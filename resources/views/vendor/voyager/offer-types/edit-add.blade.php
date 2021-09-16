@@ -2,7 +2,7 @@
     $edit = !is_null($dataTypeContent->getKey());
     $add  = is_null($dataTypeContent->getKey());
     $currencyBNR = \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR");
-    $products = \App\Product::get();
+    $products = \App\Product::orderBy('name', 'ASC')->get();
 @endphp
 
 @extends('voyager::master')
@@ -139,6 +139,7 @@
                               <li class="feature-item">
                                   <div class="feature-inner">
                                       <div class="feature-text">
+                                          <input type="text" class="hidden-product-id" value="{{$product->id}}" name="prodIds[]"/>
                                           <p><span class='handle icon voyager-move'></span></p>
                                           <p>{{$product->name}}</p>
                                       </div>

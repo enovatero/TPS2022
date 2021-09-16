@@ -282,27 +282,6 @@
                 $(".container-doua-col-right").hide();
               }
           });
-          $('#tip_oferta select').on('select2:select', function (e) {
-              var data = e.params.data;
-              $.ajax({
-                    method: 'POST',
-                    url: '/getSubtypes',
-                    data: {_token: '{{csrf_token()}}', parent_id: data.id},
-                    context: this,
-                    async: true,
-                    cache: false,
-                    dataType: 'json'
-                }).done(function(res) {
-                    $('#subtip_oferta select').html(res.html);
-                })
-                .fail(function(xhr, status, error) {
-                    if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
-                        .indexOf("CSRF token mismatch") >= 0) {
-                        window.location.reload();
-                    }
-                });
-              return false;
-          });
         });
     </script>
 @stop

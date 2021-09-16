@@ -92,26 +92,14 @@ class VoyagerOfferTypeController extends \TCG\Voyager\Http\Controllers\VoyagerBa
                         $relationshipOptions = $relationshipOptions->forPage($page, $on_page);
                     } else {
                         $total_count = $model->where($options->label, 'LIKE', '%'.$search.'%')->count();
-                        if($options->model == "App\OfferType"){
-                          $relationshipOptions = $model->take($on_page)->skip($skip)
-                            ->where($options->label, 'LIKE', '%'.$search.'%')
-                            ->whereNull('parent_id')
-                            ->get();
-                          
-                        } else{
-                          $relationshipOptions = $model->take($on_page)->skip($skip)
+                        $relationshipOptions = $model->take($on_page)->skip($skip)
                             ->where($options->label, 'LIKE', '%'.$search.'%')
                             ->get();
-                        }
 //                       dd($relationshipOptions);
                     }
                 } else {
                     $total_count = $model->count();
-                    if($options->model == "App\OfferType"){
-                      $relationshipOptions = $model->whereNull('parent_id')->take($on_page)->skip($skip)->get();
-                    } else{
-                      $relationshipOptions = $model->take($on_page)->skip($skip)->get();
-                    }
+                    $relationshipOptions = $model->take($on_page)->skip($skip)->get();
                 }
 
                 $results = [];
