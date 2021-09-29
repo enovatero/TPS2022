@@ -144,6 +144,56 @@ class VoyagerOfferTypeController extends \TCG\Voyager\Http\Controllers\VoyagerBa
         return response()->json([], 404);
     }
 
+      /**
+     * POST BRE(A)D - Store data.
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function store(Request $request)
+    {
+        $slug = $this->getSlug($request);
+
+        $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
+
+        // Check permission
+        $this->authorize('add', app($dataType->model_name));
+
+        // Validate fields with ajax
+        $val = $this->validateBread($request->all(), $dataType->addRows)->validate();
+        $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
+
+        event(new BreadDataAdded($dataType, $data));
+        if($request->input()){
+          $inserted_id = $data->id;
+          try{
+            $ids = [];
+            if($request->has('prodsSerialized') && $request->input('prodsSerialized') != null){
+              $prodIds = json_decode($request->input('prodsSerialized'), true);
+              foreach($prodIds as $prodId){
+                array_push($ids, $prodId['value']);
+              }
+              OfferType::where('id', $inserted_id)->update(['products' => json_encode($ids)]);
+            }
+          } catch(\Exception $e){}
+        }
+        if (!$request->has('_tagging')) {
+            if (auth()->user()->can('browse', $data)) {
+                $redirect = redirect()->route("voyager.{$dataType->slug}.index");
+            } else {
+                $redirect = redirect()->back();
+            }
+
+            return $redirect->with([
+                'message'    => __('voyager::generic.successfully_added_new')." {$dataType->getTranslatedAttribute('display_name_singular')}",
+                'alert-type' => 'success',
+            ]);
+        } else {
+            return response()->json(['success' => true, 'data' => $data]);
+        }
+    }
+  
   
   public function getSubtypes(Request $request){
     $selectHtml = '<option selected disabled>Alege subtipul</option>';
@@ -155,5 +205,23 @@ class VoyagerOfferTypeController extends \TCG\Voyager\Http\Controllers\VoyagerBa
     }
     return ['success' => true, 'html' => $selectHtml];
   }
+  
+  public function saveOfferTypeProducts(Request $request){
+    try{
+      $ids = [];
+      if($request->has('prodIds') && $request->input('prodIds') != null){
+        $prodIds = json_decode($request->input('prodIds'), true);
+        foreach($prodIds as $prodId){
+          array_push($ids, $prodId['value']);
+        }
+        $type_id = $request->input('type_id');
+        OfferType::where('id', $type_id)->update(['products' => json_encode($ids)]);
+        return ['success' => true, 'msg' => 'Produsul a fost adaugat cu succes in lista!'];
+      }
+    } catch(\Exception $e){
+      return ['success' => false, 'error' => 'S-a produs o eroare pe server iar datele nu au putut fi salvate!'];
+    }
+  }
+
 
 }

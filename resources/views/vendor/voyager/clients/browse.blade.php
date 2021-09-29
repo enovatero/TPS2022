@@ -5,7 +5,7 @@
 @section('page_header')
     <div class="container-fluid">
         <h1 class="page-title">
-            <i class="{{ $dataType->icon }}"></i> {{ $dataType->getTranslatedAttribute('display_name_plural') }}
+            <i class="{{ $dataType->icon }}"></i> {{ $dataType->getTranslatedAttribute('display_name_plural') }} 
         </h1>
         @can('add', app($dataType->model_name))
             <a href="{{ route('voyager.'.$dataType->slug.'.create') }}" class="btn btn-success btn-add-new">
@@ -17,7 +17,7 @@
         @endcan
         @can('edit', app($dataType->model_name))
             @if(!empty($dataType->order_column) && !empty($dataType->order_display_column))
-                <a href="{{ route('voyager.'.$dataType->slug.'.order') }}" class="btn btn-primary btn-add-new order__btn--blue">
+                <a href="{{ route('voyager.'.$dataType->slug.'.order') }}" class="btn btn-primary btn-add-new">
                     <i class="voyager-list"></i> <span>{{ __('voyager::bread.order') }}</span>
                 </a>
             @endif
@@ -126,20 +126,6 @@
                                                 @elseif($row->type == 'relationship')
                                                     @include('voyager::formfields.relationship', ['view' => 'browse','options' => $row->details])
                                                 @elseif($row->type == 'select_multiple')
-                                                    @php
-                                                      $retireved_data = json_decode($data->subtypes);
-                                                    @endphp
-                                                    @if(count($retireved_data) > 0)
-                                                      @foreach($retireved_data as $key => $subtype)
-                                                        @if($loop->last)
-                                                           {{$subtype}}
-                                                        @else
-                                                           {{$subtype}},
-                                                        @endif     
-                                                      @endforeach
-                                                    @else
-                                                      Fara subtipuri
-                                                    @endif
                                                     @if(property_exists($row->details, 'relationship'))
 
                                                         @foreach($data->{$row->field} as $item)

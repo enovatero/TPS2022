@@ -1,23 +1,18 @@
 @php
     $edit = !is_null($dataTypeContent->getKey());
     $add  = is_null($dataTypeContent->getKey());
-    $currencyBNR = \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR");
-    $products = \App\Product::orderBy('name', 'ASC')->get();
-    $selectedProducts = [];
-    if($edit){
-      $selectedIds = json_decode($dataTypeContent->products, true);
-      $selectedProducts = [];
-      if($selectedIds != null){
-        $selectedProducts = \App\Product::whereIn('id', $selectedIds)->orderBy('id')->get();
-        $selectedProductsArray = $selectedProducts->toArray();
-        $selectedProducts = [];
-        foreach($selectedIds as $pId){
-          foreach($selectedProductsArray as $prod){
-            if($pId == $prod['id']){
-              array_push($selectedProducts, $prod);
-            }
-          }
+    if($add){
+      $categories = \App\Category::get();
+    } else{
+      $formulas = json_decode($dataTypeContent->formulas, true);
+      $catIds = [];
+      if($formulas != null){
+        foreach($formulas as $cat){
+          array_push($catIds, $cat['categorie']);
         }
+        $categories = \App\Category::whereNotIn('id', $catIds)->get();
+      } else{
+        $categories = \App\Category::get();
       }
     }
 @endphp
@@ -56,9 +51,8 @@
 
                         <!-- CSRF TOKEN -->
                         {{ csrf_field() }}
-
-                        <div class="panel-body">
-
+                        <div class="container-doua-coloane">
+                          <div class="panel-body col-md-3">
                             @if (count($errors) > 0)
                                 <div class="alert alert-danger">
                                     <ul>
@@ -68,6 +62,7 @@
                                     </ul>
                                 </div>
                             @endif
+                            <h4 class="col-md-12" style="margin-bottom: 25px;">Detalii regula</h4>
 
                             <!-- Adding / Editing -->
                             @php
@@ -95,23 +90,7 @@
                                     @elseif ($row->type == 'relationship')
                                         @include('voyager::formfields.relationship', ['options' => $row->details])
                                     @else
-                                      @php
-                                        if($row->field == 'subtypes'){
-                                          $subtypes = $dataTypeContent->subtypes;
-                                        }
-                                      @endphp
-                                        
-                                        @if($row->field == 'subtypes')
-                                          <input class="retrieved_subtipes" value="{{$subtypes}}" type="hidden"/>
-                                        @endif
-                                        <div class="btn__input--cont">     
-                                        <span class="bnrCursInput">
                                         {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
-                                    </span>
-                                        @if($row->field == 'exchange')
-                                          <button type="button" class="btn btn-success ml-5 btnCursBnr">Curs EUR BNR</button>
-                                        @endif
-                                        </div>
                                     @endif
 
                                     @foreach (app('voyager')->afterFormFields($row, $dataType, $dataTypeContent) as $after)
@@ -124,16 +103,86 @@
                                     @endif
                                 </div>
                             @endforeach
-                            @if($add)
-                              <input class="prodsSerialized" name="prodsSerialized" type="hidden"/>
-                            @endif
-                        </div><!-- panel-body -->
+                            <div class="panel-footer">
+                                @section('submit-buttons')
+                                    <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>
+                                @stop
+                                @yield('submit-buttons')
+                            </div>
 
-                        <div class="panel-footer">
-                            @section('submit-buttons')
-                                <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>
-                            @stop
-                            @yield('submit-buttons')
+                        </div><!-- panel-body -->
+                          @if($edit)
+                            <div class="panel-body col-md-7">
+                              <h4 class="col-md-12" style="margin-bottom: 25px;">Aplicatii regula</h4>
+                              <div>
+                                <div class="box-body">
+                                    <table class="table table-hover">
+                                      <tbody>
+                                        <tr>
+                                          <th>Tip obiect</th>
+                                          <th>Denumire obiect</th>
+                                          <th>Formula(Variabile, Operator, Alte date)</th>
+                                          <th></th>
+                                        </tr> 
+                                        @if($formulas)
+                                          @foreach($formulas as $formula)
+                                            <tr>
+                                              <td>{{$formula['tip_obiect']}}</td>
+                                              <td>{{$formula['categorie_name']}}</td>
+                                              <td>{{$formula['full_formula']}}</td>
+                                              <td class="al_right">
+                                                <button type="button" class="btn btn-danger btn-xs btnRemoveFormula" title="sterge">Sterge</button>
+                                              </td>
+                                              <td style="display: none !important;"><div class="json_input" formula='{{json_encode($formula)}}'></div></td>
+                                            </tr>  
+                                          @endforeach
+                                        @endif
+                                        
+                                        <tr class="tr-functions">
+                                          <td>
+                                            <select name="object_type">
+                                              <option selected disabled>Alege...</option>
+                                              <option value="category">Categorie</option>
+                                            </select>
+                                          </td>
+                                          <td>
+                                            <select name="object_id">
+                                              <option selected disabled>Alege...</option>
+                                              @foreach($categories as $category)
+                                                <option value="{{$category->id}}">{{$category->title}}</option>
+                                              @endforeach
+                                            </select>
+                                          </td>
+                                          <td>
+                                            <select name="variabila">
+                                              <option selected disabled>Alege...</option>
+                                              <option value="PI">PI</option>
+                                            </select>
+                                            <select name="operator">
+                                              <option selected disabled>Alege...</option>
+                                              <option value="+">+</option>
+                                              <option value="-">-</option>
+                                              <option value="*">*</option>
+                                              <option value="/">/</option>
+                                              <option value="%">%</option>
+                                              <option value="^">^</option>
+                                            </select>
+                                            <input name="formula" class="" type="number"/>
+                                          </td>
+                                          <td class="al_right">
+                                            <button type="button" class="btn btn-primary btn-xs btnAddFormula" style="margin-left:1%" title="Adauga formula">Adauga formula</button>
+                                          </td>
+                                        </tr>
+                                    </tbody>
+                                  </table>
+                                <p><b>Reguli formula:</b>
+                                  <br>- Variabile:<br>PI = pret de intrare produs
+                                  <br>- Operanzi: * (inmultire), / (impartire), + (adunare), - (scadere), % (procent), ^ (ridicare la putere)
+                                  <br>Ex.: PI*1.25 (25% peste pretul de baza)</p>
+                                </div>
+                            </div>
+                          </div>
+                          @endif
                         </div>
                     </form>
 
@@ -148,53 +197,6 @@
 
                 </div>
             </div>
-            <div class="page-content edit-add container-fluid">
-                <div class="text">
-                    <h3>Produse din oferta</h3>
-                    <p>Poti selecta produsele care apartin ofertei, din lista de produse din stanga, tragand produsele in coloana din dreapta.</p>
-                </div>
-            </div>
-            <div class="col-md-12 panel panel-bordered">
-            <div class="container container-products-types">
-                <div class="half">
-                    <h3 class="text-center">Toate produsele</h3>
-                    <ul class="feature" id='left-lovehandles'>
-                        @if($products && count($products) > 0)
-                          @foreach($products as $product)
-                            <li class="feature-item">
-                                <div class="feature-inner">
-                                    <div class="feature-text">
-                                        <input type="hidden" class="hidden-product-id" value="{{$product->id}}" name="prodIds[]"/>
-                                        <p><img src="../../../images/draggable.png" class="handle"/></p>
-                                        <p>{{$product->name}}</p>
-                                    </div>
-                                </div>
-                            </li>
-                          @endforeach
-                        @else
-                          Niciun produs disponibil
-                        @endif
-                    </ul>
-                </div>
-
-                <div class="half">
-                    <h3 class="text-center">Produse din oferta</h3>
-                    <ul class="feature" id='right-lovehandles'>
-                       @foreach($selectedProducts as $product)
-                          <li class="feature-item">
-                              <div class="feature-inner">
-                                  <div class="feature-text">
-                                      <input type="hidden" class="hidden-product-id" value="{{$product['id']}}" name="prodIds[]"/>
-                                      <p><img src="../../../images/draggable.png" class="handle"/></p>
-                                      <p>{{$product['name']}}</p>
-                                  </div>
-                              </div>
-                          </li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-          </div>
         </div>
     </div>
 
@@ -223,7 +225,6 @@
 @stop
 
 @section('javascript')
-    <script src="../../../js/dragster.min.js" type="text/javascript"></script>
     <script>
         var params = {};
         var $file;
@@ -294,37 +295,77 @@
                 $('#confirm_delete_modal').modal('hide');
             });
             $('[data-toggle="tooltip"]').tooltip();
-//             if($(".retrieved_subtipes").val() != ''){
-//               var subtypes = $.parseJSON($(".retrieved_subtipes").val());
-//               if(subtypes.length > 0){
-//                 for(var i=0;i<subtypes.length;i++){
-//                   var text = subtypes[i];
-//                   var newOption = new Option(text, text, true, true);
-//                   $("#id_subtypes>select.select2").append(newOption).trigger('change');
-//                 }
-//               }
-//             }
-            $(".btnCursBnr").click(function(){
-              $(this).parent().find("input[name=exchange]").val("{{$currencyBNR}}");
+          
+          $(".btnAddFormula").click(function(){
+            var tip_obiect = $("select[name=object_type] option:selected").val();
+            var categorie = $("select[name=object_id] option:selected").val();
+            var categorie_name = $("select[name=object_id] option:selected").text();
+            var variabila = $("select[name=variabila] option:selected").val();
+            var operator = $("select[name=operator] option:selected").val();
+            var formula = $("input[name=formula]").val();
+            if(tip_obiect == 'Alege...' || categorie == 'Alege...' || variabila == 'Alege...' || operator == 'Alege...'){
+              toastr.error("Selecteaza fiecare element al formulei!", 'Eroare');
+              return;
+            }
+            var full_formula;
+            if(formula == ''){
+              full_formula = variabila;
+            } else{
+              full_formula = variabila + "" + operator + "" +formula;
+            }
+            var created_formula = {
+              tip_obiect: tip_obiect,
+              categorie: categorie,
+              categorie_name: categorie_name,
+              variabila: variabila,
+              operator: operator,
+              formula: formula,
+              full_formula: full_formula
+            };
+            var created_formula_json = JSON.stringify(created_formula);
+            var html_created = `       
+              <tr class="just-inserted">
+                <td>${tip_obiect}</td>
+                <td>${categorie_name}</td>
+                <td>${full_formula}</td>
+                <td class="al_right">
+                  <button type="button" class="btn btn-danger btn-xs btnRemoveFormula" title="sterge">Sterge</button>
+                </td>
+                <td style="display: none !important;"><div class="json_input" formula='${created_formula_json}'></div></td>
+              </tr> 
+            `;
+            $(html_created).insertBefore($(".tr-functions"));
+            $("select[name=object_type]").prop('selectedIndex',0);
+            $("select[name=object_id]").prop('selectedIndex',0);
+            $("select[name=variabila]").prop('selectedIndex',0);
+            $("select[name=operator]").prop('selectedIndex',0);
+            $("input[name=formula]").val("");
+            var formulasArray = [];
+            $(".json_input").each(function(){
+              formulasArray.push(jQuery.parseJSON($(this).attr("formula")));  
             });
-        });
-      var options = {
-        moves: function (el, container, handle) {
-          return handle.classList.contains('handle');
-        }
-      };
-
-      var dragster = new Dragster(options, document.getElementById('left-lovehandles'), document.getElementById('right-lovehandles'));
-      dragster.on('drop', function (el, container) {
-          var prodsSerialized = JSON.stringify($("#right-lovehandles .hidden-product-id").serializeArray());
-          if("{{$add}}"){
-            $(".prodsSerialized").val(prodsSerialized);
-          } else{
-            console.log(prodsSerialized);
+            sendFormulasToDb(formulasArray, categorie, 'add');
+          });
+          $(document).on("click", ".btnRemoveFormula", function(){
+            var categoryForAdd = $(this).parent().parent().find(".json_input").attr("formula");
+            categoryForAdd = jQuery.parseJSON(categoryForAdd);
+            console.log(categoryForAdd);
+            $("select[name=object_id]").append($('<option>', {
+                value: categoryForAdd.categorie,
+                text: categoryForAdd.categorie_name
+            }));
+            $(this).parent().parent().remove();
+            var formulasArray = [];
+            $(".json_input").each(function(){
+              formulasArray.push(jQuery.parseJSON($(this).attr("formula")));  
+            });
+            sendFormulasToDb(formulasArray, null, 'delete');
+          });
+          function sendFormulasToDb(formulasArray, categorie, type){
             $.ajax({
                 method: 'POST',
-                url: '/admin/saveOfferTypeProducts',
-                data: {_token: '{{csrf_token()}}',type_id:'{{$dataTypeContent->getKey()}}' , prodIds: prodsSerialized},
+                url: '/admin/saveRulePrice',
+                data: {_token: '{{csrf_token()}}',rule_id:'{{$dataTypeContent->getKey()}}' , formulasArray: formulasArray, type: type},
                 context: this,
                 async: true,
                 cache: false,
@@ -332,8 +373,12 @@
             }).done(function(res) {
                 if (res.success == false) {
                     toastr.error(res.error, 'Eroare');
+                    $(".just-inserted").last().remove();
                 } else{
                   toastr.success(res.msg, 'Success');
+                  if(categorie != null){
+                    $("select[name=object_id] option[value='"+categorie+"']").remove();
+                  }
                 }
             })
             .fail(function(xhr, status, error) {
@@ -343,6 +388,6 @@
                 }
             });
           }
-      })
+        });
     </script>
 @stop

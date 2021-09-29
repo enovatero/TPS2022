@@ -75,4 +75,25 @@ class AddressController extends Controller
         return ['success' => true, 'msg' => 'Adresa stearsa cu succes!'];
       }
     }
+    
+    public function getUserAddresses(Request $request){
+      $form_data = $request->only('user_id');
+      $validationRules = [
+        'user_id'    => ['required'],
+      ];
+      $validationMessages = [
+          'user_id.required'    => "Te rugam sa selectezi un user valid!",
+      ];
+      $validator = Validator::make($form_data, $validationRules, $validationMessages);
+      if ($validator->fails()){
+          return ['success' => false, 'msg' => $validator->errors()->all()];  
+      } else{
+        $address = UserAddress::where('id', $request->input('user_id'))->get();
+        foreach($address as &$addr){
+          $addr->city_name = $addr->city_name()->city_name;
+          $addr->state_name = $addr->state_name()->state_name;
+        }
+        return ['success' => true, 'userAddresses' => $address];
+      }
+    }
 }

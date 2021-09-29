@@ -1,6 +1,18 @@
 @php
-    $edit = !is_null($dataTypeContent->getKey());
-    $add  = is_null($dataTypeContent->getKey());
+$edit = !is_null($dataTypeContent->getKey());
+$add  = is_null($dataTypeContent->getKey());
+$isNewClient = false;
+$priceRules = null;
+$priceGridId = null;
+$offerType = null;
+$userAddresses = \App\UserAddress::where('user_id', $dataTypeContent->user_id)->get();
+if($edit){
+  $offerType = \App\OfferType::find($dataTypeContent->type);
+  $cursValutar = $offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR");
+  $dataTypeContent->curs_eur = $cursValutar;
+  $priceRules = \App\RulesPrice::get();
+  $priceGridId = $dataTypeContent->price_grid_id != null ? $dataTypeContent->price_grid_id : -1;
+}
 @endphp
 
 @extends('voyager::master')
@@ -14,7 +26,7 @@
 @section('page_header')
     <h1 class="page-title">
         <i class="{{ $dataType->icon }}"></i>
-        {{ __('voyager::generic.'.($edit ? 'edit' : 'add')).' '.$dataType->getTranslatedAttribute('display_name_singular') }}
+        Oferta {{$edit ? '#'.$dataTypeContent->serie : 'noua'}}
     </h1>
     @include('voyager::multilingual.language-selector')
 @stop
@@ -22,7 +34,19 @@
 @section('content')
     <div class="page-content edit-add container-fluid">
         <div class="row">
-            <div class="col-md-12">
+            @if($edit)
+              <div class="col-md-12">
+                <ul class="nav nav-tabs" style="width: max-content;">
+                  <li class="active">
+                      <a data-toggle="tab" href="#oferta" aria-expanded="true" class="btnOferta">Detali oferta</a>
+                  </li>
+                  <li class="">
+                      <a data-toggle="tab" href="#awb" aria-expanded="false" class="btnOfertaAwb">Detalii livrare / AWB</a>
+                  </li>
+                </ul>
+              </div>
+            @endif
+            <div class="col-md-12" id="oferta">
 
                 <div class="panel panel-bordered">
                     <!-- form start -->
@@ -38,8 +62,8 @@
                         <!-- CSRF TOKEN -->
                         {{ csrf_field() }}
 
-                        <div class="container-doua-coloane">
-                          <div class="panel-body container-doua-col-left">
+                        <div class="container-doua-coloane" style="display: flex;flex-direction: row;justify-content: space-between; flex-wrap: wrap;">
+                          <div class="panel-body container-doua-col-left" @if($add) style="width: 50%" @else style="width: 100%" @endif>
 
                             @if (count($errors) > 0)
                                 <div class="alert alert-danger">
@@ -49,6 +73,9 @@
                                         @endforeach
                                     </ul>
                                 </div>
+                              @php
+                                $isNewClient = count($errors) > 0 && array_key_exists('address', $errors->toArray());
+                              @endphp
                             @endif
 
                             <!-- Adding / Editing -->
@@ -68,7 +95,7 @@
                                     <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
                                 @endif
 
-                                <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif>
+                                <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif @if($add) style="width: 100%;" @else style="width: 48%;" @endif>
                                     {{ $row->slugify }}
                                     <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
                                     @include('voyager::multilingual.input-hidden-bread-edit-add')
@@ -90,56 +117,124 @@
                                     @endif
                                 </div>
                             @endforeach
+                            @if($edit)
+                            <div class="form-group  col-md-12" style="width: 48%;">
+                                <div class="form-group  col-md-12" style="width: 100%;">
+                                  <label class="control-label">Date livrare</label>
+                                  <select name="delivery_address_user" class="form-control">
+                                    <option value="-1" selected disabled>Alege adresa de livrare</option>
+                                    <option value="-2">Adauga adresa noua</option>
+                                    @if(count($userAddresses) > 0)
+                                      @foreach($userAddresses as $address)
+                                        <option value="{{$address->id}}" country="{{$address->country}}" state="{{$address->state_name()->state_name}}" city="{{$address->city_name()->city_name}}">{{$address->address}}, {{$address->city_name()->city_name}}, {{$address->state_name()->state_name}}</option>
+                                      @endforeach
+                                    @endif
+                                  </select>
+                                </div>
+                                <div class="form-group  col-md-12" style="width: 100%;">
+                                    <div class="panel-body container-box-adresa">
+                                      <div class="form-group col-md-12 column-element-address" style="width: 100%">
+                                         <label class="control-label">Tara</label>
+                                         @include('vendor.voyager.formfields.countries', ['selected' => null])                       
+                                      </div>
+                                      <div class="form-group col-md-12 column-element-address">
+                                         <label class="control-label" for="state">Judet/Regiune</label>
+                                         <select name="state" class="form-control select-state"></select>
+                                      </div>
+                                      <div class="form-group col-md-12 column-element-address">
+                                         <label class="control-label">Oras/Localitate/Sector</label>
+                                         <select name="city" class="form-control select-city"></select>        
+                                      </div>
+                                      <div class="form-group col-md-12 column-element-address" style="width: 100%;">
+                                         <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
+                                         <input class="control-label" required type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>                          
+                                      </div>
+                                      <div class="form-group col-md-12 column-element-address">
+                                         <label class="control-label" for="state">Telefon</label>
+                                         <input name="delivery_phone" type="text" style="padding: 5px;"/>
+                                      </div>
+                                      <div class="form-group col-md-12 column-element-address">
+                                         <label class="control-label">Persoana de contact</label>
+                                         <input name="delivery_contact" type="text" style="padding: 5px;"/>        
+                                      </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
 
                         </div><!-- panel-body -->
-                          <div class="panel-body container-doua-col-right">
-                            <div class="form-group  col-md-12 ">     
-                               <h4 class="control-label font-weight-bold" for="name">Adaugare client</h4>     
+                          @if($add)
+                            <div class="panel-body container-doua-col-right" @if (count($errors) > 0 && array_key_exists('address', $errors->toArray())) style="display: block !important;" @endif>
+                              <div class="form-group  col-md-12 ">     
+                                 <h4 class="control-label font-weight-bold" for="name">Adaugare client</h4>     
+                              </div>
+                              <div class="form-group  col-md-12 ">
+                                 <label class="control-label" for="name">Tip client</label>
+                                 <ul class="radio">
+                                    <li>
+                                        <input type="radio" id="option-type-fizica" name="persoana_type" value="fizica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'fizica' || old('persoana_type', $dataTypeContent->persoana_type) == '') checked="" @endif>
+                                        <label for="option-type-fizica">Persoana fizica</label>
+                                        <div class="check"></div>
+                                    </li>
+                                    <li>
+                                        <input type="radio" id="option-type-juridica" name="persoana_type" value="juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') checked="" @endif>
+                                        <label for="option-type-juridica">Persoana juridica</label>
+                                        <div class="check"></div>
+                                    </li>
+                                 </ul>
+                              </div>
+                                <div class="form-group col-md-12">
+                                 <label class="control-label" for="name">Nume</label>
+                                 <input class="form-control" type="text" name="name" autocomplete="off" value="{{ old('name', $dataTypeContent->name ?? '') != '' ? old('name', $dataTypeContent->name) : ''}}"/>                          
+                                </div>
+                                <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
+                                 <label class="control-label" for="name">CUI</label>
+                                 <input class="form-control" type="text" name="cui" autocomplete="off" value="{{ old('cui', $dataTypeContent->cui ?? '') != '' ? old('cui', $dataTypeContent->cui) : ''}}"/>                          
+                                </div>
+                                <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
+                                 <label class="control-label" for="name">Reg. Com.</label>
+                                 <input class="form-control" type="text" name="reg_com" autocomplete="off" value="{{ old('reg_com', $dataTypeContent->reg_com ?? '') != '' ? old('reg_com', $dataTypeContent->reg_com) : ''}}"/>                          
+                                </div>
+                                <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
+                                 <label class="control-label" for="name">Banca</label>
+                                 <input class="form-control" type="text" name="banca" autocomplete="off"value="{{ old('banca', $dataTypeContent->banca ?? '') != '' ? old('banca', $dataTypeContent->banca) : ''}}" />                          
+                                </div>
+                                <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
+                                 <label class="control-label" for="name">IBAN</label>
+                                 <input class="form-control" type="text" name="iban" autocomplete="off"value="{{ old('iban', $dataTypeContent->iban ?? '') != '' ? old('iban', $dataTypeContent->iban) : ''}}" />                          
+                                </div>
+                                <div class="form-group col-md-12 container-inputs-fizica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: none" @endif>
+                                 <label class="control-label" for="name">CNP</label>
+                                 <input class="form-control" type="text" name="cnp" autocomplete="off" value="{{ old('cnp', $dataTypeContent->cnp ?? '') != '' ? old('cnp', $dataTypeContent->cnp) : ''}}"/>                          
+                                </div>
+                                <div class="form-group  col-md-12 " >
+                                    <label class="control-label" for="name">Email</label>
+                                    <input  type="text" class="form-control" name="email" placeholder="Email" value="{{ old('email', $dataTypeContent->email ?? '') != '' ? old('email', $dataTypeContent->email) : ''}}">
+                                </div>
+                                <div class="form-group  col-md-12 " >
+                                    <label class="control-label" for="name">Telefon</label>
+                                    <input  type="text" class="form-control" name="phone" placeholder="Telefon" value="{{ old('cnp', $dataTypeContent->cnp ?? '') != '' ? old('cnp', $dataTypeContent->cnp) : ''}}">
+                                </div>
+                              <div>
+                                <div class="form-group col-md-12 column-element-address">
+                                   <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
+                                   <input class="control-label" type="text" name="address[]" value="{{ old('address', $dataTypeContent->address ?? '') != '' ? old('address', $dataTypeContent->address)[0] : ''}}"/>                          
+                                </div>
+                                <div class="form-group col-md-12 column-element-address">
+                                   <label class="control-label">Tara</label>
+                                   @include('vendor.voyager.formfields.countries', ['selected' => null]) 
+                                </div>
+                                <div class="form-group col-md-12 column-element-address">
+                                   <label class="control-label" for="state">Judet/Regiune</label>
+                                   <select name="state[]" class="form-control select-state"></select>
+                                </div>
+                                <div class="form-group col-md-12 column-element-address">
+                                   <label class="control-label">Oras/Localitate/Sector</label>
+                                   <select name="city[]" class="form-control select-city"></select>        
+                                </div>
+                              </div>
                             </div>
-                            <div class="form-group  col-md-12 ">
-                               <label class="control-label" for="name">Tip client</label>
-                               <ul class="radio">
-                                  <li>
-                                      <input type="radio" id="option-type-fizica" name="type" value="fizica" checked="">
-                                      <label for="option-type-fizica">Persoana fizica</label>
-                                      <div class="check"></div>
-                                  </li>
-                                  <li>
-                                      <input type="radio" id="option-type-juridica" name="type" value="juridica">
-                                      <label for="option-type-juridica">Persoana juridica</label>
-                                      <div class="check"></div>
-                                  </li>
-                               </ul>
-                            </div>
-                            <div class="form-group col-md-12 container-inputs-juridica" >
-                               <label class="control-label" for="name">CUI</label>
-                               <input class="form-control" type="text" name="cui" autocomplete="off" />                          
-                              </div>
-                              <div class="form-group col-md-12 container-inputs-juridica" >
-                               <label class="control-label" for="name">Reg. Com.</label>
-                               <input class="form-control" type="text" name="reg_com" autocomplete="off" />                          
-                              </div>
-                              <div class="form-group col-md-12 container-inputs-juridica" >
-                               <label class="control-label" for="name">Banca</label>
-                               <input class="form-control" type="text" name="banca" autocomplete="off" />                          
-                              </div>
-                              <div class="form-group col-md-12 container-inputs-juridica" >
-                               <label class="control-label" for="name">IBAN</label>
-                               <input class="form-control" type="text" name="iban" autocomplete="off" />                          
-                              </div>
-                              <div class="form-group col-md-12 container-inputs-fizica" >
-                               <label class="control-label" for="name">CNP</label>
-                               <input class="form-control" type="text" name="cnp" autocomplete="off" />                          
-                              </div>
-                              <div class="form-group  col-md-12 " >
-                                  <label class="control-label" for="name">Email</label>
-                                  <input  type="text" class="form-control" name="email" placeholder="Email" value="">
-                              </div>
-                              <div class="form-group  col-md-12 " >
-                                  <label class="control-label" for="name">Telefon</label>
-                                  <input  type="text" class="form-control" name="phone" placeholder="Telefon" value="">
-                              </div>
-                          </div>
+                          @endif
                         </div>
                         <div class="panel-footer">
                             @section('submit-buttons')
@@ -160,6 +255,79 @@
 
                 </div>
             </div>
+          <div class="col-md-12" id="awb" style="display: none;">
+            <div class="panel">
+              <div class="panel-body">
+                <input type="hidden" name="order_id" id="order_id" value="24073">
+                <input type="hidden" name="partner_id" id="partner_id" value="7479">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="deliveryAccount">Cont FAN</label>
+                    <select name="deliveryAccount" id="deliveryAccount" class="form-control">
+                      <option disabled="" selected="">Alege...</option>
+                      <option value="7155019">BERCENI</option>
+                      <option value="7165267">MPOS</option>
+                      <option value="7177309">IASI</option>
+                      <option value="7038192">STANDARD</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="packages">Nr. colete</label>
+                      <input type="text" name="packages" id="packages" class="form-control" value="1">
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="weight">Greutate (kg)</label>
+                      <input type="text" name="weight" id="weight" class="form-control" value="1">
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="cashback">Ramburs (ex: 2542.26)</label>
+                      <input type="text" name="cashback" id="cashback" class="form-control" value="0.00">
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="height">Inaltime (cm)</label>
+                      <input type="text" name="height" id="height" class="form-control">
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="Width">Latime (cm)</label>
+                      <input type="text" name="Width" id="Width" class="form-control">
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="lenght">Lungime (cm)</label>
+                      <input type="text" name="lenght" id="lenght" class="form-control">
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="contents">Continut</label>
+                    <input type="text" name="contents" id="contents" class="form-control" value="sisteme acoperis">
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <label for="deliveryAddressAWB">Adresa de livrare</label>
+                  <select name="deliveryAddressAWB" id="deliveryAddressAWB" class="form-control">
+                    <option disabled="" selected="">Alege...</option>
+                    <option value="1">STR STADIONULUI MIC NR 20, VIDELE, TELEORMAN ---   STOCHITA ELENA - 0766582487</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
     </div>
 
@@ -281,6 +449,83 @@
               } else{
                 $(".container-doua-col-right").hide();
               }
+          });
+          if("{{$isNewClient}}"){
+          var newOption = new Option("Adauga client nou", -1, false, false);
+          $("#select_client>select").append(newOption).trigger('change');
+          }
+          $(".btnOferta").click(function(){
+            $("#oferta").show();
+            $("#awb").hide();
+          });
+          $(".btnOfertaAwb").click(function(){
+            $("#awb").show();
+            $("#oferta").hide();
+          });
+          var isEdit = {!! $edit != "" ? 'true' : 'false' !!};
+          if(isEdit){
+            $("#tip_oferta > select").prop("disabled", "disabled");
+            $("#data_oferta > input").attr('readonly', true);
+            $("#data_oferta > input").css("cursor", "not-allowed !important");
+            $("#tip_oferta .selection>span").css("cursor", "not-allowed !important");
+            $("input[name=price_grid_id]").prop("type", "hidden");
+            var select_html_prices = "<select name='price_grid_id' class='form-control'>";
+            var prRules = {!!$priceRules != "" ? $priceRules : 'false' !!};
+            var price_grid_id = {!! $priceRules != "" ? $priceRules : 'false' !!};
+            if(prRules){
+              for(var i = 0; i < prRules.length; i++){
+                if(prRules[i].id == price_grid_id){
+                  select_html_prices += "<option value='"+prRules[i].id+"' selected>["+prRules[i].code+"] - "+prRules[i].title+"</option>";
+                } else{ 
+                  select_html_prices += "<option value='"+prRules[i].id+"'>["+prRules[i].code+"] - "+prRules[i].title+"</option>";
+                }
+              }
+            }
+            select_html_prices += "</select>";
+            $("input[name=price_grid_id]").parent().append(select_html_prices);
+            $("input[name=price_grid_id]").remove();
+            var tip_oferta_label = $("#tip_oferta > label").html();
+            $("#tip_oferta").html('');
+            $("#tip_oferta").append(tip_oferta_label);
+            $("#tip_oferta").append("<input name='type' type='hidden' class='form-control' value='{{$dataTypeContent->type}}'/>");
+            $("#tip_oferta").append("<input type='text' readonly class='form-control' value='{{$offerType->title ?? ''}}'/>");
+          }
+          
+          $("#select_client > select").on('select2:select', function (e) {
+             var data = e.params.data;
+             var vthis = this;
+             $.ajax({
+                  method: 'POST',
+                  url: '/getUserAddresses',
+                  data: {_token: $("meta[name=csrf-token]").attr("content"), user_id: data.id},
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(res) {
+                  if (res.success == false) {
+                      toastr.error(res.error, 'Eroare');
+                  } else{
+                    var html_user_addresses = `
+                        <option value="-1" selected disabled>Alege adresa de livrare</option>
+                        <option value="-2">Adauga adresa noua</option>`;
+                    
+                        if(res.userAddresses.length > 0){
+                          for(var i = 0; i < res.userAddresses.length; i++){
+                            html_user_addresses += `<option value="${res.userAddresses[i].id}" country="${res.userAddresses[i].country}" state="${res.userAddresses[i].state_name}" city="${res.userAddresses[i].city_name}">${res.userAddresses[i].address}, ${res.userAddresses[i].city_name}, ${res.userAddresses[i].state_name}</option>`;
+                          }
+                        }
+                    console.log(html_user_addresses);
+                    $("select[name=delivery_address_user]").html(html_user_addresses);
+                  }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+            return false;
           });
         });
     </script>

@@ -21,10 +21,10 @@
 
 @section('content')
     <div class="page-content edit-add container-fluid">
-        <div class="row">
+        <div class="row create__client--page">
             <div class="col-md-12">
 
-                <div class="panel panel-bordered">
+                <div class="panel panel-bordered panel__add-client">
                     <!-- form start -->
                     <form role="form"
                             class="form-edit-add"
@@ -54,97 +54,104 @@
                             @php
                                 $dataTypeRows = $dataType->{($edit ? 'editRows' : 'addRows' )};
                             @endphp
+                            
+                          <div class="container-elements-left-right" style="width: 100%; display: flex;flex-direction: row;justify-content: space-between;">
+                            <div class="container-elements-left" style="width: 50%;">
+                            <div class="form__add-client--title" >Detalii client</div>
+                              @foreach($dataTypeRows as $row)
+                                  <!-- GET THE DISPLAY OPTIONS -->
+                                  @php
+                                      $display_options = $row->details->display ?? NULL;
+                                      if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
+                                          $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
+                                      }
+                                  @endphp
+                                  @if (isset($row->details->legend) && isset($row->details->legend->text))
+                                      <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
+                                  @endif
 
-                            @foreach($dataTypeRows as $row)
-                                <!-- GET THE DISPLAY OPTIONS -->
-                                @php
-                                    $display_options = $row->details->display ?? NULL;
-                                    if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
-                                        $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
-                                    }
-                                @endphp
-                                @if (isset($row->details->legend) && isset($row->details->legend->text))
-                                    <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
-                                @endif
+                                  <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif>
+                                  {{ $row->slugify }}
+                                      <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+                                      @include('voyager::multilingual.input-hidden-bread-edit-add')
+                                      @if (isset($row->details->view))
+                                          @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add'), 'view' => ($edit ? 'edit' : 'add'), 'options' => $row->details])
+                                      @elseif ($row->type == 'relationship')
+                                          @include('voyager::formfields.relationship', ['options' => $row->details])
+                                      @else
+                                          {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
+                                      @endif
 
-                                <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif>
-                                    {{ $row->slugify }}
-                                    <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
-                                    @include('voyager::multilingual.input-hidden-bread-edit-add')
-                                    @if (isset($row->details->view))
-                                        @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add'), 'view' => ($edit ? 'edit' : 'add'), 'options' => $row->details])
-                                    @elseif ($row->type == 'relationship')
-                                        @include('voyager::formfields.relationship', ['options' => $row->details])
-                                    @else
-                                        {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
+                                      @foreach (app('voyager')->afterFormFields($row, $dataType, $dataTypeContent) as $after)
+                                          {!! $after->handle($row, $dataType, $dataTypeContent) !!}
+                                      @endforeach
+                                      @if ($errors->has($row->field))
+                                          @foreach ($errors->get($row->field) as $error)
+                                              <span class="help-block">{{ $error }}</span>
+                                          @endforeach
+                                      @endif
+                                  </div>
+                                  @if($row->field == 'name')
+                                    <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
+                                       <label class="control-label" for="name">CUI</label>
+                                       <input class="form-control" type="text" name="cui" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->cui}}" @endif/>                          
+                                    </div>
+                                    <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
+                                       <label class="control-label" for="name">Reg. Com.</label>
+                                       <input class="form-control" type="text" name="reg_com" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->reg_com}}" @endif/>                          
+                                    </div>
+                                    <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
+                                       <label class="control-label" for="name">Banca</label>
+                                       <input class="form-control" type="text" name="banca" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->banca}}" @endif/>                          
+                                    </div>
+                                    <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
+                                       <label class="control-label" for="name">IBAN</label>
+                                       <input class="form-control" type="text" name="iban" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->iban}}" @endif/>                          
+                                    </div>
+                                    <div class="form-group col-md-12 container-inputs-fizica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: none;" @endif>
+                                       <label class="control-label" for="name">CNP</label>
+                                       <input class="form-control" type="text" name="cnp" autocomplete="off" @if(isset($individual) && $individual != null) value="{{$individual->cnp}}" @endif/>                          
+                                    </div>
+                                    @if(isset($individual) && $individual != null)
+                                      <input type="hidden" name="fizica_id" value="{{$individual->id}}"/>
                                     @endif
-
-                                    @foreach (app('voyager')->afterFormFields($row, $dataType, $dataTypeContent) as $after)
-                                        {!! $after->handle($row, $dataType, $dataTypeContent) !!}
-                                    @endforeach
-                                    @if ($errors->has($row->field))
-                                        @foreach ($errors->get($row->field) as $error)
-                                            <span class="help-block">{{ $error }}</span>
-                                        @endforeach
+                                    @if(isset($legal_entity) && $legal_entity != null)
+                                      <input type="hidden" name="juridica_id" value="{{$legal_entity->id}}"/>
+                                    @endif
+                                  @endif
+                              @endforeach
+                            </div>
+                            <div class="container-elements-right" style="width: 50%;">
+                            <div class="form__add-client--title" >Detalii adrese client</div>
+                              <div class="container-addresses client__adress--container" style="justify-content: flex-start;">
+                                <div class="panel-body btn__container--address">
+                                  <div type="button" class="btn btn-success btnAddAddress">Adauga adresa</div>
+                                  <div type="button" class="btn btn-danger btnRemoveAddress" style="margin-bottom: 5px;">Sterge adresa</div>
+                                  <div type="button" class="btn btn-danger btnCancelAddress" style="margin-bottom: 5px; display: none;">Anuleaza stergere</div>
+                                </div>
+                                <input 
+                                       type="hidden" 
+                                       name="addressesCounter" 
+                                       @if(old('address', $dataTypeContent->address ?? '') != '') 
+                                          value="{{count(old('address', $dataTypeContent->address))}}" 
+                                       @else 
+                                          @if(isset($addresses) && $addresses && count($addresses) > 0)
+                                            value="{{count($addresses)}}"
+                                          @else
+                                            value="1" 
+                                          @endif
+                                       @endif 
+                                       class="addressesCounter"/>
+                                <div class="container-addresses-list">
+                                    @if(isset($addresses) && $addresses && count($addresses) > 0)
+                                      @include('vendor.voyager.formfields.address', ['removeDelete' => false, 'addresses' => $addresses])
+                                    @else
+                                      @include('vendor.voyager.formfields.address', ['removeDelete' => true, 'addresses' => []])
                                     @endif
                                 </div>
-                                @if($row->field == 'name')
-                                  <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
-                                     <label class="control-label" for="name">CUI</label>
-                                     <input class="form-control" type="text" name="cui" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->cui}}" @endif/>                          
-                                  </div>
-                                  <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
-                                     <label class="control-label" for="name">Reg. Com.</label>
-                                     <input class="form-control" type="text" name="reg_com" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->reg_com}}" @endif/>                          
-                                  </div>
-                                  <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
-                                     <label class="control-label" for="name">Banca</label>
-                                     <input class="form-control" type="text" name="banca" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->banca}}" @endif/>                          
-                                  </div>
-                                  <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
-                                     <label class="control-label" for="name">IBAN</label>
-                                     <input class="form-control" type="text" name="iban" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->iban}}" @endif/>                          
-                                  </div>
-                                  <div class="form-group col-md-12 container-inputs-fizica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: none;" @endif>
-                                     <label class="control-label" for="name">CNP</label>
-                                     <input class="form-control" type="text" name="cnp" autocomplete="off" @if(isset($individual) && $individual != null) value="{{$individual->cnp}}" @endif/>                          
-                                  </div>
-                                  @if(isset($individual) && $individual != null)
-                                    <input type="hidden" name="fizica_id" value="{{$individual->id}}"/>
-                                  @endif
-                                  @if(isset($legal_entity) && $legal_entity != null)
-                                    <input type="hidden" name="juridica_id" value="{{$legal_entity->id}}"/>
-                                  @endif
-                                @endif
-                            @endforeach
-                            <div class="container-addresses">
-                              <div class="panel-body">
-<!--                                 <label class="control-label">Adrese</label> -->
-                                <div type="button" class="btn btn-success btnAddAddress">Adauga adresa</div>
-                                <div type="button" class="btn btn-danger btnRemoveAddress" style="margin-bottom: 5px;">Sterge adresa</div>
-                                <div type="button" class="btn btn-danger btnCancelAddress" style="margin-bottom: 5px; display: none;">Anuleaza stergere</div>
-                              </div>
-                              <input 
-                                     type="hidden" 
-                                     name="addressesCounter" 
-                                     @if(old('address', $dataTypeContent->address ?? '') != '') 
-                                        value="{{count(old('address', $dataTypeContent->address))}}" 
-                                     @else 
-                                        @if(isset($addresses) && $addresses && count($addresses) > 0)
-                                          value="{{count($addresses)}}"
-                                        @else
-                                          value="1" 
-                                        @endif
-                                     @endif 
-                                     class="addressesCounter"/>
-                              <div class="container-addresses-list">
-                                  @if(isset($addresses) && $addresses && count($addresses) > 0)
-                                    @include('vendor.voyager.formfields.address', ['removeDelete' => false, 'addresses' => $addresses])
-                                  @else
-                                    @include('vendor.voyager.formfields.address', ['removeDelete' => true, 'addresses' => []])
-                                  @endif
                               </div>
                             </div>
+                          </div>
                         </div><!-- panel-body -->
 
                         <div class="panel-footer">
@@ -166,7 +173,10 @@
 
                 </div>
             </div>
+          <!-- Here -->
+          
         </div>
+        
     </div>
 
     <div class="modal fade modal-danger" id="confirm_delete_modal">
@@ -333,7 +343,7 @@
       $('.select-country').each(function(item){
         var value = $(this).attr('selectedValue');
         if(value != ''){
-          $(this).find('option[value='+value+']').prop('selected',true).trigger('change');
+          $(this).val(value).trigger('change');
         }
       });
     </script>

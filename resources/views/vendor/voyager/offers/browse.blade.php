@@ -17,7 +17,7 @@
         @endcan
         @can('edit', app($dataType->model_name))
             @if(!empty($dataType->order_column) && !empty($dataType->order_display_column))
-                <a href="{{ route('voyager.'.$dataType->slug.'.order') }}" class="btn btn-primary btn-add-new order__btn--blue">
+                <a href="{{ route('voyager.'.$dataType->slug.'.order') }}" class="btn btn-primary btn-add-new">
                     <i class="voyager-list"></i> <span>{{ __('voyager::bread.order') }}</span>
                 </a>
             @endif
@@ -126,24 +126,10 @@
                                                 @elseif($row->type == 'relationship')
                                                     @include('voyager::formfields.relationship', ['view' => 'browse','options' => $row->details])
                                                 @elseif($row->type == 'select_multiple')
-                                                    @php
-                                                      $retireved_data = json_decode($data->subtypes);
-                                                    @endphp
-                                                    @if(count($retireved_data) > 0)
-                                                      @foreach($retireved_data as $key => $subtype)
-                                                        @if($loop->last)
-                                                           {{$subtype}}
-                                                        @else
-                                                           {{$subtype}},
-                                                        @endif     
-                                                      @endforeach
-                                                    @else
-                                                      Fara subtipuri
-                                                    @endif
                                                     @if(property_exists($row->details, 'relationship'))
 
                                                         @foreach($data->{$row->field} as $item)
-                                                            {{ $item->{$row->field} }}
+                                                            {{ $item->{$row->field} }} 
                                                         @endforeach
 
                                                     @elseif(property_exists($row->details, 'options'))
@@ -170,8 +156,15 @@
                                                         @endif
 
                                                 @elseif(($row->type == 'select_dropdown' || $row->type == 'radio_btn') && property_exists($row->details, 'options'))
-
-                                                    {!! $row->details->options->{$data->{$row->field}} ?? '' !!}
+                                                    @if($row->field == "status")
+                                                    <span class="offers__status" >
+                                                            <span class="{{$data->status == 'noua' ? 'offer__status--green' : ($data->status == 'refuzata' ? 'offer__status--orange' : ($data->status == 'anulata' ? 'offer__status--yellow' : ($data->status == 'modificata' ? 'offer__status--purple' : ( $data->status == 'finalizata'  ? 'offer__status--gray' : '' ) ) )) }} ">
+                                                            {!! $row->details->options->{$data->{$row->field}} ?? '' !!}
+                                                            </span>        
+                                                    </span>
+                                                    @else
+                                                        {!! $row->details->options->{$data->{$row->field}} ?? '' !!}
+                                                    @endif
 
                                                 @elseif($row->type == 'date' || $row->type == 'timestamp')
                                                     @if ( property_exists($row->details, 'format') && !is_null($data->{$row->field}) )
