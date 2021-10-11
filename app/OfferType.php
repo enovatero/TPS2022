@@ -33,4 +33,13 @@ class OfferType extends Model
 
         return $order;
     }
+  
+  public function products(){
+    $prodIds = json_decode($this->products, true);
+    if($prodIds != null && count($prodIds) > 0){
+      return \App\Product::whereIn('id', $prodIds)->get();
+    } else{
+      return [];
+    }
+  }
 }

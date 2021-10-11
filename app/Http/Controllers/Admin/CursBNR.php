@@ -6,6 +6,7 @@ class CursBNR extends BaseController
 {
     public static function getExchangeRate($currencyVal)
     {
+      try{
         $xmlDocument = file_get_contents("http://www.bnro.ro/nbrfxrates.xml");
         $currency = (new self())->parseXMLDocument($xmlDocument);
         foreach($currency as $line)
@@ -15,8 +16,8 @@ class CursBNR extends BaseController
                 return $line["value"];
             }
         }
-
         return 0;
+      } catch(\Exception $e){ return 4.9;}
     }
     public static function parseXMLDocument($xmlDocument)
     {

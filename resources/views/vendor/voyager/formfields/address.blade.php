@@ -15,11 +15,11 @@
           </div>
           <div class="form-group col-md-12 column-element-address">
              <label class="control-label" for="state">Judet/Regiune</label>
-             <select name="state[]" class="form-control select-state" selectedValue="{{old('state', $dataTypeContent->state ?? '') != '' ? old('state', $dataTypeContent->state)[$key] : ''}}"></select>
+             <select name="state[]" class="form-control select-state" selectedValue="{{old('state', $dataTypeContent->state ?? '') != '' ? old('state', $dataTypeContent->state)[$key] : ''}}"  state_code="{{old('state', $dataTypeContent->state ?? '') != '' ? in_array($key, old('state', $dataTypeContent->state)) && old('state', $dataTypeContent->state)[$key] : ''}}" state_name="{{old('state_name', $dataTypeContent->state_name ?? '') != '' ? in_array($key, old('state', $dataTypeContent->state_name)) && old('state', $dataTypeContent->state_name)[$key] : ''}}"></select>
           </div>
           <div class="form-group col-md-12 column-element-address">
              <label class="control-label">Oras/Localitate/Sector</label>
-             <select name="city[]" class="form-control select-city" selectedValue="{{old('city', $dataTypeContent->city ?? '') != '' ? old('city', $dataTypeContent->city)[$key] : ''}}"></select>        
+             <select name="city[]" class="form-control select-city" selectedValue="{{old('city', $dataTypeContent->city ?? '') != '' ? in_array($key, old('city', $dataTypeContent->city)) && old('city', $dataTypeContent->city)[$key] : ''}}" city_id="{{old('city', $dataTypeContent->city ?? '') != '' ? in_array($key, old('city', $dataTypeContent->city)) && old('city', $dataTypeContent->city)[$key] : ''}}" city_name="{{old('city_name', $dataTypeContent->city_name ?? '') != '' ? old('city_name', $dataTypeContent->city_name)[$key] : ''}}"></select>        
           </div>
         </div>
       @endforeach
@@ -40,11 +40,11 @@
           </div>
           <div class="form-group col-md-12 column-element-address">
              <label class="control-label" for="state">Judet/Regiune</label>
-             <select name="state[]" class="form-control select-state" selectedValue="{{old('state', $item->state ?? '') != '' ? old('state', $item->state) : ''}}"></select>
+             <select name="state[]" class="form-control select-state" selectedValue="{{old('state', $item->state ?? '') != '' ? old('state', $item->state) : ''}}" state_code="{{old('state', $item->state ?? '') != '' ? old('state', $item->state) : ''}}" state_name="{{$item->state_name}}"></select>
           </div>
           <div class="form-group col-md-12 column-element-address">
              <label class="control-label">Oras/Localitate/Sector</label>
-             <select name="city[]" class="form-control select-city" selectedValue="{{old('city', $item->city ?? '') != '' ? old('city', $item->city) : ''}}"></select>        
+             <select name="city[]" class="form-control select-city" selectedValue="{{old('city', $item->city ?? '') != '' ? old('city', $item->city) : ''}}" city_id="{{old('city', $item->city ?? '') != '' ? old('city', $item->city) : ''}}" city_name="{{$item->city_name}}"></select>        
           </div>
         </div>
       @endforeach

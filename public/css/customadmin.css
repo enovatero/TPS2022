@@ -312,7 +312,8 @@ ul.radio li .check {
   justify-content: flex-start;
   margin-left: 1rem;
 }
-.btn.btn-primary.save {
+.btn.btn-primary.save,
+.btn.btn-primary.btnGreenNew {
   background-color: #fff;
   border: 1px solid #4ea71b;
   border-left-color: #4ea71b;
@@ -865,7 +866,8 @@ input[type="time"].form-control {
 }
 
 .green__btn-upload,
-.green__btn-folder {
+.green__btn-folder,
+.media__create-folder {
   color: #4ea71b !important;
   background-color: #fff !important;
   border: none !important;
@@ -968,4 +970,122 @@ input[type="time"].form-control {
 #files li .file_link {
   width: 12rem !important;
   border-radius: 1rem;
+}
+
+.flex #left {
+  flex: 1 !important;
+}
+
+#right .right_details .right_details .detail_info {
+  margin-left: 1rem;
+}
+
+#right .right_details .right_details .detail_img i {
+  background: #fff !important;
+  text-align: left !important;
+  padding: 0 30px !important;
+}
+#right .right_details .right_details .detail_info span h4 {
+  font-size: 1rem !important;
+  margin-bottom: 0.5rem;
+}
+
+#right .right_details .right_details .detail_info span input {
+  border-radius: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+#right .right_details .right_details .detail_info span p {
+  color: #bbb !important;
+  font-weight: 400 !important;
+  margin-top: 0.1rem;
+}
+
+.media__modal--btns {
+  display: flex;
+}
+
+.media__delete-btn {
+  width: 8rem !important;
+  height: 3rem !important;
+}
+
+.color__edit--cont {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 9rem;
+  height: 3rem;
+  border-radius: 0.7rem;
+}
+
+.color__square {
+  margin-right: 0.7rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  border: none !important;
+}
+
+.color__square > input {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.edit__color-code {
+  color: #000;
+}
+
+.menus__add-new {
+  width: 11rem !important;
+}
+
+.delete-confirm__ {
+  height: 3rem !important;
+}
+
+.color__color-code--cont {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.voyager .side-menu.sidebar-inverse .navbar{
+  margin-bottom: 90px;
+}
+.database-tables .btn.btn-danger.btn-sm.delete{
+    font-size: inherit;
+    display: inherit;
+    align-items: inherit;
+    justify-content: inherit;
+    min-width: inherit;
+    height: inherit;
+    padding: 3px;
+    padding-right: 10px;
+}
+.database-tables td.actions.text-right{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+.roundedBtn {
+    width: 30px;
+    height: 30px;
+    padding: 3px;
+    border-radius: 50%;
+    overflow: hidden;
+    text-align: center;
+    color: #4ea71b;
+    background: #ffffff;
+    border: 1.5px solid #4ea71b;
+}
+.btnRemoveAttribute{
+   border: 1.5px solid red;
+   color: red;
+   padding: 1px;
+}
+#values_attributes{
+  display: none !important;
 }

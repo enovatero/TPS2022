@@ -337,6 +337,12 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
           $addresses = UserAddress::where('user_id', $id)->get();
           $legal_entity = LegalEntity::where('user_id', $id)->first();
         }
+        if($addresses && count($addresses) > 0){
+          foreach($addresses as &$address){
+            $address->state_name = $address->state_name();
+            $address->city_name = $address->city_name();
+          }
+        }
         return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'addresses', 'individual', 'legal_entity'));
     }
 

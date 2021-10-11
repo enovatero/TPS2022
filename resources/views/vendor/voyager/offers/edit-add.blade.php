@@ -4,14 +4,31 @@ $add  = is_null($dataTypeContent->getKey());
 $isNewClient = false;
 $priceRules = null;
 $priceGridId = null;
-$offerType = null;
-$userAddresses = \App\UserAddress::where('user_id', $dataTypeContent->user_id)->get();
+$userAddresses = null;
 if($edit){
+  $userAddresses = \App\UserAddress::where('user_id', $dataTypeContent->client_id)->get();
   $offerType = \App\OfferType::find($dataTypeContent->type);
-  $cursValutar = $offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR");
+  $offerType->products = $offerType->products();
+  $cursValutar = $dataTypeContent->curs_eur != null ? $dataTypeContent->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
   $dataTypeContent->curs_eur = $cursValutar;
   $priceRules = \App\RulesPrice::get();
   $priceGridId = $dataTypeContent->price_grid_id != null ? $dataTypeContent->price_grid_id : -1;
+  $selectedAddress = \App\UserAddress::find($dataTypeContent->delivery_address_user);
+  if($selectedAddress != null){
+    $selectedAddress->city_name = $selectedAddress->city_name();
+    $selectedAddress->state_name = $selectedAddress->state_name();
+    $selectedAddress->phone = $selectedAddress->delivery_phone != null ? $selectedAddress->delivery_phone : $selectedAddress->userData()->phone;
+    $selectedAddress->name = $selectedAddress->delivery_contact != null ? $selectedAddress->delivery_contact : $selectedAddress->userData()->name;
+  }
+  if($userAddresses != null && count($userAddresses) > 0){
+    foreach($userAddresses as &$addr){
+      $addr->city_name = $addr->city_name();
+      $addr->state_name = $addr->state_name();
+      $addr->phone = $addr->delivery_phone != null ? $addr->delivery_phone : $addr->userData()->phone;
+      $addr->name = $addr->delivery_contact != null ? $addr->delivery_contact : $addr->userData()->name;
+    }
+  }
+  
 }
 @endphp
 
@@ -126,13 +143,21 @@ if($edit){
                                     <option value="-2">Adauga adresa noua</option>
                                     @if(count($userAddresses) > 0)
                                       @foreach($userAddresses as $address)
-                                        <option value="{{$address->id}}" country="{{$address->country}}" state="{{$address->state_name()->state_name}}" city="{{$address->city_name()->city_name}}">{{$address->address}}, {{$address->city_name()->city_name}}, {{$address->state_name()->state_name}}</option>
+                                        @if($selectedAddress != null && $selectedAddress->id == $address->id)
+                                          @php
+                                            $address = $selectedAddress;
+                                          @endphp
+                                          <option selected value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name}}" city_id="{{$address->city}}" city_name="{{$address->city_name}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name}}, {{$address->state_name}}</option>
+                                        @else
+                                          <option value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name()}}" city_id="{{$address->city}}" city_name="{{$address->city_name()}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name()}}, {{$address->state_name()}}</option>
+                                        @endif
                                       @endforeach
                                     @endif
                                   </select>
                                 </div>
-                                <div class="form-group  col-md-12" style="width: 100%;">
+                                <div class="form-group  col-md-12 container-elements-addresses" style="width: 100%; display: none;">
                                     <div class="panel-body container-box-adresa">
+                                      <input class="trick-addr-id" value="" type="hidden"/>
                                       <div class="form-group col-md-12 column-element-address" style="width: 100%">
                                          <label class="control-label">Tara</label>
                                          @include('vendor.voyager.formfields.countries', ['selected' => null])                       
@@ -147,7 +172,7 @@ if($edit){
                                       </div>
                                       <div class="form-group col-md-12 column-element-address" style="width: 100%;">
                                          <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
-                                         <input class="control-label" required type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>                          
+                                         <input class="control-label" type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>                          
                                       </div>
                                       <div class="form-group col-md-12 column-element-address">
                                          <label class="control-label" for="state">Telefon</label>
@@ -157,6 +182,9 @@ if($edit){
                                          <label class="control-label">Persoana de contact</label>
                                          <input name="delivery_contact" type="text" style="padding: 5px;"/>        
                                       </div>
+                                    </div>
+                                    <div class="col-md-12 panel-footer" style="    justify-content: flex-end;display: flex;width: 100%;">
+                                      <button type="button" class="btn btn-primary btnGreenNew btnSalveazaAdresa">Salveaza adresa noua</button>
                                     </div>
                                 </div>
                             </div>
@@ -254,6 +282,13 @@ if($edit){
                     </form>
 
                 </div>
+              @if($edit)
+                <div class="col-md-12">
+                  <div class="box">
+                    @include('vendor.voyager.products.offer_box', ['products' => $offerType->products, 'type' => 'PIRAMIDA'])
+                  </div>
+                </div>
+              @endif
             </div>
           <div class="col-md-12" id="awb" style="display: none;">
             <div class="panel">
@@ -322,8 +357,21 @@ if($edit){
                   <label for="deliveryAddressAWB">Adresa de livrare</label>
                   <select name="deliveryAddressAWB" id="deliveryAddressAWB" class="form-control">
                     <option disabled="" selected="">Alege...</option>
-                    <option value="1">STR STADIONULUI MIC NR 20, VIDELE, TELEORMAN ---   STOCHITA ELENA - 0766582487</option>
+                    @if($userAddresses != null && count($userAddresses) > 0)
+                      @foreach($userAddresses as $address)
+                        <option value="{{$address->id}}">
+                            {{$address->name}} - 
+                            {{$address->address}}, 
+                            {{$address->city_name}}, 
+                            {{$address->state_name}},
+                            {{$address->phone}}
+                        </option>
+                      @endforeach
+                    @endif
                   </select>
+                </div>
+                <div class="col-md-12 panel-footer">
+                  <button type="submit" class="btn btn-primary btnGreenNew btnGenerateAwb">Genereaza AWB</button>
                 </div>
               </div>
             </div>
@@ -494,6 +542,8 @@ if($edit){
           $("#select_client > select").on('select2:select', function (e) {
              var data = e.params.data;
              var vthis = this;
+             $(".container-box-adresa select").prop('selectedIndex',0);
+             $(".container-box-adresa input").val('');
              $.ajax({
                   method: 'POST',
                   url: '/getUserAddresses',
@@ -506,16 +556,10 @@ if($edit){
                   if (res.success == false) {
                       toastr.error(res.error, 'Eroare');
                   } else{
-                    var html_user_addresses = `
-                        <option value="-1" selected disabled>Alege adresa de livrare</option>
-                        <option value="-2">Adauga adresa noua</option>`;
-                    
-                        if(res.userAddresses.length > 0){
-                          for(var i = 0; i < res.userAddresses.length; i++){
-                            html_user_addresses += `<option value="${res.userAddresses[i].id}" country="${res.userAddresses[i].country}" state="${res.userAddresses[i].state_name}" city="${res.userAddresses[i].city_name}">${res.userAddresses[i].address}, ${res.userAddresses[i].city_name}, ${res.userAddresses[i].state_name}</option>`;
-                          }
-                        }
-                    console.log(html_user_addresses);
+                    var html_addr = completeWithAddresses(res.userAddresses);
+                    var html_user_addresses = html_addr[0];
+                    var html_awb_addresses = html_addr[1];
+                    $("#deliveryAddressAWB").html(html_awb_addresses);
                     $("select[name=delivery_address_user]").html(html_user_addresses);
                   }
               })
@@ -527,6 +571,143 @@ if($edit){
               });
             return false;
           });
+          $("select[name=delivery_address_user]").on("change", function(){
+            console.log($(this).val());
+            if($(this).val() == -2){
+              $(".container-box-adresa .select-country").prop('selectedIndex',0);
+              $(".container-box-adresa .select-city").html('');
+              $(".container-box-adresa .select-state").html('');
+              $(".container-box-adresa input").val('');
+              $(".trick-addr-id").val('');
+              $(".btnSalveazaAdresa").text('Salveaza adresa noua');
+//               $(".container-elements-addresses").slideDown();
+            } else{
+              $(".container-elements-addresses").show();
+              var country = $(this).find('option:selected').attr('country');
+              var state_code = $(this).find('option:selected').attr('state_code');
+              var state_name = $(this).find('option:selected').attr('state_name');
+              var city_id = $(this).find('option:selected').attr('city_id');
+              var city_name = $(this).find('option:selected').attr('city_name');
+              var address = $(this).find('option:selected').attr('address');
+              var phone = $(this).find('option:selected').attr('phone');
+              var contact = $(this).find('option:selected').attr('contact');
+              var address_id = $(this).find('option:selected').val();
+              $(".trick-addr-id").val(address_id);
+              $(".container-box-adresa .select-country").val(country);
+              window.selectCountryChange($(".container-box-adresa .select-country")[0], state_code, state_name);
+              setTimeout(function(){
+                window.selectStateChange($(".container-box-adresa .select-state")[0], city_id, city_name, state_code);
+              }, 300);
+              $(".container-box-adresa input[name=delivery_address]").val(address);
+              $(".container-box-adresa input[name=delivery_phone]").val(phone);
+              $(".container-box-adresa input[name=delivery_contact]").val(contact);
+              $(".btnSalveazaAdresa").text('Modifica adresa');
+            }
+          });
+          $(".btnSalveazaAdresa").click(function(){
+            var country = $(this).parent().parent().parent().find(".select-country").find(":selected").val();
+            var city = $(this).parent().parent().parent().find(".select-city").find(":selected").val();
+            var state = $(this).parent().parent().parent().find(".select-state").find(":selected").val();
+            var delivery_address = $(this).parent().parent().parent().find("input[name=delivery_address]").val();
+            var delivery_phone = $(this).parent().parent().parent().find("input[name=delivery_phone]").val();
+            var delivery_contact = $(this).parent().parent().parent().find("input[name=delivery_contact]").val();
+            var address_id = $(".trick-addr-id").val();
+             $.ajax({
+                  method: 'POST',
+                  url: '/saveNewAddress',
+                  data: {
+                    _token: $("meta[name=csrf-token]").attr("content"), 
+                    client_id: "{{$dataTypeContent->client_id}}",
+                    offer_id: "{{$dataTypeContent->getKey()}}",
+                    country: country,
+                    city: city,
+                    state: state,
+                    delivery_address: delivery_address,
+                    delivery_phone: delivery_phone,
+                    delivery_contact: delivery_contact,
+                    address_id: address_id,
+                  },
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(res) {
+                  if (res.success == false) {
+                      toastr.error(res.error, 'Eroare');
+                  } else{
+                    var html_addr = completeWithAddresses(res.userAddresses, res.address.id);
+                    var html_user_addresses = html_addr[0];
+                    var html_awb_addresses = html_addr[1];
+                    $("#deliveryAddressAWB").html(html_awb_addresses);
+                    $("select[name=delivery_address_user]").html(html_user_addresses);
+                      toastr.success(res.msg, 'Success');
+                  }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+            return false;
+            
+          });
+          completeWithAddresses = function(addresses, selectedAddr = null){
+            var html_user_addresses = `
+                        <option value="-1" selected disabled>Alege adresa de livrare</option>
+                        <option value="-2">Adauga adresa noua</option>`;
+            var html_awb_addresses = `<option disabled="" selected="">Alege...</option>`;
+            if(addresses.length > 0){
+              for(var i = 0; i < addresses.length; i++){
+                console.log(selectedAddr);
+                console.log(addresses[i].id);
+                console.log(addresses[i].id == selectedAddr);
+                if(addresses[i].id == selectedAddr){
+                  html_user_addresses += `
+                    <option 
+                      selected
+                      value="${addresses[i].id}" 
+                      country="${addresses[i].country}" 
+                      state_code="${addresses[i].state}" 
+                      state_name="${addresses[i].state_name}" 
+                      city_id="${addresses[i].city}"  
+                      city_name="${addresses[i].city_name}"  
+                      address="${addresses[i].address}" 
+                      phone="${addresses[i].phone}" 
+                      contact="${addresses[i].name}">
+                      ${addresses[i].address}, 
+                      ${addresses[i].city_name}, 
+                      ${addresses[i].state_name}
+                    </option>`;
+                } else{
+                    html_user_addresses += `
+                      <option 
+                        value="${addresses[i].id}" 
+                        country="${addresses[i].country}" 
+                        state_code="${addresses[i].state}" 
+                        state_name="${addresses[i].state_name}" 
+                        city_id="${addresses[i].city}"  
+                        city_name="${addresses[i].city_name}"  
+                        address="${addresses[i].address}" 
+                        phone="${addresses[i].phone}" 
+                        contact="${addresses[i].name}">
+                        ${addresses[i].address}, 
+                        ${addresses[i].city_name}, 
+                        ${addresses[i].state_name}
+                      </option>`;
+                }
+                html_awb_addresses += `
+                                  <option value="${addresses[i].id}">
+                                      ${addresses[i].name} - 
+                                      ${addresses[i].address}, 
+                                      ${addresses[i].city_name}, 
+                                      ${addresses[i].state_name},
+                                      ${addresses[i].phone}
+                                  </option>`;
+              }
+            }
+            return [html_user_addresses, html_awb_addresses];
+          }
         });
     </script>
 @stop

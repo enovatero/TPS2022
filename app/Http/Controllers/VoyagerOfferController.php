@@ -234,9 +234,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 return $request->hasFile($item->field);
             });
         $original_data = clone($data);
-
+      
         $this->insertUpdateData($request, $slug, $dataType->editRows, $data);
 
+        if($request->input('delivery_address_user') != null){
+          $data->delivery_address_user = $request->input('delivery_address_user') == -2 ? null : $request->input('delivery_address_user');
+          $data->save();
+        }
+      
         // Delete Images
         $this->deleteBreadImages($original_data, $to_remove);
 

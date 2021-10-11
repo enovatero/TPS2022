@@ -1,27 +1,6 @@
 @php
     $edit = !is_null($dataTypeContent->getKey());
     $add  = is_null($dataTypeContent->getKey());
-    $currencyBNR = \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR");
-    $selectedProducts = [];
-    if($edit){
-      $selectedIds = json_decode($dataTypeContent->products, true);
-      $selectedProducts = [];
-      if($selectedIds != null){
-        $products = \App\ProductParent::orderBy('title', 'ASC')->whereNotIn('id', $selectedIds)->get();
-        $selectedProducts = \App\ProductParent::whereIn('id', $selectedIds)->orderBy('id')->get();
-        $selectedProductsArray = $selectedProducts->toArray();
-        $selectedProducts = [];
-        foreach($selectedIds as $pId){
-          foreach($selectedProductsArray as $prod){
-            if($pId == $prod['id']){
-              array_push($selectedProducts, $prod);
-            }
-          }
-        }
-      }
-    } else{
-      $products = \App\ProductParent::orderBy('title', 'ASC')->get();
-    }
 @endphp
 
 @extends('voyager::master')
@@ -96,24 +75,14 @@
                                         @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add'), 'view' => ($edit ? 'edit' : 'add'), 'options' => $row->details])
                                     @elseif ($row->type == 'relationship')
                                         @include('voyager::formfields.relationship', ['options' => $row->details])
+                                    
+                                    @elseif ($row->type == 'color')
+                                        <div style="border: 1px solid #6b76d8;" class="color__edit--cont" >
+                                            <span class="color__square"> {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!} </span>
+                                            <span class="edit__color-code">{{ $dataTypeContent->color_code }}</span>
+                                    </div>
                                     @else
-                                      @php
-                                        if($row->field == 'subtypes'){
-                                          $subtypes = $dataTypeContent->subtypes;
-                                        }
-                                      @endphp
-                                        
-                                        @if($row->field == 'subtypes')
-                                          <input class="retrieved_subtipes" value="{{$subtypes}}" type="hidden"/>
-                                        @endif
-                                        <div class="btn__input--cont">     
-                                        <span class="bnrCursInput">
                                         {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
-                                    </span>
-                                        @if($row->field == 'exchange')
-                                          <button type="button" class="btn btn-success ml-5 btnCursBnr">Curs EUR BNR</button>
-                                        @endif
-                                        </div>
                                     @endif
 
                                     @foreach (app('voyager')->afterFormFields($row, $dataType, $dataTypeContent) as $after)
@@ -126,9 +95,7 @@
                                     @endif
                                 </div>
                             @endforeach
-                            @if($add)
-                              <input class="prodsSerialized" name="prodsSerialized" type="hidden"/>
-                            @endif
+
                         </div><!-- panel-body -->
 
                         <div class="panel-footer">
@@ -150,53 +117,6 @@
 
                 </div>
             </div>
-            <div class="page-content edit-add container-fluid">
-                <div class="text">
-                    <h3>Produse din oferta</h3>
-                    <p>Poti selecta produsele care apartin ofertei, din lista de produse din stanga, tragand produsele in coloana din dreapta.</p>
-                </div>
-            </div>
-            <div class="col-md-12 panel panel-bordered">
-            <div class="container container-products-types">
-                <div class="half">
-                    <h3 class="text-center">Toate produsele</h3>
-                    <ul class="feature" id='left-lovehandles'>
-                        @if($products && count($products) > 0)
-                          @foreach($products as $product)
-                            <li class="feature-item">
-                                <div class="feature-inner">
-                                    <div class="feature-text">
-                                        <input type="hidden" class="hidden-product-id" value="{{$product->id}}" name="prodIds[]"/>
-                                        <p><img src="../../../images/draggable.png" class="handle"/></p>
-                                        <p>{{$product->title}}</p>
-                                    </div>
-                                </div>
-                            </li>
-                          @endforeach
-                        @else
-                          Niciun produs disponibil
-                        @endif
-                    </ul>
-                </div>
-
-                <div class="half">
-                    <h3 class="text-center">Produse din oferta</h3>
-                    <ul class="feature" id='right-lovehandles'>
-                       @foreach($selectedProducts as $product)
-                          <li class="feature-item">
-                              <div class="feature-inner">
-                                  <div class="feature-text">
-                                      <input type="hidden" class="hidden-product-id" value="{{$product['id']}}" name="prodIds[]"/>
-                                      <p><img src="../../../images/draggable.png" class="handle"/></p>
-                                      <p>{{$product['title']}}</p>
-                                  </div>
-                              </div>
-                          </li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-          </div>
         </div>
     </div>
 
@@ -225,7 +145,6 @@
 @stop
 
 @section('javascript')
-    <script src="../../../js/dragster.min.js" type="text/javascript"></script>
     <script>
         var params = {};
         var $file;
@@ -296,55 +215,6 @@
                 $('#confirm_delete_modal').modal('hide');
             });
             $('[data-toggle="tooltip"]').tooltip();
-//             if($(".retrieved_subtipes").val() != ''){
-//               var subtypes = $.parseJSON($(".retrieved_subtipes").val());
-//               if(subtypes.length > 0){
-//                 for(var i=0;i<subtypes.length;i++){
-//                   var text = subtypes[i];
-//                   var newOption = new Option(text, text, true, true);
-//                   $("#id_subtypes>select.select2").append(newOption).trigger('change');
-//                 }
-//               }
-//             }
-            $(".btnCursBnr").click(function(){
-              $(this).parent().find("input[name=exchange]").val("{{$currencyBNR}}");
-            });
         });
-      var options = {
-        moves: function (el, container, handle) {
-          return handle.classList.contains('handle');
-        }
-      };
-
-      var dragster = new Dragster(options, document.getElementById('left-lovehandles'), document.getElementById('right-lovehandles'));
-      dragster.on('drop', function (el, container) {
-          var prodsSerialized = JSON.stringify($("#right-lovehandles .hidden-product-id").serializeArray());
-          if("{{$add}}"){
-            $(".prodsSerialized").val(prodsSerialized);
-          } else{
-            console.log(prodsSerialized);
-            $.ajax({
-                method: 'POST',
-                url: '/admin/saveOfferTypeProducts',
-                data: {_token: '{{csrf_token()}}',type_id:'{{$dataTypeContent->getKey()}}' , prodIds: prodsSerialized},
-                context: this,
-                async: true,
-                cache: false,
-                dataType: 'json'
-            }).done(function(res) {
-                if (res.success == false) {
-                    toastr.error(res.error, 'Eroare');
-                } else{
-                  toastr.success(res.msg, 'Success');
-                }
-            })
-            .fail(function(xhr, status, error) {
-                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
-                    .indexOf("CSRF token mismatch") >= 0) {
-                    window.location.reload();
-                }
-            });
-          }
-      })
     </script>
 @stop

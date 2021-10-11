@@ -24,6 +24,7 @@ Route::post('/getCities', [AddressController::class, 'getCitiesByState']);
 Route::post('/removeAddress', [AddressController::class, 'removeAddress']);
 Route::post('/getSubtypes', [VoyagerOfferTypeController::class, 'getSubtypes']);
 Route::post('/getUserAddresses', [AddressController::class, 'getUserAddresses']);
+Route::post('/saveNewAddress', [AddressController::class, 'saveNewAddress']);
 
 Route::group(['prefix' => 'admin'], function () {
     Voyager::routes();

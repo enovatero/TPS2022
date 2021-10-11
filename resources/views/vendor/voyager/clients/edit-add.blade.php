@@ -284,6 +284,8 @@
         $(".btnRemoveAddress").show();
         $(".container-delete-adresa").css("display", "none");
         $(".addressesCounter").val($(".addressesCounter").val()+1);
+        $(".container-addresses-list>.container-box-adresa").last().find('select').prop('required',true);
+        $(".container-addresses-list>.container-box-adresa").last().find('input').prop('required',true);
       });
       $(".btnRemoveAddress").click(function(){
         $(this).hide();

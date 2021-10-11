@@ -69,7 +69,7 @@
                 <i class="voyager-crop"></i>
                 {{ __('voyager::media.crop') }}
             </button>
-            <button style="border-radius: 50%;margin-left: 0.5rem; margin-top: 0.5rem;" type="button" class="btn btn-default refresh__btn-media" v-on:click="getFiles()">
+            <button style="border-radius: 50%;margin-left: 0.5rem; margin-top: 0.5rem; border: none;" type="button" class="btn btn-default refresh__btn-media" v-on:click="getFiles()">
             <i class="voyager-refresh"></i>
         </button>
         </div>
@@ -258,9 +258,9 @@
                     <input name="new_folder_name" placeholder="{{ __('voyager::media.new_folder_name') }}" class="form-control" value="" v-model="modals.new_folder.name" />
                 </div>
 
-                <div class="modal-footer">
+                <div class="modal-footer  media__modal--btns">
                     <button type="button" class="btn btn-default" data-dismiss="modal">{{ __('voyager::generic.cancel') }}</button>
-                    <button type="button" class="btn btn-info" v-on:click="createFolder">{{ __('voyager::media.create_new_folder') }}
+                    <button type="button" class="btn btn-info media__create-folder" v-on:click="createFolder">{{ __('voyager::media.create_new_folder') }}
                     </button>
                 </div>
             </div>
@@ -287,9 +287,9 @@
                     </h5>
                 </div>
 
-                <div class="modal-footer">
+                <div class="modal-footer media__modal--btns">
                     <button type="button" class="btn btn-default" data-dismiss="modal">{{ __('voyager::generic.cancel') }}</button>
-                    <button type="button" class="btn btn-danger" v-on:click="deleteFiles">{{ __('voyager::generic.delete_confirm') }}
+                    <button type="button" class="btn btn-danger media__delete-btn" v-on:click="deleteFiles">{{ __('voyager::generic.delete_confirm') }}
                     </button>
                 </div>
             </div>
@@ -316,9 +316,9 @@
                     </select>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">{{ __('voyager::generic.cancel') }}</button>
-                    <button type="button" class="btn btn-warning" v-on:click="moveFiles">{{ __('voyager::generic.move') }}</button>
+                <div style="display: flex;" class="modal-footer">
+                    <button type="button" class="btn btn-default " data-dismiss="modal">{{ __('voyager::generic.cancel') }}</button>
+                    <button type="button" class="btn btn-warning green__btn-upload" v-on:click="moveFiles">{{ __('voyager::generic.move') }}</button>
                 </div>
             </div>
         </div>
