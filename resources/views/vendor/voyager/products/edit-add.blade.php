@@ -1,6 +1,13 @@
 @php
     $edit = !is_null($dataTypeContent->getKey());
     $add  = is_null($dataTypeContent->getKey());
+    if($edit){
+      $html_attributes = '';
+      $attributes = \App\Http\Controllers\VoyagerProductsController::getAttributesByCategory(new \Illuminate\Http\Request, $dataTypeContent->category_id, $dataTypeContent->attributes);
+      if($attributes && $attributes['success']){
+        $html_attributes = $attributes['html_attributes'];
+      }
+    }
 @endphp
 
 @extends('voyager::master')
@@ -89,7 +96,7 @@
                                     @endif
                                 </div>
                             @endforeach
-
+                            <div class="containerAttributes">{!! $html_attributes !!}</div>
                         </div><!-- panel-body -->
 
                         <div class="panel-footer">
@@ -209,6 +216,62 @@
                 $('#confirm_delete_modal').modal('hide');
             });
             $('[data-toggle="tooltip"]').tooltip();
+            $('#category_selector select[name=category_id]').on('select2:select', function (e) {
+                var data = e.params.data;
+                var cat_id = data.id;
+                getAttributesByCategory(cat_id);
+            });
+            var getAttributesByCategory = function(category_id) {
+              $.ajax({
+                  method: 'POST',
+                  url: '/admin/getAttributesByCategory',
+                  data: {_token: '{{csrf_token()}}', category_id: category_id},
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(res) {
+                  if (res.success == false) {
+                      toastr.error(res.error, 'Eroare');
+                  } else{
+                    $(".containerAttributes").html(res.html_attributes);
+                    $(".retrievedAttribute").select2();
+                    $(".selectColor").select2({templateResult: formatState});
+                  }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+            }
+            
+            function formatState (state) {
+              if (!state.id) {
+                return state.text;
+              }
+              var colorValue = state.element.value.split("(_)");
+              if(colorValue.length == 2){
+                var $state = $(
+                  '<div style="margin-bottom:3px; text-align: left; display: flex;">'+
+                      '<span class="color__square" style="background-color: '+colorValue[1]+'"></span>'+
+                      '<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[1]+'</span>'+
+                  '</div>'
+                );
+                $state.find(".select2-selection__rendered").html('<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[1]+'</span>');
+                return $state;
+              } else{
+                return state.text;
+              }
+            };
+          
+            if($(".retrievedAttribute")[0]){
+               $(".retrievedAttribute").select2();
+            }
+            if($(".selectColor")[0]){
+               $(".selectColor").select2({templateSelection: formatState, templateResult: formatState});
+            }
         });
     </script>
 @stop

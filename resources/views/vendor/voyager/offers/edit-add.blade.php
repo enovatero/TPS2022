@@ -8,7 +8,7 @@ $userAddresses = null;
 if($edit){
   $userAddresses = \App\UserAddress::where('user_id', $dataTypeContent->client_id)->get();
   $offerType = \App\OfferType::find($dataTypeContent->type);
-  $offerType->products = $offerType->products();
+  $offerType->parents = $offerType->parents();
   $cursValutar = $dataTypeContent->curs_eur != null ? $dataTypeContent->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
   $dataTypeContent->curs_eur = $cursValutar;
   $priceRules = \App\RulesPrice::get();
@@ -285,7 +285,7 @@ if($edit){
               @if($edit)
                 <div class="col-md-12">
                   <div class="box">
-                    @include('vendor.voyager.products.offer_box', ['products' => $offerType->products, 'type' => 'PIRAMIDA'])
+                    @include('vendor.voyager.products.offer_box', ['products' => $offerType->parents])
                   </div>
                 </div>
               @endif

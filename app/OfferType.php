@@ -42,4 +42,12 @@ class OfferType extends Model
       return [];
     }
   }
+  public function parents(){
+    $prodIds = json_decode($this->products, true);
+    if($prodIds != null && count($prodIds) > 0){
+      return \App\ProductParent::with('um_title')->whereIn('id', $prodIds)->get();
+    } else{
+      return [];
+    }
+  }
 }

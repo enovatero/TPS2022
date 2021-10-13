@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\VoyagerOfferTypeController;
 use App\Http\Controllers\VoyagerRulesPricesController;
+use App\Http\Controllers\VoyagerProductsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,4 +33,5 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('offers/relation', [VoyagerOfferTypeController::class,'relation'])->name('voyager.offers.relation');
     Route::post('/saveOfferTypeProducts', [VoyagerOfferTypeController::class, 'saveOfferTypeProducts'])->middleware('admin.user');
     Route::post('/saveRulePrice', [VoyagerRulesPricesController::class, 'saveRulePrice'])->middleware('admin.user');
+    Route::post('/getAttributesByCategory', [VoyagerProductsController::class, 'getAttributesByCategory'])->middleware('admin.user');
 });

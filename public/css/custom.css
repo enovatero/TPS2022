@@ -471,7 +471,9 @@ table, th, td{
     max-height: 450px;
     overflow-y: scroll;
 }
-
+.container .half:nth-child(2) ul{
+  min-height: 250px;
+}
 .container:after {
     content: ".";
     clear: both;
@@ -509,7 +511,7 @@ table, th, td{
   flex-direction: row;
   justify-content: space-between;
 }
-#formula_id{
+#formula_id, #attributes_hidden{
   display: none !important;
 }
 .container-doua-col-left{

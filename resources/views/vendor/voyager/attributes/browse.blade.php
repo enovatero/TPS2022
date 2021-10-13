@@ -175,21 +175,31 @@
                                                     @else
                                                     {{ $data->{$row->field} }}
                                                     @endif
-                                                @elseif($row->type == 'text' )
-                                                    @if($data->type == 1 && $row->field == "values")
-                                                      @php
+                                                @elseif($row->type == 'text' && $row->field == "values")
+                                                    @php
+                                                      if($data->values !=null){
                                                         $colors = json_decode($data->values, true);
-                                                      @endphp
+                                                      }else{
+                                                        $colors = [];
+                                                      }
+                                                    @endphp
+                                                    @if($data->type == 1 && $row->field == "values")
                                                       @foreach($colors as $color)
-                                                        <div test="{{$row}}" class="color__color-code--cont" style="margin-bottom:3px;">
+                                                        <div class="color__color-code--cont" style="margin-bottom:3px;">
                                                             <span class="color__square" style="background-color: {{ $color }}"></span>
-                                                            <span class="edit__color-code">{{ $color }} </span>
+                                                            <span class="edit__color-code" style="text-transform: uppercase;">{{ $color }} </span>
                                                         </div>
                                                       @endforeach
                                                     @else
-                                                       <span class="edit__color-code">{{ $data->{$row->field} }} </span>
+                                                       @foreach($colors as $key => $color)
+                                                          @if($key == count($colors) - 1)
+                                                            <span class="edit__color-code">{{ $color }} </span>
+                                                          @else
+                                                            <span class="edit__color-code">{{ $color }}, </span>
+                                                          @endif
+                                                        @endforeach
                                                     @endif
-                                                @elseif($row->type == 'text')
+                                                @elseif($row->type == 'text' && $row->field != "values")
                                                     @include('voyager::multilingual.input-hidden-bread-browse')
                                                     <div>{{ mb_strlen( $data->{$row->field} ) > 200 ? mb_substr($data->{$row->field}, 0, 200) . ' ...' : $data->{$row->field} }}</div>
                                                 @elseif($row->type == 'text_area')

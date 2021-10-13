@@ -6,18 +6,11 @@
     if($edit){
       $selectedIds = json_decode($dataTypeContent->products, true);
       $selectedProducts = [];
-      if($selectedIds != null){
+      if($selectedIds != null && count($selectedIds) > 0){
         $products = \App\ProductParent::orderBy('title', 'ASC')->whereNotIn('id', $selectedIds)->get();
         $selectedProducts = \App\ProductParent::whereIn('id', $selectedIds)->orderBy('id')->get();
-        $selectedProductsArray = $selectedProducts->toArray();
-        $selectedProducts = [];
-        foreach($selectedIds as $pId){
-          foreach($selectedProductsArray as $prod){
-            if($pId == $prod['id']){
-              array_push($selectedProducts, $prod);
-            }
-          }
-        }
+      } else{
+        $products = \App\ProductParent::orderBy('title', 'ASC')->get();
       }
     } else{
       $products = \App\ProductParent::orderBy('title', 'ASC')->get();
