@@ -28,7 +28,42 @@ if($edit){
       $addr->name = $addr->delivery_contact != null ? $addr->delivery_contact : $addr->userData()->name;
     }
   }
-  
+  if($offerType->parents && count($offerType->parents) > 0){
+    $shownAttributes = [];
+    foreach($offerType->parents as $parent){
+      if($parent->products && count($parent->products) > 0){
+        foreach($parent->products as $product){
+          $product->attributes = $product->attributes != null ? json_decode($product->attributes, true) : [];
+          if(count($product->attributes) > 0){
+            foreach($product->attributes as $attr){
+              array_push($shownAttributes, $attr);
+            }
+          }
+        }
+      }
+    }
+  }
+  $createdAttributes = [];
+  if(count($shownAttributes) > 0){
+    foreach($shownAttributes as $attr){
+      $attrId = array_key_first($attr);
+      $val = $attr[$attrId];
+      if(!array_key_exists($attrId, $createdAttributes)){
+        $createdAttributes[$attrId] = [];
+      }
+      if(!in_array($val, $createdAttributes[$attrId])){
+        $createdAttributes[$attrId][] = $val;
+      }
+    }
+    if(count($createdAttributes) > 0){
+      foreach($createdAttributes as $key => &$attribute){
+        $dbAttr = \App\Attribute::find($key);
+        $dbAttr->values = $attribute;
+        $attribute = $dbAttr;
+      }
+    }
+    $createdAttributes = array_values($createdAttributes);
+  }
 }
 @endphp
 
@@ -112,7 +147,7 @@ if($edit){
                                     <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
                                 @endif
 
-                                <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif @if($add) style="width: 100%;" @else style="width: 48%;" @endif>
+                                <div test="{{$row}}" class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif @if($add) style="width: 100%;" @else style="width: 48%;" @endif>
                                     {{ $row->slugify }}
                                     <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
                                     @include('voyager::multilingual.input-hidden-bread-edit-add')
@@ -133,6 +168,23 @@ if($edit){
                                         @endforeach
                                     @endif
                                 </div>
+                                @if($edit)
+                                  @if($row->field == 'curs_eur' && count($createdAttributes) > 0)
+                                    <div class="form-group col-md-12" style="width: 48%;">
+                                          @foreach($createdAttributes as $attr)
+                                            <div class="form-group">
+                                              <label class="control-label" for="name">{{ucfirst($attr->title)}}</label>
+                                              <select name="selectedAttribute[]" class="form-control {{$attr->type == 1 ? 'selectColor' : 'retrievedAttribute'}}">
+                                                  <option selected disabled>Selecteaza {{$attr->title}}</option>
+                                                  @foreach($attr->values as $val)
+                                                    <option value="{{$attr->id}}(_){{$val}}">{{$val}}</option>
+                                                  @endforeach
+                                              </select>
+                                            </div>
+                                          @endforeach
+                                    </div>
+                                  @endif
+                                @endif
                             @endforeach
                             @if($edit)
                             <div class="form-group  col-md-12" style="width: 48%;">
@@ -652,6 +704,7 @@ if($edit){
             return false;
             
           });
+          $("select[name=price_grid_id]").select2();
           completeWithAddresses = function(addresses, selectedAddr = null){
             var html_user_addresses = `
                         <option value="-1" selected disabled>Alege adresa de livrare</option>
@@ -708,6 +761,32 @@ if($edit){
             }
             return [html_user_addresses, html_awb_addresses];
           }
+            
+            function formatState (state) {
+              if (!state.id) {
+                return state.text;
+              }
+              var colorValue = state.element.value.split("(_)");
+              if(colorValue.length == 2){
+                var $state = $(
+                  '<div style="margin-bottom:3px; text-align: left; display: flex;">'+
+                      '<span class="color__square" style="background-color: '+colorValue[1]+'"></span>'+
+                      '<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[1]+'</span>'+
+                  '</div>'
+                );
+                $state.find(".select2-selection__rendered").html('<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[1]+'</span>');
+                return $state;
+              } else{
+                return state.text;
+              }
+            };
+          
+            if($(".retrievedAttribute")[0]){
+               $(".retrievedAttribute").select2();
+            }
+            if($(".selectColor")[0]){
+               $(".selectColor").select2({templateSelection: formatState, templateResult: formatState});
+            }
         });
     </script>
 @stop

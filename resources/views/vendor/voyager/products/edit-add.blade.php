@@ -236,7 +236,7 @@
                   } else{
                     $(".containerAttributes").html(res.html_attributes);
                     $(".retrievedAttribute").select2();
-                    $(".selectColor").select2({templateResult: formatState});
+                    $(".selectColor").select2({templateSelection: formatState, templateResult: formatState});
                   }
               })
               .fail(function(xhr, status, error) {
