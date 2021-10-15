@@ -1,4 +1,4 @@
-<div class="box-body table-responsive no-padding">
+<div class="box-body table-responsive no-padding table-prices">
   <table class="table table-hover items">
     <tbody>
       <tr>
@@ -25,25 +25,25 @@
             <td style="text-align: left;"> {{$product->title}}</td>
             <td style="text-align:center">{{$product->um_title->title}}</td>
             <td style="text-align:center">
-              <input type="text" autocomplete="off" class="form-control input-sm" style="width: 60px; display:inline">
+              <input type="number" autocomplete="off" class="form-control input-sm cantitate" style="width: 60px; display:inline">
             </td>
-            <td style="text-align:right">
-              <input type="text" autocomplete="off" class="form-control input-sm" style="width: 60px; display:inline">
+            <td style="text-align:center;">
+              <input readonly type="number" autocomplete="off" class="form-control input-sm eurFaraTVA" style="width: 60px; display:inline" value="0.00">
             </td>
-            <td style="text-align:right">
-              <input type="text" class="form-control input-sm" style="width: 60px; display:inline">
+            <td style="text-align:center;">
+              <input readonly type="number" class="form-control input-sm ronCuTVA" style="width: 60px; display:inline" value="0.00">
             </td>
-            <td style="text-align:right">
-              <input type="text" class="form-control input-sm" style="width: 60px; display:inline">
+            <td style="text-align:center;">
+              <input readonly type="number" class="form-control input-sm ronTotal" style="width: 60px; display:inline" value="0.00">
             </td>
             <td style="background: lightgrey"></td>
-            <td style="text-align: right"><span></span><input type="hidden"></td>
-            <td style="text-align: right"><span></span><input type="hidden"></td>
-            <td style="text-align: right"><span></span><input type="hidden"></td>
-            <td style="text-align: right"><span></span><input type="hidden"></td>
-            <td style="text-align: right"><span></span><input type="hidden"></td>
-            <td style="text-align: right"><span></span><input type="hidden"></td>
-            <td style="text-align: right"><span></span><input type="hidden"></td>
+            <td style="text-align: center;"><span></span></td>
+            <td style="text-align: center;"><span></span></td>
+            <td style="text-align: center;"><span></span></td>
+            <td style="text-align: center;"><span></span></td>
+            <td style="text-align: center;"><span></span></td>
+            <td style="text-align: center;"><span></span></td>
+            <td style="text-align: center;"><span></span></td>
           </tr>
         @endforeach
       @endif
@@ -54,13 +54,13 @@
         </td>
         <td class="totals"><b><span></span></b><input type="hidden"></td>
         <td style="background: lightgrey"></td>
-        <td style="text-align: right"><span></span></td>
-        <td style="text-align: right"><span></span></td>
-        <td style="text-align: right"><span></span></td>
-        <td style="text-align: right"><span></span></td>
-        <td style="text-align: right"><span></span></td>
-        <td style="text-align: right"><span></span></td>
-        <td style="text-align: right"><span></span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span></span></td>
       </tr>
       <tr class="total">
         <td colspan="6" class="totals" style="text-align: right;"><b>Reducere - RON -</b></td>

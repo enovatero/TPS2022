@@ -47,12 +47,22 @@ if($edit){
   if(count($shownAttributes) > 0){
     foreach($shownAttributes as $attr){
       $attrId = array_key_first($attr);
-      $val = $attr[$attrId];
+      $valColor = '';
+      if(is_array($attr[$attrId]) && count($attr[$attrId]) > 1){
+        $val = $attr[$attrId][0];
+        $valColor = $attr[$attrId][1];
+      } else{
+        $val = $attr[$attrId];
+      }
       if(!array_key_exists($attrId, $createdAttributes)){
         $createdAttributes[$attrId] = [];
       }
       if(!in_array($val, $createdAttributes[$attrId])){
-        $createdAttributes[$attrId][] = $val;
+        if($valColor != null){
+          $createdAttributes[$attrId][] = [$val, $valColor];
+        } else{
+          $createdAttributes[$attrId][] = $val;
+        }
       }
     }
     if(count($createdAttributes) > 0){
@@ -177,7 +187,11 @@ if($edit){
                                               <select name="selectedAttribute[]" class="form-control {{$attr->type == 1 ? 'selectColor' : 'retrievedAttribute'}}">
                                                   <option selected disabled>Selecteaza {{$attr->title}}</option>
                                                   @foreach($attr->values as $val)
-                                                    <option value="{{$attr->id}}(_){{$val}}">{{$val}}</option>
+                                                    @if(is_array($val) && count($val) > 1)
+                                                      <option value="{{$attr->id}}_{{$val[0]}}_{{$val[1]}}">{{$val[1]}}</option>
+                                                    @else
+                                                      <option value="{{$attr->id}}_{{$val}}_">{{$val}}</option>
+                                                    @endif
                                                   @endforeach
                                               </select>
                                             </div>
@@ -766,15 +780,15 @@ if($edit){
               if (!state.id) {
                 return state.text;
               }
-              var colorValue = state.element.value.split("(_)");
-              if(colorValue.length == 2){
+              var colorValue = state.element.value.split("_");
+              if(colorValue.length > 1){
                 var $state = $(
                   '<div style="margin-bottom:3px; text-align: left; display: flex;">'+
                       '<span class="color__square" style="background-color: '+colorValue[1]+'"></span>'+
-                      '<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[1]+'</span>'+
+                      '<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[2]+'</span>'+
                   '</div>'
                 );
-                $state.find(".select2-selection__rendered").html('<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[1]+'</span>');
+                $state.find(".select2-selection__rendered").html('<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[2]+'</span>');
                 return $state;
               } else{
                 return state.text;

@@ -251,15 +251,16 @@
               if (!state.id) {
                 return state.text;
               }
-              var colorValue = state.element.value.split("(_)");
-              if(colorValue.length == 2){
+              var colorValue = state.element.value.split("_");
+              console.log(colorValue.length);
+              if(colorValue.length > 1){
                 var $state = $(
                   '<div style="margin-bottom:3px; text-align: left; display: flex;">'+
                       '<span class="color__square" style="background-color: '+colorValue[1]+'"></span>'+
-                      '<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[1]+'</span>'+
+                      '<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[2]+'</span>'+
                   '</div>'
                 );
-                $state.find(".select2-selection__rendered").html('<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[1]+'</span>');
+                $state.find(".select2-selection__rendered").html('<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[2]+'</span>');
                 return $state;
               } else{
                 return state.text;

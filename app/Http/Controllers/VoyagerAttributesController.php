@@ -32,11 +32,13 @@ class VoyagerAttributesController extends \TCG\Voyager\Http\Controllers\VoyagerB
     public function store(Request $request)
     {
         $attributes = $request->input('attribute');
+        $attributeColorTexts = $request->input('attributeColorText');
         if($attributes != null){
           $values = [];
           foreach($attributes as $attr){
             array_push($values, $attr);
           }
+          dd($attributes, $values);
           $request->merge(['values' => json_encode($values)]);
         }
         $slug = $this->getSlug($request);
@@ -72,10 +74,19 @@ class VoyagerAttributesController extends \TCG\Voyager\Http\Controllers\VoyagerB
     public function update(Request $request, $id)
     {
         $attributes = $request->input('attribute');
+        $attributeColorTexts = $request->input('attributeColorText');
         if($attributes != null){
           $values = [];
-          foreach($attributes as $attr){
-            array_push($values, $attr);
+          foreach($attributes as $key => $attr){
+            if(array_key_exists($key, $attributeColorTexts)){
+              $elVal = $attributeColorTexts[$key];
+            } else{
+              $elVal = '';
+            }
+            $insertAttr = [
+              $attr => $elVal
+            ];
+            array_push($values, $insertAttr);
           }
           $request->merge(['values' => json_encode($values)]);
         }

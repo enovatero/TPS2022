@@ -32,12 +32,12 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
      */
     public function store(Request $request)
     {
-       // get all attributes like 1(_)20cm where 1 is attributeId (_) is delimitator and 20cm is selectedValue
+       // get all attributes like 1_20cm where 1 is attributeId _ is delimitator and 20cm is selectedValue
         $attributeValues = $request->input('attributeValues');
         if($attributeValues != null){
           $attrWithValues = [];
           foreach($attributeValues as $key => $attr){
-            $attribute = explode("(_)", $attr);
+            $attribute = explode("_", $attr);
             $modifiedValueWithAttribute = [
               $attribute[0] => $attribute[1]
             ];
@@ -78,15 +78,21 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
     // POST BR(E)AD
     public function update(Request $request, $id)
     {
-       // get all attributes like 1(_)20cm where 1 is attributeId (_) is delimitator and 20cm is selectedValue
+       // get all attributes like 1_20cm where 1 is attributeId _ is delimitator and 20cm is selectedValue
         $attributeValues = $request->input('attributeValues');
         if($attributeValues != null){
           $attrWithValues = [];
           foreach($attributeValues as $key => $attr){
-            $attribute = explode("(_)", $attr);
-            $modifiedValueWithAttribute = [
-              $attribute[0] => $attribute[1]
-            ];
+            $attribute = explode("_", $attr);
+            if(count($attribute) == 3){
+              $modifiedValueWithAttribute = [
+                $attribute[0] => [$attribute[1], $attribute[2]]
+              ];
+            } else{
+              $modifiedValueWithAttribute = [
+                $attribute[0] => $attribute[1]
+              ];
+            }
             array_push($attrWithValues, $modifiedValueWithAttribute);
           }
           $request->merge(['attributes' => json_encode($attrWithValues)]);
@@ -143,7 +149,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
     }
   
   public static function getAttributesByCategory(Request $request, $category = null, $selectedAttr = null){
-    try{
+//     try{
       if(count($request->all()) > 0){
         $category_id = $request->input('category_id');
         $selectedAttributes = $request->input('selectedAttributes');
@@ -162,7 +168,11 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
             foreach($selectedAttributes as $attr){
               if($attribute->id == array_key_first($attr)){
                 $foundedAttribute = array_key_first($attr);
-                $foundedAttributeValue = $attr[$foundedAttribute];
+                if($attribute->type == 1){
+                  $foundedAttributeValue = $attr[$foundedAttribute][0];
+                } else{
+                  $foundedAttributeValue = $attr[$foundedAttribute];
+                }
                 break;
               }
             }
@@ -186,22 +196,29 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
           $selected = false;
           if(count($values) > 0){
             foreach($values as $value){
-              if($foundedAttribute != null && $foundedAttributeValue != null && $attribute->id == $foundedAttribute && $value == $foundedAttributeValue){
+              $checkValue = $value;
+              if($attribute->type == 1){
+                $foundedColor = array_key_first($value);
+                $checkValue = $foundedColor;
+              }
+              if($foundedAttribute != null && $foundedAttributeValue != null && $attribute->id == $foundedAttribute && $checkValue == $foundedAttributeValue){
                 $selected = true;
               } else{
                 $selected = false;
               }
               if($attribute->type == 1){
+                $foundedColor = array_key_first($value);
+                $val = $value[$foundedColor];
                 if($selected){
-                  $html_attributes .= '<option value="'.$attribute->id.'(_)'.$value.'" selected></option>';
+                  $html_attributes .= '<option value="'.$attribute->id.'_'.$foundedColor.'_'.$val.'" selected></option>';
                 } else{
-                  $html_attributes .= '<option value="'.$attribute->id.'(_)'.$value.'"></option>';
+                  $html_attributes .= '<option value="'.$attribute->id.'_'.$foundedColor.'_'.$val.'"></option>';
                 }
               } else{
                 if($selected){
-                  $html_attributes .= '<option value="'.$attribute->id.'(_)'.$value.'" selected>'.$value.'</option>';
+                  $html_attributes .= '<option value="'.$attribute->id.'_'.$value.'" selected>'.$value.'</option>';
                 } else{
-                  $html_attributes .= '<option value="'.$attribute->id.'(_)'.$value.'">'.$value.'</option>';
+                  $html_attributes .= '<option value="'.$attribute->id.'_'.$value.'">'.$value.'</option>';
                 }
               }
             }
@@ -210,8 +227,8 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
         }
       }
       return ['success' => true, 'html_attributes' => $html_attributes];
-    } catch(\Exception $e){
-      return ['success' => false, 'error' => 'S-a produs o eroare pe server iar datele nu au putut fi preluate!'];
-    }
+//     } catch(\Exception $e){
+//       return ['success' => false, 'error' => 'S-a produs o eroare pe server iar datele nu au putut fi preluate!'];
+//     }
   }
 }

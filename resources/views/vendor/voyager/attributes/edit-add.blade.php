@@ -101,8 +101,13 @@
                                 @if($attrValues != null && count($attrValues) > 0)
                                   @foreach($attrValues as $val)
                                     @if($dataTypeContent->type == 1)
+                                       @php 
+                                         $foundedColor = array_key_first($val);
+                                         $val = $val[$foundedColor];
+                                       @endphp
                                        <div class="form-group  col-md-12 box-attribute-color">
-                                          <input name="attribute[]" type="color" style="padding: 0.2rem 0.5rem;" placeholder="Selecteaza culoarea" value="{{$val}}"/>
+                                          <input name="attribute[]" type="color" style="padding: 0.2rem 0.5rem;" placeholder="Selecteaza culoarea" value="{{$foundedColor}}"/>
+                                          <input name="attributeColorText[]" type="text" style="padding: 0.2rem 0.5rem;" placeholder="Introdu numele culorii" value="{{$val}}"/>
                                           <button class="roundedBtn btnRemoveAttribute" type="button">-</button>
                                         </div>
                                     @else
@@ -243,6 +248,7 @@
           var html_atribut_culoare = `
             <div class="form-group  col-md-12 box-attribute-color">
               <input name="attribute[]" type="color" style="padding: 0.2rem 0.5rem;" placeholder="Selecteaza culoarea"/>
+              <input name="attributeColorText[]" type="text" required style="padding: 0.2rem 0.5rem;" placeholder="Introdu numele culorii"/>
               <button class="roundedBtn btnRemoveAttribute" type="button">-</button>
             </div>
           `;

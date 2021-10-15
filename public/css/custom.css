@@ -521,3 +521,13 @@ table, th, td{
   justify-content: space-between;
   flex-wrap: wrap;
 }
+.table-prices input::-webkit-outer-spin-button,
+.table-prices input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.table-prices input[type=number] {
+  -moz-appearance: textfield;
+}

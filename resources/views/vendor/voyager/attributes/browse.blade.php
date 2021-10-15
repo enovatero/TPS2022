@@ -184,10 +184,14 @@
                                                       }
                                                     @endphp
                                                     @if($data->type == 1 && $row->field == "values")
-                                                      @foreach($colors as $color)
-                                                        <div class="color__color-code--cont" style="margin-bottom:3px;">
-                                                            <span class="color__square" style="background-color: {{ $color }}"></span>
-                                                            <span class="edit__color-code" style="text-transform: uppercase;">{{ $color }} </span>
+                                                      @foreach($colors as $key => $color)
+                                                        @php 
+                                                          $foundedColor = array_key_first($color);
+                                                          $val = $color[$foundedColor];
+                                                        @endphp
+                                                        <div class="color__color-code--cont" style="margin-bottom:3px; justify-content: flex-start; margin-left: 10px;">
+                                                            <span class="color__square" style="background-color: {{ $foundedColor }}"></span>
+                                                            <span class="edit__color-code" style="text-transform: uppercase;">{{ $val }} </span>
                                                         </div>
                                                       @endforeach
                                                     @else
