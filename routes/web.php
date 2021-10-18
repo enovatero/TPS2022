@@ -33,5 +33,5 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('offers/relation', [VoyagerOfferTypeController::class,'relation'])->name('voyager.offers.relation');
     Route::post('/saveOfferTypeProducts', [VoyagerOfferTypeController::class, 'saveOfferTypeProducts'])->middleware('admin.user');
     Route::post('/saveRulePrice', [VoyagerRulesPricesController::class, 'saveRulePrice'])->middleware('admin.user');
-    Route::post('/getAttributesByCategory', [VoyagerProductsController::class, 'getAttributesByCategory'])->middleware('admin.user');
+    Route::post('/getAttributesByParent', [VoyagerProductsController::class, 'getAttributesByParent'])->middleware('admin.user');
 });

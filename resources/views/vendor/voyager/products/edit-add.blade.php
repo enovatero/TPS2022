@@ -3,7 +3,8 @@
     $add  = is_null($dataTypeContent->getKey());
     if($edit){
       $html_attributes = '';
-      $attributes = \App\Http\Controllers\VoyagerProductsController::getAttributesByCategory(new \Illuminate\Http\Request, $dataTypeContent->category_id, $dataTypeContent->attributes);
+      $parent = \App\ProductParent::find($dataTypeContent->parent_id);
+      $attributes = \App\Http\Controllers\VoyagerProductsController::getAttributesByParent(new \Illuminate\Http\Request, $parent->id, $dataTypeContent->attributes);
       if($attributes && $attributes['success']){
         $html_attributes = $attributes['html_attributes'];
       }
@@ -216,16 +217,16 @@
                 $('#confirm_delete_modal').modal('hide');
             });
             $('[data-toggle="tooltip"]').tooltip();
-            $('#category_selector select[name=category_id]').on('select2:select', function (e) {
+            $('select[name=parent_id]').on('select2:select', function (e) {
                 var data = e.params.data;
                 var cat_id = data.id;
-                getAttributesByCategory(cat_id);
+                getAttributesByParent(cat_id);
             });
-            var getAttributesByCategory = function(category_id) {
+            var getAttributesByParent = function(parent_id) {
               $.ajax({
                   method: 'POST',
-                  url: '/admin/getAttributesByCategory',
-                  data: {_token: '{{csrf_token()}}', category_id: category_id},
+                  url: '/admin/getAttributesByParent',
+                  data: {_token: '{{csrf_token()}}', parent_id: parent_id},
                   context: this,
                   async: true,
                   cache: false,

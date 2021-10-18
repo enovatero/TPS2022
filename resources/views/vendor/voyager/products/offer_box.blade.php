@@ -20,6 +20,9 @@
       </tr>
       @if($products != null)
         @foreach($products as $key =>  $product)
+          @php
+            dump($product->products->toArray());
+          @endphp
           <tr>
             <td>{{$key+1}}</td>
             <td style="text-align: left;"> {{$product->title}}</td>

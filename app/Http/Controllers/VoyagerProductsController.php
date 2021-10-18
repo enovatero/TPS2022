@@ -18,6 +18,7 @@ use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
 
 use App\Category;
 use App\Product;
+use App\ProductParent;
 
 class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
 {
@@ -148,15 +149,17 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
         ]);
     }
   
-  public static function getAttributesByCategory(Request $request, $category = null, $selectedAttr = null){
+  public static function getAttributesByParent(Request $request, $parent_id = null, $selectedAttr = null){
 //     try{
       if(count($request->all()) > 0){
-        $category_id = $request->input('category_id');
+        $parent = ProductParent::find($request->input('parent_id'));
         $selectedAttributes = $request->input('selectedAttributes');
       } else{
-        $category_id = $category;
+        $parent = ProductParent::find($parent_id);
         $selectedAttributes = $selectedAttr;
       }
+      $category = Category::find($parent->category_id);
+      $category_id = $category->id;
       $selectedAttributes = $selectedAttributes != null ? json_decode($selectedAttributes, true) : null;
       $category = Category::with('attributes')->where('id', $category_id)->first();
       $html_attributes = '';

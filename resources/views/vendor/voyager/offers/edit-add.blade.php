@@ -67,7 +67,10 @@ if($edit){
     }
     if(count($createdAttributes) > 0){
       foreach($createdAttributes as $key => &$attribute){
-        $dbAttr = \App\Attribute::find($key);
+        $dbAttr = \App\Attribute::with('category')->find($key);
+        if($dbAttr->type == 1 && is_array($attribute)){
+          $attribute = array_unique($attribute, SORT_REGULAR);
+        }
         $dbAttr->values = $attribute;
         $attribute = $dbAttr;
       }
@@ -184,13 +187,13 @@ if($edit){
                                           @foreach($createdAttributes as $attr)
                                             <div class="form-group">
                                               <label class="control-label" for="name">{{ucfirst($attr->title)}}</label>
-                                              <select name="selectedAttribute[]" class="form-control {{$attr->type == 1 ? 'selectColor' : 'retrievedAttribute'}}">
+                                              <select name="selectedAttribute[]" class="form-control {{$attr->type == 1 ? 'selectColor' : 'retrievedAttribute'}} selectAttribute">
                                                   <option selected disabled>Selecteaza {{$attr->title}}</option>
                                                   @foreach($attr->values as $val)
                                                     @if(is_array($val) && count($val) > 1)
                                                       <option value="{{$attr->id}}_{{$val[0]}}_{{$val[1]}}">{{$val[1]}}</option>
                                                     @else
-                                                      <option value="{{$attr->id}}_{{$val}}_">{{$val}}</option>
+                                                      <option value="{{$attr->id}}_{{$val}}">{{$val}}</option>
                                                     @endif
                                                   @endforeach
                                               </select>
@@ -801,6 +804,10 @@ if($edit){
             if($(".selectColor")[0]){
                $(".selectColor").select2({templateSelection: formatState, templateResult: formatState});
             }
+          $('.selectAttribute').on('select2:select', function (e) {
+              var data = e.params.data;
+              console.log(data);
+          });
         });
     </script>
 @stop
