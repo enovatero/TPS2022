@@ -124,7 +124,19 @@
                                                 @elseif($row->type == 'image')
                                                     <img src="@if( !filter_var($data->{$row->field}, FILTER_VALIDATE_URL)){{ Voyager::image( $data->{$row->field} ) }}@else{{ $data->{$row->field} }}@endif" style="width:100px">
                                                 @elseif($row->type == 'relationship')
-                                                    @include('voyager::formfields.relationship', ['view' => 'browse','options' => $row->details])
+                                                    @if($row->field == "offer_belongsto_status_relationship")
+                                                    <span class="offers__status">
+                                                      @php
+                                                        $dataStatus = \App\Status::find($data->status);
+                                                        $dataStatus = $dataStatus == null ? 'No results' : $dataStatus->title;
+                                                      @endphp
+                                                            <span style="text-transform: capitalize;" class="{{$dataStatus == 'noua' ? 'offer__status--green' : ($dataStatus == 'refuzata' ? 'offer__status--orange' : ($dataStatus == 'anulata' ? 'offer__status--yellow' : ($dataStatus == 'modificata' ? 'offer__status--purple' : ( $dataStatus == 'finalizata'  ? 'offer__status--gray' : '' ) ) )) }} ">
+                                                              @include('voyager::formfields.relationship', ['view' => 'browse','options' => $row->details])
+                                                            </span>        
+                                                    </span>
+                                                    @else
+                                                      @include('voyager::formfields.relationship', ['view' => 'browse','options' => $row->details])
+                                                    @endif
                                                 @elseif($row->type == 'select_multiple')
                                                     @if(property_exists($row->details, 'relationship'))
 
@@ -156,16 +168,7 @@
                                                         @endif
 
                                                 @elseif(($row->type == 'select_dropdown' || $row->type == 'radio_btn') && property_exists($row->details, 'options'))
-                                                    @if($row->field == "status")
-                                                    <span class="offers__status" >
-                                                            <span class="{{$data->status == 'noua' ? 'offer__status--green' : ($data->status == 'refuzata' ? 'offer__status--orange' : ($data->status == 'anulata' ? 'offer__status--yellow' : ($data->status == 'modificata' ? 'offer__status--purple' : ( $data->status == 'finalizata'  ? 'offer__status--gray' : '' ) ) )) }} ">
-                                                            {!! $row->details->options->{$data->{$row->field}} ?? '' !!}
-                                                            </span>        
-                                                    </span>
-                                                    @else
-                                                        {!! $row->details->options->{$data->{$row->field}} ?? '' !!}
-                                                    @endif
-
+                                                   {!! $row->details->options->{$data->{$row->field}} ?? '' !!}
                                                 @elseif($row->type == 'date' || $row->type == 'timestamp')
                                                     @if ( property_exists($row->details, 'format') && !is_null($data->{$row->field}) )
                                                         {{ \Carbon\Carbon::parse($data->{$row->field})->formatLocalized($row->details->format) }}

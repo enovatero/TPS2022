@@ -28,54 +28,48 @@ if($edit){
       $addr->name = $addr->delivery_contact != null ? $addr->delivery_contact : $addr->userData()->name;
     }
   }
+  $attributesProds = [];
+  $createdAttributes = [];
   if($offerType->parents && count($offerType->parents) > 0){
-    $shownAttributes = [];
+    $prodIds = [];
     foreach($offerType->parents as $parent){
       if($parent->products && count($parent->products) > 0){
-        foreach($parent->products as $product){
-          $product->attributes = $product->attributes != null ? json_decode($product->attributes, true) : [];
-          if(count($product->attributes) > 0){
-            foreach($product->attributes as $attr){
-              array_push($shownAttributes, $attr);
-            }
-          }
+        foreach($parent->products as &$product){
+          array_push($prodIds, $product->id);
         }
       }
     }
-  }
-  $createdAttributes = [];
-  if(count($shownAttributes) > 0){
-    foreach($shownAttributes as $attr){
-      $attrId = array_key_first($attr);
-      $valColor = '';
-      if(is_array($attr[$attrId]) && count($attr[$attrId]) > 1){
-        $val = $attr[$attrId][0];
-        $valColor = $attr[$attrId][1];
-      } else{
-        $val = $attr[$attrId];
-      }
-      if(!array_key_exists($attrId, $createdAttributes)){
-        $createdAttributes[$attrId] = [];
-      }
-      if(!in_array($val, $createdAttributes[$attrId])){
-        if($valColor != null){
-          $createdAttributes[$attrId][] = [$val, $valColor];
-        } else{
-          $createdAttributes[$attrId][] = $val;
+    if(count($prodIds) > 0){
+      $arrayOfAttrValues = [];
+      $prodAttrs = \App\ProductAttribute::with('attrs')->whereIn('product_id', $prodIds)->get();
+      $prodAttrs = $prodAttrs->toArray();
+      foreach($prodAttrs as $key => &$attr){
+        $attr['attrs'] = $attr['attrs'][0];
+        unset($attr['attrs']['created_at']);
+        unset($attr['attrs']['updated_at']);
+        $attr['value'] = json_decode($attr['value'], true);
+        $attr['attrs']['values'] = $attr['value'];
+        if(!in_array($attr['attrs'], $createdAttributes)){
+          array_push($createdAttributes, $attr['attrs']);
         }
       }
-    }
-    if(count($createdAttributes) > 0){
-      foreach($createdAttributes as $key => &$attribute){
-        $dbAttr = \App\Attribute::with('category')->find($key);
-        if($dbAttr->type == 1 && is_array($attribute)){
-          $attribute = array_unique($attribute, SORT_REGULAR);
-        }
-        $dbAttr->values = $attribute;
-        $attribute = $dbAttr;
+      $mergedAttributes = [];
+      foreach($createdAttributes as $key => &$attr){
+        $copyElement = $attr;
+        unset($copyElement['values']);
+        $mergedAttributes[$attr['id']] = $copyElement;
       }
+      foreach($createdAttributes as $key => &$attr){
+        if(!array_key_exists('values', $mergedAttributes[$attr['id']])){
+          $mergedAttributes[$attr['id']]['values'] = [];
+        }
+        if(!in_array($attr['values'], $mergedAttributes[$attr['id']]['values'])){
+          array_push($mergedAttributes[$attr['id']]['values'], $attr['values']);
+        }
+      }
+      $createdAttributes = $mergedAttributes;
+      $attributesProds = $prodAttrs;
     }
-    $createdAttributes = array_values($createdAttributes);
   }
 }
 @endphp
@@ -160,7 +154,7 @@ if($edit){
                                     <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
                                 @endif
 
-                                <div test="{{$row}}" class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif @if($add) style="width: 100%;" @else style="width: 48%;" @endif>
+                                <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif @if($add) style="width: 100%;" @else style="width: 48%;" @endif>
                                     {{ $row->slugify }}
                                     <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
                                     @include('voyager::multilingual.input-hidden-bread-edit-add')
@@ -186,14 +180,40 @@ if($edit){
                                     <div class="form-group col-md-12" style="width: 48%;">
                                           @foreach($createdAttributes as $attr)
                                             <div class="form-group">
-                                              <label class="control-label" for="name">{{ucfirst($attr->title)}}</label>
-                                              <select name="selectedAttribute[]" class="form-control {{$attr->type == 1 ? 'selectColor' : 'retrievedAttribute'}} selectAttribute">
-                                                  <option selected disabled>Selecteaza {{$attr->title}}</option>
-                                                  @foreach($attr->values as $val)
+                                              <label class="control-label" for="name">{{ucfirst($attr['title'])}}</label>
+                                              <select name="selectedAttribute[]" class="form-control {{$attr['type'] == 1 ? 'selectColor' : 'retrievedAttribute'}} selectAttribute">
+                                                  <option selected disabled>Selecteaza {{$attr['title']}}</option>
+                                                  @foreach($attr['values'] as $val)
                                                     @if(is_array($val) && count($val) > 1)
-                                                      <option value="{{$attr->id}}_{{$val[0]}}_{{$val[1]}}">{{$val[1]}}</option>
+                                                      @php
+                                                        $retrievedAttr = $attr['id'].'_'.$val[0].'_'.$val[1];
+                                                        $offAttrs = json_decode($dataTypeContent->attributes, true);
+                                                        $offerAttributes = [];
+                                                        if($offAttrs != null && count($offAttrs) > 0){
+                                                          foreach($offAttrs as $att){
+                                                            if($att['attribute'] != null){
+                                                              array_push($offerAttributes, $att['attribute']);
+                                                            }
+                                                          }
+                                                        }
+                                                        $isSelected = $retrievedAttr != null && $offerAttributes != null && in_array($retrievedAttr, $offerAttributes) ? true : false;
+                                                      @endphp
+                                                      <option value="{{$attr['id']}}_{{$val[0]}}_{{$val[1]}}" @if($isSelected) selected @endif>{{$val[1]}}</option>
                                                     @else
-                                                      <option value="{{$attr->id}}_{{$val}}">{{$val}}</option>
+                                                      @php
+                                                        $retrievedAttr = $attr['id'].'_'.$val[0];
+                                                        $offerAttributes = json_decode($dataTypeContent->attributes, true);
+                                                        $offerAttributes = [];
+                                                        if($offAttrs != null && count($offAttrs) > 0){
+                                                          foreach($offAttrs as $att){
+                                                            if($att['attribute'] != null){
+                                                              array_push($offerAttributes, $att['attribute']);
+                                                            }
+                                                          }
+                                                        }
+                                                        $isSelected = $retrievedAttr != null && $offerAttributes != null && in_array($retrievedAttr, $offerAttributes) ? true : false;
+                                                      @endphp
+                                                      <option value="{{$attr['id']}}_{{$val}}">{{$val}}</option>
                                                     @endif
                                                   @endforeach
                                               </select>
@@ -333,6 +353,14 @@ if($edit){
                             </div>
                           @endif
                         </div>
+                        @if($edit)
+                        <input name="offer_id" type="hidden" value="{{$dataTypeContent->getKey()}}"/>
+                          <div class="col-md-12">
+                            <div class="box">
+                              @include('vendor.voyager.products.offer_box', ['parents' => $offerType->parents])
+                            </div>
+                          </div>
+                        @endif
                         <div class="panel-footer">
                             @section('submit-buttons')
                                 <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>
@@ -351,13 +379,6 @@ if($edit){
                     </form>
 
                 </div>
-              @if($edit)
-                <div class="col-md-12">
-                  <div class="box">
-                    @include('vendor.voyager.products.offer_box', ['products' => $offerType->parents])
-                  </div>
-                </div>
-              @endif
             </div>
           <div class="col-md-12" id="awb" style="display: none;">
             <div class="panel">
@@ -496,6 +517,7 @@ if($edit){
         }
 
         $('document').ready(function () {
+            window.currentPriceGrid = 1;
             $('.toggleswitch').bootstrapToggle();
 
             //Init datepicker for date fields if data-datepicker attribute defined
@@ -588,7 +610,7 @@ if($edit){
             $("input[name=price_grid_id]").prop("type", "hidden");
             var select_html_prices = "<select name='price_grid_id' class='form-control'>";
             var prRules = {!!$priceRules != "" ? $priceRules : 'false' !!};
-            var price_grid_id = {!! $priceRules != "" ? $priceRules : 'false' !!};
+            var price_grid_id = {!! $dataTypeContent->price_grid_id != null ? $dataTypeContent->price_grid_id : 1 !!};
             if(prRules){
               for(var i = 0; i < prRules.length; i++){
                 if(prRules[i].id == price_grid_id){
@@ -606,7 +628,22 @@ if($edit){
             $("#tip_oferta").append(tip_oferta_label);
             $("#tip_oferta").append("<input name='type' type='hidden' class='form-control' value='{{$dataTypeContent->type}}'/>");
             $("#tip_oferta").append("<input type='text' readonly class='form-control' value='{{$offerType->title ?? ''}}'/>");
+            
+            var selAttrs = null;
+            if(selAttrs != null && selAttrs.length > 0){
+              var attrsArr = [];
+              for(var i = 0; i< selAttrs.length; i++){
+                 if(selAttrs[i].qty != null){ 
+                  $("input[parentId="+selAttrs[i].parent+"]").val(selAttrs[i].qty);
+                 }
+                if(selAttrs[i].attribute != null){
+                  attrsArr.push(selAttrs[i].attribute);   
+                }
+               }
+              completePrices(attrsArr, false);
+            }
           }
+          
           
           $("#select_client > select").on('select2:select', function (e) {
              var data = e.params.data;
@@ -649,7 +686,7 @@ if($edit){
               $(".container-box-adresa input").val('');
               $(".trick-addr-id").val('');
               $(".btnSalveazaAdresa").text('Salveaza adresa noua');
-//               $(".container-elements-addresses").slideDown();
+              $(".container-elements-addresses").slideDown();
             } else{
               $(".container-elements-addresses").show();
               var country = $(this).find('option:selected').attr('country');
@@ -806,8 +843,264 @@ if($edit){
             }
           $('.selectAttribute').on('select2:select', function (e) {
               var data = e.params.data;
-              console.log(data);
+              var elements = [];
+              $('.selectAttribute').each(function(index){
+                if ($(this).has('option:selected')){
+                  var valoareSelectata = $(this).val();
+                  if(valoareSelectata != null){
+                    elements.push(valoareSelectata);
+                  }
+                }
+              });
+              completePrices(elements, true);
           });
+          function completePrices(elements, reset = true){
+            var combinations = checkClassAndParent(elements);
+            var arrProductsClasses = [];
+            for(var i = 0; i < combinations.length; i++){
+              $(".attributeSelector").each(function(){
+                var attrNr = parseInt($(this).attr("numberofattributes"));
+                var attributes = combinations[i].split(' ');
+                if(attributes.length == attrNr){
+                  var productAttrs = $.parseJSON($(this).attr('attributes'));
+                  if(arraysEqual(attributes, productAttrs)){
+                    arrProductsClasses.push($(this).attr("product_id"));
+                  }
+                }
+              });
+            }
+            $(".attributeSelector").css("background-color", "white");
+            for(var k = 0; k < arrProductsClasses.length; k++){
+              var product_id = $(".attributeSelector[product_id="+arrProductsClasses[k]+"]").attr("prod_id");
+              var category_id = $(".attributeSelector[product_id="+arrProductsClasses[k]+"]").attr("cat_id");
+              var parent_id = $(".attributeSelector[product_id="+arrProductsClasses[k]+"]").attr("par_id");
+              var selQty = $(".changeQty[parentId="+parent_id+"]").val();
+              // fetch to get all prices by category and product and currency
+              if(reset){
+                resetAllInputs();
+              }
+              getAllPricesByProductAndCategory(product_id, category_id, parent_id, selQty);
+              if(!reset){
+                setTimeout(function(){  
+                  $(".changeQty").trigger("input"); 
+                }, 1000);
+              }
+            }
+          }
+          function completeAllInputsWithPrices(parent_id, rulePrices = [], qty = 0, rightFillable = false) {
+            if(rulePrices && rulePrices.length > 0){
+              for(var i = 0; i < rulePrices.length; i++){
+                var rule = rulePrices[i];
+                var baseParentEl = ".baseParent-"+parent_id+".baseRule-"+rule.id;
+                $(baseParentEl).val(rule.formulas.currency_price);
+                var parentEl = "span.parent-"+parent_id+".baseRule-"+rule.id;
+                if(rightFillable){
+                  if(qty == 0){
+                    $(parentEl).text((rule.formulas.currency_price*1).toFixed(2));
+                  } else{
+                    $(parentEl).text((rule.formulas.currency_price*qty).toFixed(2));
+                  }
+                } else{
+                  $(parentEl).text('0.00');
+                }
+                if(qty == 0){
+                  $(".eurFaraTVA.parent-"+parent_id).val((rule.formulas.eur_prod_price*1).toFixed(2));
+                  $(".ronCuTVA.parent-"+parent_id).val((rule.formulas.ron_cu_tva*1).toFixed(2));
+//                   $(".ronTotal.parent-"+parent_id).val((rule.formulas.ron_fara_tva*1).toFixed(2));
+                  $(".ronTotal.parent-"+parent_id).val('0.00');
+                  $(".pret-intrare.parent-"+parent_id).val((rule.formulas.product_price*1).toFixed(2));
+                } else{
+                  $(".eurFaraTVA.parent-"+parent_id).val((rule.formulas.eur_prod_price*qty).toFixed(2));
+                  $(".ronCuTVA.parent-"+parent_id).val((rule.formulas.ron_cu_tva*qty).toFixed(2));
+                  $(".ronTotal.parent-"+parent_id).val((rule.formulas.ron_fara_tva*qty).toFixed(2));
+                  $(".pret-intrare.parent-"+parent_id).val((rule.formulas.product_price*qty).toFixed(2));
+                }
+                if(!rightFillable){
+                  if(qty == 0){
+                    $(".pretIntrare.parent-"+parent_id).text((rule.formulas.product_price*1).toFixed(2));
+                  } else{
+                    $(".pretIntrare.parent-"+parent_id).text((rule.formulas.product_price*qty).toFixed(2));
+                  }
+                }
+              }
+            } else{
+              $(".baseParent-"+parent_id).each(function(){
+                var basePrice = $(this).val();
+                var calcPrice = (basePrice*qty).toFixed(2);
+                $(this).parent().find(".parent-"+parent_id).text(calcPrice);
+                recalculateTotalPrice(window.currentPriceGrid);
+              });
+            }
+          }
+          $(document).on("input", ".changeQty", function(){
+            var parent_id = $(this).attr("parentId");
+            var currentVal = $(this).val();
+            currentVal = currentVal == '' ? 0 : currentVal;
+            completeAllInputsWithPrices(parent_id, [], currentVal, true);
+            calculateTotalPricePage();
+          });
+          function checkClassAndParent(elements) {
+            var result = [];
+            var f = function(prefix, elements) {
+              for (var i = 0; i < elements.length; i++) {
+                if(prefix == ''){
+                  result.push(prefix +''+ elements[i]);
+                  f(prefix + elements[i], elements.slice(i + 1));
+                } else{
+                  result.push(prefix +' '+ elements[i]);
+                  f(prefix +' '+ elements[i], elements.slice(i + 1));
+                }
+              }
+            }
+            f('', elements);
+            return result;
+          }
+          function arraysEqual(a, b) {
+            if (a === b) return true;
+            if (a == null || b == null) return false;
+            if (a.length !== b.length) return false;
+            for (var i = 0; i < a.length; ++i) {
+              if (a[i] !== b[i]) return false;
+            }
+            return true;
+         }
+          function getAllPricesByProductAndCategory(product_id, category_id, parent_id, selQty = null){
+             var vthis = this;
+             var ruleprices = [];
+             $.ajax({
+                  method: 'POST',
+                  url: '/admin/getPricesByProductAndCategory',//remove this address on POST message after i get all the address data
+                  data: {_token: '{{csrf_token()}}', product_id: product_id, category_id: category_id, currency: $("input[name=curs_eur]").val()},
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(res) {
+                  if (res.success == false) {
+                      toastr.error(res.error, 'Eroare');
+                  } else{
+                    window.ruleprices = res.rulePrices;
+                    if(window.ruleprices.length > 0){
+                      completeAllInputsWithPrices(parent_id, window.ruleprices, selQty);
+                    }
+                  }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+            return true;
+          }
+          function recalculateTotalPrice(priceRuleId){
+            window.currentPriceGrid = priceRuleId == -1 ? 1 : priceRuleId;
+            $(".inputBaseRule").each(function(){
+              if($(this).val() != ''){
+                var parent_id = $(this).attr("parent_id");
+                var qty = $(".changeQty.parentId-"+parent_id).val();
+                var price = $(".baseParent-"+parent_id+".baseRule-"+window.currentPriceGrid).val();
+                $(".ronTotal.parent-"+parent_id).val((price*qty).toFixed(2));
+              }
+            });
+            calculateTotalPricePage();
+          }
+          $("select[name=price_grid_id]").on('select2:select', function (e) {
+            var data = e.params.data;
+            recalculateTotalPrice(data.id);
+          });
+          function calculateTotalPricePage(){
+            var totalPrice = 0;
+            $(".ronTotal").each(function(){
+              var totPrice = $(this).val();
+              totalPrice = totalPrice + parseFloat(totPrice);
+            });
+            totalPrice = parseFloat(totalPrice).toFixed(2);
+            $(".totalGeneralCuTva").text(totalPrice);
+            $(".totalFinalRon").text(totalPrice);
+            $(".totalHandled").val(totalPrice);
+            var totalBaseRule = [];
+            var totalPretIntrare = 0;
+            $(".inputBaseRule").each(function(){
+              var base_rule_id = $(this).attr("base_rule_id");
+              totalBaseRule[base_rule_id] = 0;
+            });
+            $(".inputBaseRule").each(function(){
+              var base_rule_id = $(this).attr("base_rule_id");
+              totalBaseRule[base_rule_id] = parseFloat(totalBaseRule[base_rule_id]) + parseFloat($(this).parent().find(".baseRule-"+base_rule_id).text());
+            });
+            $(".pretIntrare").each(function(){
+              totalPretIntrare = parseFloat(totalPretIntrare) + parseFloat($(this).text());
+            });
+            $(".totalPricePi").text(totalPretIntrare.toFixed(2));
+            if(totalBaseRule.length > 0){
+              for (var k in totalBaseRule){
+                  if (totalBaseRule.hasOwnProperty(k)) {
+                    $(".totalPrice"+k).text(totalBaseRule[k].toFixed(2));
+                  }
+              }
+            }
+          }
+          function resetAllInputs(){
+            $(".changeQty").val('');
+            $(".eurFaraTVA").val('0.00');
+            $(".ronCuTVA").val('0.00');
+            $(".ronTotal").val('0.00');
+            $(".totalGeneralCuTva").text('0.00');
+            $(".totalFinalRon").text('0.00');
+          }
+          
+          $("select").on('select2:select', function (e) {
+            setTimeout(function(){ 
+              saveNewDataToDb();
+            }, 1000);
+          });
+          
+          var timeout = null;
+
+          $('input').keyup(function() {
+              clearTimeout(timeout);
+              timeout = setTimeout(function() {
+                  saveNewDataToDb();
+              }, 500);
+          });
+          
+          $('textarea').keyup(function() {
+              clearTimeout(timeout);
+              timeout = setTimeout(function() {
+                  saveNewDataToDb();
+              }, 500);
+          });
+          
+          $('input[type=date]').change(function() {
+              timeout = setTimeout(function() {
+                  saveNewDataToDb();
+              }, 500);
+          });
+          
+          function saveNewDataToDb(){
+            $.ajax({
+                method: 'POST',
+                url: '/admin/ajaxSaveUpdateOffer',//remove this address on POST message after i get all the address data
+                data: $(".form-edit-add").serializeArray(),
+                context: this,
+                async: true,
+                cache: false,
+                dataType: 'json'
+            }).done(function(res) {
+                console.log(res);
+               if(res.success){
+                $("input[name=offer_id]").val(res.offer_id);
+               }
+            })
+            .fail(function(xhr, status, error) {
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                    .indexOf("CSRF token mismatch") >= 0) {
+                    window.location.reload();
+                }
+            });
+          return true;
+          }
         });
     </script>
 @stop

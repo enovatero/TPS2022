@@ -1,10 +1,26 @@
 @php
     $edit = !is_null($dataTypeContent->getKey());
     $add  = is_null($dataTypeContent->getKey());
+    $html_attributes = null;
     if($edit){
       $html_attributes = '';
       $parent = \App\ProductParent::find($dataTypeContent->parent_id);
-      $attributes = \App\Http\Controllers\VoyagerProductsController::getAttributesByParent(new \Illuminate\Http\Request, $parent->id, $dataTypeContent->attributes);
+      $currentProduct = \App\Product::with('allAttributes')->find($dataTypeContent->id);
+      $attributes = $currentProduct->listAttributes($currentProduct->allAttributes);
+      $arrayAttributes = [];
+      if($attributes && count($attributes) > 0){
+        foreach($attributes as $attribute){
+          if(!array_key_exists($attribute['id'], $attribute)){
+            $arrayAttributes[$attribute['id']] = [];
+          }
+          $arrayAttributes[$attribute['id']] = $attribute['values'];
+        }
+      }
+      if($parent == null){
+        $attributes = null;
+      } else{
+        $attributes = \App\Http\Controllers\VoyagerProductsController::getAttributesByParent(new \Illuminate\Http\Request, $parent->id, json_encode($arrayAttributes));
+      }
       if($attributes && $attributes['success']){
         $html_attributes = $attributes['html_attributes'];
       }

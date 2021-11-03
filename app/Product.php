@@ -7,30 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    public function listAttributes(){
-      $attributes = $this->getAttribute('attributes') != null ? json_decode($this->getAttribute('attributes'), true) : [];
-      $attrIds = [];
-      if(count($attributes) > 0){
-        foreach($attributes as $attribute){
-          $attrId = array_key_first($attribute);
-          $val = $attribute[$attrId];
-          array_push($attrIds, $attrId);
-        }  
-      }
-      $dbAttributes = \App\Attribute::whereIn('id', $attrIds)->get();
-      if($dbAttributes && count($dbAttributes) > 0){
-        foreach($dbAttributes as &$attr){
-          $values = [];
-          foreach($attributes as $attribute){
-            $attrId = array_key_first($attribute);
-            $val = $attribute[$attrId];
-            if($attrId == $attr->id){
-              array_push($values, $val);
-            }
+    public function allAttributes(){
+      return $this->belongsToMany(Attribute::class, 'product_attributes', 'product_id', 'attribute_id')->withPivot('value')->orderBy('type', 'DESC');
+    }
+    public function listAttributes($attributes){
+      $attributes = $attributes != null ? json_decode($attributes, true) : [];
+      if($attributes && count($attributes) > 0){
+        foreach($attributes as &$attribute){
+          if($attribute['type'] == 1){
+            $attribute['values'] = json_decode($attribute['pivot']['value'], true);
+          } else{
+            $attribute['values'] = $attribute['pivot']['value'];
           }
-          $attr->values = $values;
         }
       }
-      return $dbAttributes;
+      return $attributes;
     }
 }

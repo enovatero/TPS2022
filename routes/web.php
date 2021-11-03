@@ -5,6 +5,7 @@ use App\Http\Controllers\AddressController;
 use App\Http\Controllers\VoyagerOfferTypeController;
 use App\Http\Controllers\VoyagerRulesPricesController;
 use App\Http\Controllers\VoyagerProductsController;
+use App\Http\Controllers\VoyagerOfferController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,4 +35,6 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('/saveOfferTypeProducts', [VoyagerOfferTypeController::class, 'saveOfferTypeProducts'])->middleware('admin.user');
     Route::post('/saveRulePrice', [VoyagerRulesPricesController::class, 'saveRulePrice'])->middleware('admin.user');
     Route::post('/getAttributesByParent', [VoyagerProductsController::class, 'getAttributesByParent'])->middleware('admin.user');
+    Route::post('/getPricesByProductAndCategory', [VoyagerOfferController::class, 'getPricesByProductAndCategory'])->middleware('admin.user');
+    Route::put('/ajaxSaveUpdateOffer', [VoyagerOfferController::class, 'ajaxSaveUpdateOffer'])->middleware('admin.user');
 });

@@ -27,23 +27,32 @@ class RulesPrice extends Model
             "full_formula"   => "PI"
           ];
         }
+        $ruleItem = array_values($ruleItem);
         $item->formulas = $ruleItem[0];
       }
-      $rulePrices = (new self())->getFormulasWithPricesByProduct($rulePrices, 21, 4.9345);
+//       $rulePrices = (new self())->getFormulasWithPricesByProduct($rulePrices, 21, 4.9345);
       return $rulePrices;
     }
   
-    public static function getFormulasWithPricesByProduct($rulePricesFilteredByCategory, $productPrice, $currency = null){
+    public static function getFormulasWithPricesByProduct($rulePricesFilteredByCategory, $productPrice = null, $currency = null){
       foreach($rulePricesFilteredByCategory as &$item){
-        $formula = str_replace("PI", $productPrice, $item->formulas['full_formula']);
+        $formula = str_replace("PI", $productPrice, $item['formulas']['full_formula']);
         $price = eval('return '.$formula.';');
-        $formatedPrice = floatVal(number_format($price ,2,',', '.'));
-        $itemFormulas = $item->formulas;
-        $itemFormulas['price'] = $formatedPrice;
-        if($currency != null){
-          $itemFormulas['currency_price'] = floatVal($formatedPrice)*floatVal($currency);
+        $formatedPrice = floatVal(number_format($price ,2,'.', ','));
+        $itemFormulas = $item['formulas'];
+        $itemFormulas['price'] = number_format($formatedPrice, 2, '.', ',');
+        if($currency == null){
+          $currency = 0;
         }
-        $item->formulas = $itemFormulas;
+        $itemFormulas['product_price'] = number_format($productPrice, 2, '.', ',');
+        $itemFormulas['eur_prod_price'] = number_format($productPrice, 2, '.', ',');
+        $itemFormulas['ron_fara_tva'] = number_format($productPrice*$currency, 2, '.', ',');
+        $itemFormulas['ron_cu_tva'] = number_format($productPrice*$currency, 2, '.', ','); // ramane sa pun TVA-ul
+        if($currency != 0){
+          $itemFormulas['currency_price'] = number_format(floatVal($formatedPrice)*floatVal($currency), 2, '.', ',');
+          $itemFormulas['product_price'] = number_format(floatVal($productPrice)*floatVal($currency), 2, '.', ',');
+        }
+        $item['formulas'] = $itemFormulas;
       }
       return $rulePricesFilteredByCategory;
     }

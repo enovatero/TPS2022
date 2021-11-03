@@ -45,7 +45,7 @@ class OfferType extends Model
   public function parents(){
     $prodIds = json_decode($this->products, true);
     if($prodIds != null && count($prodIds) > 0){
-      return \App\ProductParent::with(['um_title', 'products', 'category'])->whereIn('id', $prodIds)->get();
+      return \App\ProductParent::with(['um_title', 'products.allAttributes', 'category'])->whereIn('id', $prodIds)->get();
     } else{
       return [];
     }

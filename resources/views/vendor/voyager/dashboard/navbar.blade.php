@@ -1,8 +1,8 @@
 <nav class="navbar navbar-default navbar-fixed-top navbar-top">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button class="hamburger btn-link">
-                <span class="hamburger-inner"></span>
+        <button class="hamburger btn-link">
+                <img src="/images/arrow.svg" class="arrow__leftpanel" />
             </button>
             @section('breadcrumbs')
             <ol class="breadcrumb hidden-xs">

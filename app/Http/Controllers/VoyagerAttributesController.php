@@ -35,10 +35,23 @@ class VoyagerAttributesController extends \TCG\Voyager\Http\Controllers\VoyagerB
         $attributeColorTexts = $request->input('attributeColorText');
         if($attributes != null){
           $values = [];
-          foreach($attributes as $attr){
-            array_push($values, $attr);
+          foreach($attributes as $key => $attr){
+            if($attributeColorTexts != null){
+              if(array_key_exists($key, $attributeColorTexts)){
+                $elVal = $attributeColorTexts[$key];
+              } else{
+                $elVal = '';
+              }
+              $insertAttr = [
+                $attr => $elVal
+              ];
+              array_push($values, $insertAttr);
+            } else{
+              if($attr != '' || $attr != null){
+                array_push($values, $attr);
+              }
+            }
           }
-          dd($attributes, $values);
           $request->merge(['values' => json_encode($values)]);
         }
         $slug = $this->getSlug($request);
@@ -55,8 +68,7 @@ class VoyagerAttributesController extends \TCG\Voyager\Http\Controllers\VoyagerB
         event(new BreadDataAdded($dataType, $data));
         if (!$request->has('_tagging')) {
             if (auth()->user()->can('browse', $data)) {
-//                 $redirect = redirect()->route("voyager.{$dataType->slug}.index");
-                $redirect = redirect("/admin/rules-prices/{$data->id}/edit");
+                $redirect = redirect()->route("voyager.{$dataType->slug}.index");
             } else {
                 $redirect = redirect()->back();
             }
@@ -73,20 +85,27 @@ class VoyagerAttributesController extends \TCG\Voyager\Http\Controllers\VoyagerB
     // POST BR(E)AD
     public function update(Request $request, $id)
     {
+//       dd($request->all());
         $attributes = $request->input('attribute');
         $attributeColorTexts = $request->input('attributeColorText');
         if($attributes != null){
           $values = [];
           foreach($attributes as $key => $attr){
-            if(array_key_exists($key, $attributeColorTexts)){
-              $elVal = $attributeColorTexts[$key];
+            if($attributeColorTexts != null){
+              if(array_key_exists($key, $attributeColorTexts)){
+                $elVal = $attributeColorTexts[$key];
+              } else{
+                $elVal = '';
+              }
+              $insertAttr = [
+                $attr => $elVal
+              ];
+              array_push($values, $insertAttr);
             } else{
-              $elVal = '';
+              if($attr != '' || $attr != null){
+                array_push($values, $attr);
+              }
             }
-            $insertAttr = [
-              $attr => $elVal
-            ];
-            array_push($values, $insertAttr);
           }
           $request->merge(['values' => json_encode($values)]);
         }

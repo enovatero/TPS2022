@@ -21,6 +21,7 @@ use App\Client;
 use App\UserAddress;
 use App\LegalEntity;
 use App\Individual;
+use App\Product;
 
 class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
 {
@@ -270,4 +271,60 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       }
       return $randomString;
     }
+  
+    public function getPricesByProductAndCategory(Request $request){
+      $product_id = $request->input("product_id");
+      $product = Product::find($product_id);
+      $category_id = $request->input("category_id");
+      $cleanRulePrices = \App\RulesPrice::getFormulaByCategory($category_id);
+      $cleanRulePrices = $cleanRulePrices->toArray();
+      $rulePrices = \App\RulesPrice::getFormulasWithPricesByProduct($cleanRulePrices, $product->price, $request->input('currency'));
+      return ['success' => true, 'rulePrices' => $rulePrices];
+    }
+  
+  public function ajaxSaveUpdateOffer(Request $request){
+    $offer_id = $request->input('offer_id');
+    if($offer_id != null){
+      $offer = Offer::find($offer_id);
+    } else{
+      $offer = new Offer;
+    }
+    
+    $attributes = $request->input('selectedAttribute');
+    $parentIds = $request->input('parentIds');
+    $offerQty = $request->input('offerQty');
+    
+    $attributesArray = [];
+    if($attributes && count($attributes) > 0){
+      foreach($attributes as $key => $attr){
+        if(array_key_exists($key, $offerQty)){
+          $attributesArray[] = [
+            'parent' => $parentIds[$key],
+            'attribute' => $attr,
+            'qty' => $offerQty[$key],
+          ];
+        }
+      }
+    }
+    
+    $offer->type = $request->input('type');
+    $offer->offer_date = $request->input('offer_date');
+    $offer->client_id = $request->input('client_id');
+    $offer->distribuitor_id = $request->input('distribuitor_id');
+    $offer->price_grid_id = $request->input('price_grid_id');
+    $offer->curs_eur = $request->input('curs_eur');
+    $offer->agent_id = $request->input('agent_id');
+    $offer->delivery_address_user = $request->input('delivery_address_user');
+    $offer->delivery_date = $request->input('delivery_date');
+    $offer->observations = $request->input('observations');
+    $offer->created_at = $request->input('created_at');
+    $offer->updated_at = $request->input('updated_at');
+    $offer->status = $request->input('status');
+    $offer->serie = $request->input('serie');
+    $offer->attributes = json_encode($attributesArray);
+    $offer->save();
+    
+    
+    return ['success' => true, 'offer_id' => $offer->id];
+  }
 }

@@ -652,7 +652,10 @@ tbody td img {
   border-radius: 1rem;
   width: 80%;
 }
-
+.offers__status span > p {
+  margin-bottom: 0 !important;
+  color: #ffffff;
+}
 .offer__status--yellow {
   background-color: #ebac15;
 }
@@ -1052,40 +1055,71 @@ input[type="time"].form-control {
   align-items: center;
   justify-content: center;
 }
-.voyager .side-menu.sidebar-inverse .navbar{
+.voyager .side-menu.sidebar-inverse .navbar {
   margin-bottom: 90px;
 }
-.database-tables .btn.btn-danger.btn-sm.delete{
-    font-size: inherit;
-    display: inherit;
-    align-items: inherit;
-    justify-content: inherit;
-    min-width: inherit;
-    height: inherit;
-    padding: 3px;
-    padding-right: 10px;
+.database-tables .btn.btn-danger.btn-sm.delete {
+  font-size: inherit;
+  display: inherit;
+  align-items: inherit;
+  justify-content: inherit;
+  min-width: inherit;
+  height: inherit;
+  padding: 3px;
+  padding-right: 10px;
 }
-.database-tables td.actions.text-right{
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
+.database-tables td.actions.text-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 .roundedBtn {
-    width: 30px;
-    height: 30px;
-    padding: 3px;
-    border-radius: 50%;
-    overflow: hidden;
-    text-align: center;
-    color: #4ea71b;
-    background: #ffffff;
-    border: 1.5px solid #4ea71b;
+  width: 30px;
+  height: 30px;
+  padding: 3px;
+  border-radius: 50%;
+  overflow: hidden;
+  text-align: center;
+  color: #4ea71b;
+  background: #ffffff;
+  border: 1.5px solid #4ea71b;
 }
-.btnRemoveAttribute{
-   border: 1.5px solid red;
-   color: red;
-   padding: 1px;
+.btnRemoveAttribute {
+  border: 1.5px solid red;
+  color: red;
+  padding: 1px;
 }
-#values_attributes{
+#values_attributes {
   display: none !important;
+}
+.table-prices table tbody > tr > td:not(:first-child):not(:nth-child(2)) {
+  border-right: none !important;
+}
+
+.is-active img {
+  transform: rotate(180deg);
+}
+
+.arrow__leftpanel {
+  left: -3.7rem;
+  position: absolute;
+  top: -1.3rem;
+}
+.navbar-fixed-top {
+  z-index: 9999999;
+  background: transparent !important;
+}
+
+.navbar-nav li:hover {
+  color: "red";
+  background-color: "red";
+}
+
+.breadcrumb {
+  left: -25px !important;
+}
+
+#adminmenu ul > li {
+  background-color: "#000" !important;
+  color: "#000" !important;
 }

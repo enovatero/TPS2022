@@ -19,6 +19,7 @@ use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
 use App\Category;
 use App\Product;
 use App\ProductParent;
+use App\ProductAttribute;
 
 class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
 {
@@ -33,20 +34,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
      */
     public function store(Request $request)
     {
-       // get all attributes like 1_20cm where 1 is attributeId _ is delimitator and 20cm is selectedValue
-        $attributeValues = $request->input('attributeValues');
-        if($attributeValues != null){
-          $attrWithValues = [];
-          foreach($attributeValues as $key => $attr){
-            $attribute = explode("_", $attr);
-            $modifiedValueWithAttribute = [
-              $attribute[0] => $attribute[1]
-            ];
-            array_push($attrWithValues, $modifiedValueWithAttribute);
-          }
-          $request->merge(['attributes' => json_encode($attrWithValues)]);
-        }
-      
+//       dd($request->all());
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -59,10 +47,38 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         event(new BreadDataAdded($dataType, $data));
+      
+        
+       // get all attributes like 1_20cm where 1 is attributeId _ is delimitator and 20cm is selectedValue
+        $attributeValues = $request->input('attributeValues');
+        if($attributeValues != null){
+          $attrWithValues = [];
+          foreach($attributeValues as $key => $attr){
+            $attribute = explode("_", $attr);
+            $insertProductAttribute = new ProductAttribute;
+            $insertProductAttribute->product_id = $data->id;
+            $insertProductAttribute->attribute_id = $attribute[0];
+            if(array_key_exists(2, $attribute)){
+              $colorHex = $attribute[1];
+              $colorVal = $attribute[2];
+              $insertProductAttribute->value = strpos($attribute[1], '#') !== false ? json_encode([$colorHex, $colorVal]) : $attribute[1];
+            } else{
+              if(strpos($attribute[1], '#') !== false){
+                $insertProductAttribute->value = json_encode([$attribute[1], null]);
+              } else{
+                $insertProductAttribute->value = $attribute[1];
+              }
+            }
+            $insertProductAttribute->save();
+            $modifiedValueWithAttribute = [
+              $attribute[0] => $attribute[1]
+            ];
+          }
+        }
+      
         if (!$request->has('_tagging')) {
             if (auth()->user()->can('browse', $data)) {
-//                 $redirect = redirect()->route("voyager.{$dataType->slug}.index");
-                $redirect = redirect("/admin/rules-prices/{$data->id}/edit");
+                $redirect = redirect()->route("voyager.{$dataType->slug}.index");
             } else {
                 $redirect = redirect()->back();
             }
@@ -79,26 +95,6 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
     // POST BR(E)AD
     public function update(Request $request, $id)
     {
-       // get all attributes like 1_20cm where 1 is attributeId _ is delimitator and 20cm is selectedValue
-        $attributeValues = $request->input('attributeValues');
-        if($attributeValues != null){
-          $attrWithValues = [];
-          foreach($attributeValues as $key => $attr){
-            $attribute = explode("_", $attr);
-            if(count($attribute) == 3){
-              $modifiedValueWithAttribute = [
-                $attribute[0] => [$attribute[1], $attribute[2]]
-              ];
-            } else{
-              $modifiedValueWithAttribute = [
-                $attribute[0] => $attribute[1]
-              ];
-            }
-            array_push($attrWithValues, $modifiedValueWithAttribute);
-          }
-          $request->merge(['attributes' => json_encode($attrWithValues)]);
-//       dd($attrWithValues);
-        }
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -131,6 +127,36 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
         $original_data = clone($data);
 
         $this->insertUpdateData($request, $slug, $dataType->editRows, $data);
+      
+       // get all attributes like 1_20cm where 1 is attributeId _ is delimitator and 20cm is selectedValue
+        $attributeValues = $request->input('attributeValues');
+        if($attributeValues != null){
+          $attrWithValues = [];
+          foreach($attributeValues as $key => $attr){
+            $attribute = explode("_", $attr);
+            $insertProductAttribute = ProductAttribute::where('product_id', $data->id)->where('attribute_id', $attribute[0])->first();
+            if($insertProductAttribute == null){
+              $insertProductAttribute = new ProductAttribute;
+            }
+            $insertProductAttribute->product_id = $data->id;
+            $insertProductAttribute->attribute_id = $attribute[0];
+            if(array_key_exists(2, $attribute)){
+              $colorHex = $attribute[1];
+              $colorVal = $attribute[2];
+              $insertProductAttribute->value = strpos($attribute[1], '#') !== false ? json_encode([$colorHex, $colorVal]) : $attribute[1];
+            } else{
+              if(strpos($attribute[1], '#') !== false){
+                $insertProductAttribute->value = json_encode([$attribute[1], null]);
+              } else{
+                $insertProductAttribute->value = $attribute[1];
+              }
+            }
+            $insertProductAttribute->save();
+            $modifiedValueWithAttribute = [
+              $attribute[0] => $attribute[1]
+            ];
+          }
+        }
 
         // Delete Images
         $this->deleteBreadImages($original_data, $to_remove);
@@ -168,13 +194,13 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
           $foundedAttribute = null;
           $foundedAttributeValue = null;
           if($selectedAttributes != null){
-            foreach($selectedAttributes as $attr){
-              if($attribute->id == array_key_first($attr)){
-                $foundedAttribute = array_key_first($attr);
+            foreach($selectedAttributes as $key => $attr){
+              if($attribute->id == $key){
+                $foundedAttribute = $key;
                 if($attribute->type == 1){
-                  $foundedAttributeValue = $attr[$foundedAttribute][0];
+                  $foundedAttributeValue = $attr[0];
                 } else{
-                  $foundedAttributeValue = $attr[$foundedAttribute];
+                  $foundedAttributeValue = $attr;
                 }
                 break;
               }
