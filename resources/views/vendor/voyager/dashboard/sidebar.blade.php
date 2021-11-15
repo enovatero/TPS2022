@@ -1,4 +1,4 @@
-<div class="side-menu sidebar-inverse">
+<div class="side-menu sidebar-inverse  ">
     <nav class="navbar navbar-default" role="navigation">
         <div class="side-menu-container">
             <div class="navbar-header">
@@ -21,7 +21,7 @@
          
 
         </div>
-        <div id="adminmenu">
+        <div id="adminmenu" class="admin-left">
             <admin-menu :items="{{ menu('admin', '_json') }}"></admin-menu>
         </div>
     </nav>

@@ -143,7 +143,7 @@
     </div>
     <!-- End Delete File Modal -->
 @stop
-
+<script type="text/javascript" src="/js/ntc.js"></script>
 @section('javascript')
     <script>
         var params = {};
@@ -215,6 +215,20 @@
                 $('#confirm_delete_modal').modal('hide');
             });
             $('[data-toggle="tooltip"]').tooltip();
+            $("input[name=color_code]").on('input', function() {
+              var colorCode = $(this).val();
+              var ntcMatch  = ntc.name(colorCode);
+              console.log(ntcMatch);
+              $("input[name=color_name]").val(ntcMatch[1]);
+
+            });
+            $("input[name=color_code]").on('change', function() {
+              var colorCode = $(this).val();
+              var ntcMatch  = ntc.name(colorCode);
+              console.log(ntcMatch);
+              $("input[name=color_name]").val(ntcMatch[1]);
+
+            });
         });
     </script>
 @stop

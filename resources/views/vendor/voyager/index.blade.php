@@ -1,13 +1,40 @@
+@php
+  $products = \App\Product::get()->count();
+  $todayProfit = \App\Offer::where('status', 2)->where('offer_date', date('Y-m-d'))->sum('total_final');
+  $clients = \App\Client::get()->count();
+  $users = \App\Models\User::get()->count();
+  $top5Users = \App\Models\User::with('role')->take(5)->get();
+  $top5Orders = \App\Offer::with('client')->take(5)->latest('offer_date')->get();
+  $calendarOrders = [];
+  $orderProfitMonthly = \App\Offer::select(\DB::raw('SUM(total_final) as total, COUNT(id) as orders, MONTH(offer_date) as month'))->groupBy('month')->get();
+  $orderProfitMonthly = $orderProfitMonthly->toArray();
+  $ordersChart = [];
+  $totalOrdersChart = [];
+  for($i = 1; $i <= 12; $i++){
+    $ordersChart[$i] = 0;                    
+    $totalOrdersChart[$i] = 0;                    
+  }
+  foreach($orderProfitMonthly as $order){
+    $ordersChart[$order['month']] = $order['orders'];
+    $totalOrdersChart[$order['month']] = $order['total'] != 0 ? number_format($order['total']/1000, 4, '.', '') : 0;
+  }
+                      
+@endphp
+
 @extends('voyager::master')
 
 @section('content')
     <div class="page-content">
         @include('voyager::alerts')
-        @include('voyager::dimmers')
+        @include('vendor.voyager.dashboard-wg.top')
+        @include('vendor.voyager.dashboard-wg.middle')
+        @include('vendor.voyager.dashboard-wg.bottom')
     </div>
 @stop
 
 @section('javascript')
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.29.0/dist/apexcharts.css">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/air-datepicker@3.0.1/air-datepicker.css">
 
     @if(isset($google_analytics_client_id) && !empty($google_analytics_client_id))
         <script>
@@ -394,9 +421,154 @@
                 window.dispatchEvent(new Event('resize'));
 
             });
-
+            
         </script>
-
     @endif
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.29.0/dist/apexcharts.min.js"></script>
+    <script src='https://unpkg.com/vue/dist/vue.js'></script>
+
+<!-- 2. Link VCalendar Javascript (Plugin automatically installed) -->
+<script src='https://unpkg.com/v-calendar'></script>
+
+
+    <script>
+      var orders = @json(array_values($ordersChart));
+      var totalOrdersChart = @json(array_values($totalOrdersChart));
+      console.log(orders);
+    var options = {
+          series: [{
+          name: 'Numar Comenzi',
+          data: orders
+        }, {
+          name: 'Profit Lunar',
+          data: totalOrdersChart
+        }, ],
+          chart: {
+          type: 'bar',
+          height: 280,
+        
+        },
+        plotOptions: {
+          bar: {
+            horizontal: false,
+            columnWidth: '55%',
+            endingShape: 'rounded',
+            
+          },
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          show: true,
+          width: 2,
+          colors: ['transparent']
+        },
+        xaxis: {
+          categories: ['Ian', 'Feb' , 'Mart' , 'Apr', 'Mai', 'Iun' , 'Iul' , 'Aug' , 'Sep' , 'Oct' , 'Noi' , 'Dec'],
+        },
+       
+        fill: {
+          opacity: 1
+        },
+        colors: ['#EBAC15', "#4EA71B"],
+    
+        tooltip: {
+          y: {
+            formatter: function (val, {seriesIndex}) {
+              return seriesIndex === 0 ? val : (val + 'K RON')
+            }
+          }
+        }
+        };
+
+        var chart = new ApexCharts(document.querySelector("#chart"), options);
+        chart.render();
+</script>
+<script>
+   window.calendarOrders = @json($calendarOrders);
+   var comenzi = getComenziFormated(window.calendarOrders);
+   new Vue({
+       el: '#calendar1',
+       data() {
+    return {
+      incId: comenzi.length,
+      comenzi,
+    };
+  },
+  computed: {
+    attributes() {
+      return [
+        {
+          contentStyle: {
+            fontWeight: '700',
+            fontSize: '.9rem',
+            height: '200px',
+            overflow: 'hidden'
+          },
+          dates: new Date(),
+        },
+        ...this.comenzi.map(comanda => ({
+          dates: comanda.dates,
+          highlight: {
+            color: comanda.color,   
+            fillMode: 'light',
+          },
+          popover: {
+            label: comanda.description,
+            visibility: 'focus',
+            isInteractive: true
+          },
+          customData: comanda,
+        })),
+      ];
+    },
+  },
+  methods: {
+      onMonthClick(param) {
+        var vthis = this;
+        $.ajax({
+            method: 'POST',
+            url: '/admin/retrieveOffersPerYearMonth',//remove this address on POST message after i get all the address data
+            data: {_token: "{{csrf_token()}}",month: param.month, year: param.year},
+            context: this,
+            async: true,
+            cache: false,
+            dataType: 'json'
+        }).done(function(res) {
+            if(res.success){
+              var calendarOrders = getComenziFormated(res.calendarOrders);
+              vthis.comenzi = calendarOrders;
+              vthis.incId = calendarOrders.length;
+            }
+        })
+        .fail(function(xhr, status, error) {
+            if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                .indexOf("CSRF token mismatch") >= 0) {
+                window.location.reload();
+            }
+        });
+      return true;
+      },
+    },
+   });
+  function getComenziFormated(orders){
+    const comenzi = [];
+     for(var i=0;i<orders.length;i++){
+       var ord = orders[i];
+       var serie = ord.serie != null ? ord.serie : '-';
+       comenzi.push(
+             {
+              description: 'Comanda #'+serie+' '+ord.status+'!',
+              isComplete: false,
+              dates: new Date(ord.year, ord.month - 1, ord.day),
+              color: ord.status === 'noua' ? 'red' : ord.status === 'finalizata' && 'green',
+            }
+       );
+     }
+  return comenzi;
+  }
+        
+</script>
 
 @stop

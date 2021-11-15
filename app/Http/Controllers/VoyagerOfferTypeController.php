@@ -110,7 +110,7 @@ class VoyagerOfferTypeController extends \TCG\Voyager\Http\Controllers\VoyagerBa
                         'text' => __('voyager::generic.none'),
                     ];
                 }
-                if($options->model == "App\Client"){
+                if($options->model == "App\Client" && $request->input('id') == null){
                   $results[] = [
                         'id'   => '-1',
                         'text' => "Adauga client nou",

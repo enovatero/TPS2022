@@ -112,7 +112,7 @@
                                         </div>
                                     @else
                                       <div class="form-group  col-md-12 box-attribute-normal">
-                                        <input name="attribute[]" type="text" style="padding: 0.2rem 0.5rem;" placeholder="Introdu valoare" value="{{$val}}"/>
+                                        <input name="attribute[]" type="text" style="padding: 0.2rem 0.5rem;" placeholder="Introdu valoare" value="{{$val}}" class="added-input-attribute"/>
                                         <button class="roundedBtn btnRemoveAttribute" type="button">-</button>
                                       </div>
                                     @endif
@@ -241,7 +241,7 @@
             $('[data-toggle="tooltip"]').tooltip();
           var html_atribut_normal = `
             <div class="form-group  col-md-12 box-attribute-normal">
-              <input name="attribute[]" type="text" style="padding: 0.2rem 0.5rem;" placeholder="Introdu valoare"/>
+              <input name="attribute[]" type="text" style="padding: 0.2rem 0.5rem;" placeholder="Introdu valoare" class="added-input-attribute"/>
               <button class="roundedBtn btnRemoveAttribute" type="button">-</button>
             </div>
           `;
@@ -270,6 +270,13 @@
           });
           $(document).on("click", ".btnRemoveAttribute", function(){
             $(this).parent().remove();
+          });
+          $(document).on("input", ".added-input-attribute", function(){
+            var currentVal = $(this).val();
+            $(this).val(currentVal.replace(",", "."));
+            currentVal = currentVal.split('.');
+            currentVal = currentVal.shift() + '.' + currentVal.join('');
+            $(this).val(currentVal.replace(",", ""));
           });
         });
     </script>

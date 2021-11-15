@@ -47,7 +47,7 @@ if($edit){
         $attr['attrs'] = $attr['attrs'][0];
         unset($attr['attrs']['created_at']);
         unset($attr['attrs']['updated_at']);
-        $attr['value'] = json_decode($attr['value'], true);
+        $attr['value'] = json_decode($attr['value'], true) && json_last_error() != 4 ? json_decode($attr['value'], true) : $attr['value'];
         $attr['attrs']['values'] = $attr['value'];
         if(!in_array($attr['attrs'], $createdAttributes)){
           array_push($createdAttributes, $attr['attrs']);
@@ -68,6 +68,17 @@ if($edit){
         }
       }
       $createdAttributes = $mergedAttributes;
+      function array_sort_by_column(&$arr, $col, $dir = SORT_DESC) {
+          $sort_col = array();
+          foreach ($arr as $key => $row) {
+              $sort_col[$key] = $row[$col];
+          }
+
+          array_multisort($sort_col, $dir, $arr);
+      }
+
+      array_sort_by_column($createdAttributes, 'type');
+
       $attributesProds = $prodAttrs;
     }
   }
@@ -184,36 +195,29 @@ if($edit){
                                               <select name="selectedAttribute[]" class="form-control {{$attr['type'] == 1 ? 'selectColor' : 'retrievedAttribute'}} selectAttribute">
                                                   <option selected disabled>Selecteaza {{$attr['title']}}</option>
                                                   @foreach($attr['values'] as $val)
-                                                    @if(is_array($val) && count($val) > 1)
-                                                      @php
-                                                        $retrievedAttr = $attr['id'].'_'.$val[0].'_'.$val[1];
-                                                        $offAttrs = json_decode($dataTypeContent->attributes, true);
+                                                    @php
+                                                        $offAttrs = $dataTypeContent->attributes != null ? json_decode($dataTypeContent->attributes, true) : null;
                                                         $offerAttributes = [];
                                                         if($offAttrs != null && count($offAttrs) > 0){
                                                           foreach($offAttrs as $att){
-                                                            if($att['attribute'] != null){
-                                                              array_push($offerAttributes, $att['attribute']);
+                                                            if($att != null){
+                                                              array_push($offerAttributes, $att);
                                                             }
                                                           }
                                                         }
+                                                    @endphp
+                                                    @if(is_array($val) && count($val) > 1)
+                                                      @php
+                                                        $retrievedAttr = $attr['id'].'_'.$val[0].'_'.$val[1];
                                                         $isSelected = $retrievedAttr != null && $offerAttributes != null && in_array($retrievedAttr, $offerAttributes) ? true : false;
                                                       @endphp
                                                       <option value="{{$attr['id']}}_{{$val[0]}}_{{$val[1]}}" @if($isSelected) selected @endif>{{$val[1]}}</option>
                                                     @else
                                                       @php
-                                                        $retrievedAttr = $attr['id'].'_'.$val[0];
-                                                        $offerAttributes = json_decode($dataTypeContent->attributes, true);
-                                                        $offerAttributes = [];
-                                                        if($offAttrs != null && count($offAttrs) > 0){
-                                                          foreach($offAttrs as $att){
-                                                            if($att['attribute'] != null){
-                                                              array_push($offerAttributes, $att['attribute']);
-                                                            }
-                                                          }
-                                                        }
+                                                        $retrievedAttr = $attr['id'].'_'.$val;
                                                         $isSelected = $retrievedAttr != null && $offerAttributes != null && in_array($retrievedAttr, $offerAttributes) ? true : false;
                                                       @endphp
-                                                      <option value="{{$attr['id']}}_{{$val}}">{{$val}}</option>
+                                                      <option value="{{$attr['id']}}_{{$val}}" @if($isSelected) selected @endif>{{$val}}</option>
                                                     @endif
                                                   @endforeach
                                               </select>
@@ -232,7 +236,7 @@ if($edit){
                                     <option value="-2">Adauga adresa noua</option>
                                     @if(count($userAddresses) > 0)
                                       @foreach($userAddresses as $address)
-                                        @if($selectedAddress != null && $selectedAddress->id == $address->id)
+                                        @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
                                           @php
                                             $address = $selectedAddress;
                                           @endphp
@@ -357,7 +361,7 @@ if($edit){
                         <input name="offer_id" type="hidden" value="{{$dataTypeContent->getKey()}}"/>
                           <div class="col-md-12">
                             <div class="box">
-                              @include('vendor.voyager.products.offer_box', ['parents' => $offerType->parents])
+                              @include('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $dataTypeContent->reducere])
                             </div>
                           </div>
                         @endif
@@ -382,20 +386,150 @@ if($edit){
             </div>
           <div class="col-md-12" id="awb" style="display: none;">
             <div class="panel">
-              <div class="panel-body">
-                <input type="hidden" name="order_id" id="order_id" value="24073">
-                <input type="hidden" name="partner_id" id="partner_id" value="7479">
+              <form class="panel-body" method="POST">
+                {{csrf_field()}}
+                <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
                 <div class="col-md-12">
                   <div class="form-group">
+                    <label for="message-text" class="col-form-label" style="margin-right: 25px;font-size: 14px;">Agentie FAN*</label>
+                    <select name="expeditor_agentie" class="form-control" style="width: 230px;">
+                      <option value="232">Adjud</option>
+                      <option value="1">Alba Iulia</option>
+                      <option value="234">Alesd</option>
+                      <option value="2">Alexandria</option>
+                      <option value="3">Arad</option>
+                      <option value="253">Babeni</option>
+                      <option value="4">Bacau</option>
+                      <option value="5">Baia Mare</option>
+                      <option value="256">Baile Govora</option>
+                      <option value="6">Barlad</option>
+                      <option value="274">Beius</option>
+                      <option value="248">Bicaz</option>
+                      <option value="7">Bistrita</option>
+                      <option value="8">Botosani</option>
+                      <option value="9">Braila</option>
+                      <option value="10">Brasov</option>
+                      <option value="11">Bucuresti</option>
+                      <option value="12">Buzau</option>
+                      <option value="258">Calafat</option>
+                      <option value="13">Calarasi</option>
+                      <option value="251">Calimanesti</option>
+                      <option value="285">Campeni</option>
+                      <option value="15">Campia Turzii</option>
+                      <option value="14">Campina</option>
+                      <option value="16">Campulung</option>
+                      <option value="237">Campulung Moldovenesc</option>
+                      <option value="17">Caracal</option>
+                      <option value="224">Caransebes</option>
+                      <option value="252">Carei</option>
+                      <option value="18">Cernavoda</option>
+                      <option value="286">Chisoda</option>
+                      <option value="19">Cluj-Napoca</option>
+                      <option value="269">Comanesti</option>
+                      <option value="20">Constanta</option>
+                      <option value="21">Craiova</option>
+                      <option value="247">Cristuru Secuiesc</option>
+                      <option value="22">Curtea de Arges</option>
+                      <option value="23">Dej</option>
+                      <option value="24">Deva</option>
+                      <option value="245">Dragasani</option>
+                      <option value="25">Drobeta-Turnu Severin</option>
+                      <option value="297">Dumbravita</option>
+                      <option value="26">Fagaras</option>
+                      <option value="270">Falticeni</option>
+                      <option value="233">Fetesti</option>
+                      <option value="241">Filiasi</option>
+                      <option value="271">Floresti</option>
+                      <option value="27">Focsani</option>
+                      <option value="263">Gaesti</option>
+                      <option value="28">Galati</option>
+                      <option value="262">Gheorgheni</option>
+                      <option value="29">Giurgiu</option>
+                      <option value="243">Gura Humorului</option>
+                      <option value="268">Harsova</option>
+                      <option value="254">Hateg</option>
+                      <option value="244">Horezu</option>
+                      <option value="30">Huedin</option>
+                      <option value="31">Hunedoara</option>
+                      <option value="32">Husi</option>
+                      <option value="33">Iasi</option>
+                      <option value="265">Iernut</option>
+                      <option value="266">Ineu</option>
+                      <option value="264">Ludus</option>
+                      <option value="34">Lugoj</option>
+                      <option value="152">Mangalia</option>
+                      <option value="284">Marghita</option>
+                      <option value="37">Medias</option>
+                      <option value="35">Miercurea-Ciuc</option>
+                      <option value="260">Moldova Noua</option>
+                      <option value="257">Motru</option>
+                      <option value="273">Novaci</option>
+                      <option value="38">Odorheiu Secuiesc</option>
+                      <option value="39">Oltenita</option>
+                      <option value="40">Onesti</option>
+                      <option value="41">Oradea</option>
+                      <option value="276">Orastie</option>
+                      <option value="255">Orsova</option>
+                      <option value="43">Pascani</option>
+                      <option value="44">Petrosani</option>
+                      <option value="42">Piatra-Neamt</option>
+                      <option value="45">Pitesti</option>
+                      <option value="46">Ploiesti</option>
+                      <option value="267">Radauti</option>
+                      <option value="221">Ramnicu Sarat</option>
+                      <option value="49">Ramnicu Valcea</option>
+                      <option value="47">Reghin</option>
+                      <option value="48">Resita</option>
+                      <option value="50">Roman</option>
+                      <option value="222">Rosiori de Vede</option>
+                      <option value="249">Roznov</option>
+                      <option value="272">Salonta</option>
+                      <option value="51">Satu Mare</option>
+                      <option value="242">Sebes</option>
+                      <option value="52">Sfantu Gheorghe</option>
+                      <option value="192">Sibiu</option>
+                      <option value="54">Sighetu Marmatiei</option>
+                      <option value="55">Sighisoara</option>
+                      <option value="298">Simleu Silvaniei</option>
+                      <option value="56">Sinaia</option>
+                      <option value="57">Slatina</option>
+                      <option value="58">Slobozia</option>
+                      <option value="275">Sovata</option>
+                      <option value="59">Suceava</option>
+                      <option value="250">Talmaciu</option>
+                      <option value="60">Targoviste</option>
+                      <option value="235">Targu Frumos</option>
+                      <option value="63">Targu Jiu</option>
+                      <option value="62">Targu Mures</option>
+                      <option value="223">Targu Neamt</option>
+                      <option value="236">Targu Secuiesc</option>
+                      <option value="227">Tarnaveni</option>
+                      <option value="61">Tecuci</option>
+                      <option value="64">Timisoara</option>
+                      <option value="261">Toplita</option>
+                      <option value="65">Tulcea</option>
+                      <option value="226">Turnu Magurele</option>
+                      <option value="66">Urziceni</option>
+                      <option value="279">Valenii de Munte</option>
+                      <option value="67">Vaslui</option>
+                      <option value="238">Vatra Dornei</option>
+                      <option value="246">Videle</option>
+                      <option value="76">Zalau</option>
+                    </select>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="message-text" class="col-form-label" style="margin-right: 25px;font-size: 14px;">Localitatea*</label>
+                    <select name="expeditor_localitate" class="form-control" style="width: 230px;">
+                    </select>
+                  </div>
+<!--                   <div class="form-group">
                     <label for="deliveryAccount">Cont FAN</label>
                     <select name="deliveryAccount" id="deliveryAccount" class="form-control">
                       <option disabled="" selected="">Alege...</option>
                       <option value="7155019">BERCENI</option>
-                      <option value="7165267">MPOS</option>
-                      <option value="7177309">IASI</option>
-                      <option value="7038192">STANDARD</option>
                     </select>
-                  </div>
+                  </div> -->
                 </div>
                 <div class="col-md-12">
                   <div class="row col-md-3" style="margin-right: 3px !important;">
@@ -463,7 +597,7 @@ if($edit){
                 <div class="col-md-12 panel-footer">
                   <button type="submit" class="btn btn-primary btnGreenNew btnGenerateAwb">Genereaza AWB</button>
                 </div>
-              </div>
+              </form>
             </div>
           </div>
         </div>
@@ -517,7 +651,6 @@ if($edit){
         }
 
         $('document').ready(function () {
-            window.currentPriceGrid = 1;
             $('.toggleswitch').bootstrapToggle();
 
             //Init datepicker for date fields if data-datepicker attribute defined
@@ -589,9 +722,10 @@ if($edit){
                 $(".container-doua-col-right").hide();
               }
           });
-          if("{{$isNewClient}}"){
-          var newOption = new Option("Adauga client nou", -1, false, false);
-          $("#select_client>select").append(newOption).trigger('change');
+          var isEdit = {!! $edit != "" ? 'true' : 'false' !!};
+          if("{{$isNewClient}}" && !isEdit){
+            var newOption = new Option("Adauga client nou", -1, false, false);
+            $("#select_client>select").append(newOption).trigger('change');
           }
           $(".btnOferta").click(function(){
             $("#oferta").show();
@@ -601,7 +735,6 @@ if($edit){
             $("#awb").show();
             $("#oferta").hide();
           });
-          var isEdit = {!! $edit != "" ? 'true' : 'false' !!};
           if(isEdit){
             $("#tip_oferta > select").prop("disabled", "disabled");
             $("#data_oferta > input").attr('readonly', true);
@@ -611,6 +744,7 @@ if($edit){
             var select_html_prices = "<select name='price_grid_id' class='form-control'>";
             var prRules = {!!$priceRules != "" ? $priceRules : 'false' !!};
             var price_grid_id = {!! $dataTypeContent->price_grid_id != null ? $dataTypeContent->price_grid_id : 1 !!};
+            window.currentPriceGrid = price_grid_id;
             if(prRules){
               for(var i = 0; i < prRules.length; i++){
                 if(prRules[i].id == price_grid_id){
@@ -629,18 +763,18 @@ if($edit){
             $("#tip_oferta").append("<input name='type' type='hidden' class='form-control' value='{{$dataTypeContent->type}}'/>");
             $("#tip_oferta").append("<input type='text' readonly class='form-control' value='{{$offerType->title ?? ''}}'/>");
             
-            var selAttrs = null;
-            if(selAttrs != null && selAttrs.length > 0){
-              var attrsArr = [];
-              for(var i = 0; i< selAttrs.length; i++){
-                 if(selAttrs[i].qty != null){ 
-                  $("input[parentId="+selAttrs[i].parent+"]").val(selAttrs[i].qty);
+            var selPrices = {!! $dataTypeContent->prices != "" ? $dataTypeContent->prices : "[]"  !!};
+            var selAttributes = {!! $dataTypeContent->attributes != "" ? $dataTypeContent->attributes : "[]"  !!};
+            if(selPrices != null && selPrices.length > 0){
+              var selAttr = [];
+              for(var i = 0; i< selPrices.length; i++){
+                 if(selPrices[i].qty != null){ 
+                  $("input[parentId="+selPrices[i].parent+"]").val(selPrices[i].qty);
                  }
-                if(selAttrs[i].attribute != null){
-                  attrsArr.push(selAttrs[i].attribute);   
-                }
                }
-              completePrices(attrsArr, false);
+            }
+            if(selAttributes != null){
+              completePrices(selAttributes, false);
             }
           }
           
@@ -677,7 +811,7 @@ if($edit){
               });
             return false;
           });
-          $("select[name=delivery_address_user]").on("change", function(){
+          $("select[name=delivery_address_user]").on('select2:select', function (e) {
             console.log($(this).val());
             if($(this).val() == -2){
               $(".container-box-adresa .select-country").prop('selectedIndex',0);
@@ -759,6 +893,7 @@ if($edit){
             
           });
           $("select[name=price_grid_id]").select2();
+          $("select[name=delivery_address_user]").select2();
           completeWithAddresses = function(addresses, selectedAddr = null){
             var html_user_addresses = `
                         <option value="-1" selected disabled>Alege adresa de livrare</option>
@@ -852,9 +987,12 @@ if($edit){
                   }
                 }
               });
-              completePrices(elements, true);
+              if(isEdit){
+                completePrices(elements, true);
+              }
           });
           function completePrices(elements, reset = true){
+            console.log(elements);
             var combinations = checkClassAndParent(elements);
             var arrProductsClasses = [];
             for(var i = 0; i < combinations.length; i++){
@@ -870,11 +1008,13 @@ if($edit){
               });
             }
             $(".attributeSelector").css("background-color", "white");
+            var prodIds = [];
             for(var k = 0; k < arrProductsClasses.length; k++){
               var product_id = $(".attributeSelector[product_id="+arrProductsClasses[k]+"]").attr("prod_id");
               var category_id = $(".attributeSelector[product_id="+arrProductsClasses[k]+"]").attr("cat_id");
               var parent_id = $(".attributeSelector[product_id="+arrProductsClasses[k]+"]").attr("par_id");
               var selQty = $(".changeQty[parentId="+parent_id+"]").val();
+              prodIds.push(product_id);
               // fetch to get all prices by category and product and currency
               if(reset){
                 resetAllInputs();
@@ -885,6 +1025,18 @@ if($edit){
                   $(".changeQty").trigger("input"); 
                 }, 1000);
               }
+            }
+            if(isEdit){
+              $(".selectedProducts").val(prodIds);
+              setTimeout(function(){
+                var totalFinal = {!! $dataTypeContent->total_final != '' ? $dataTypeContent->total_final : '0' !!};
+                var reducere = {!! $dataTypeContent->reducere != '' ? $dataTypeContent->reducere : '0' !!};
+                $("input[name=reducere]").val(parseFloat(reducere).toFixed(2));
+                $("span.reducereRon").text(parseFloat(reducere).toFixed(2));
+                $("input[name=totalFinal]").val(parseFloat(totalFinal).toFixed(2));
+                $("input[name=totalCalculatedPrice]").val(parseFloat(totalFinal).toFixed(2));
+                $("span.totalFinalRon").text(parseFloat(totalFinal).toFixed(2));
+              }, 2000);
             }
           }
           function completeAllInputsWithPrices(parent_id, rulePrices = [], qty = 0, rightFillable = false) {
@@ -916,11 +1068,7 @@ if($edit){
                   $(".pret-intrare.parent-"+parent_id).val((rule.formulas.product_price*qty).toFixed(2));
                 }
                 if(!rightFillable){
-                  if(qty == 0){
-                    $(".pretIntrare.parent-"+parent_id).text((rule.formulas.product_price*1).toFixed(2));
-                  } else{
-                    $(".pretIntrare.parent-"+parent_id).text((rule.formulas.product_price*qty).toFixed(2));
-                  }
+                  $(".pretIntrare.parent-"+parent_id).text(parseFloat(rule.formulas.product_price).toFixed(2));
                 }
               }
             } else{
@@ -1017,6 +1165,8 @@ if($edit){
             });
             totalPrice = parseFloat(totalPrice).toFixed(2);
             $(".totalGeneralCuTva").text(totalPrice);
+            $("input[name=totalGeneral]").val(totalPrice);
+            $("input[name=totalFinal]").val(totalPrice);
             $(".totalFinalRon").text(totalPrice);
             $(".totalHandled").val(totalPrice);
             var totalBaseRule = [];
@@ -1047,6 +1197,10 @@ if($edit){
             $(".ronCuTVA").val('0.00');
             $(".ronTotal").val('0.00');
             $(".totalGeneralCuTva").text('0.00');
+            $("input[name=totalGeneral]").val('0.00');
+            $("input[name=reducere]").val('0.00');
+            $("input[name=totalFinal]").val('0.00');
+            $(".totalHandled").val('0.00');
             $(".totalFinalRon").text('0.00');
           }
           
@@ -1099,8 +1253,52 @@ if($edit){
                     window.location.reload();
                 }
             });
-          return true;
+            return true;
           }
+          $(".totalHandled").on("input", function(){
+            var totalHandled = $(this).val();
+            var totalGeneral = $("input[name=totalGeneral]").val();
+            var reducere = totalGeneral - totalHandled;
+            var totalFinal = totalHandled;
+            console.log(reducere);
+            $("input[name=reducere]").val(parseFloat(reducere).toFixed(2));
+            $("span.reducereRon").text(parseFloat(reducere).toFixed(2));
+            $("input[name=totalFinal]").val(parseFloat(totalFinal).toFixed(2));
+            $("span.totalFinalRon").text(parseFloat(totalFinal).toFixed(2));
+          });
+          
+          $("select[name=expeditor_agentie]").change(function(){
+            var selected_county = $(this).val();
+            $.ajax({
+                method: 'POST',
+                url: '/cityAgentie',//remove this address on POST message after i get all the address data
+                data: {
+                  county: selected_county,
+                },
+                context: this,
+                async: true,
+                cache: false,
+                dataType: 'json'
+            }).done(function(resp) {
+                var $dropdown = $("select[name=expeditor_localitate]");
+                $dropdown.empty();
+                for(var i = 0; i < resp.length; i++){
+                  $dropdown.append($("<option />").val(resp[i].localitate).text(resp[i].localitate));
+                }
+            })
+            .fail(function(xhr, status, error) {
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                    .indexOf("CSRF token mismatch") >= 0) {
+                    window.location.reload();
+                }
+            });
+            return true;
+          });
+          
+          $(".btnGenerateAwb").click(function(){
+            
+          });
+          
         });
     </script>
 @stop

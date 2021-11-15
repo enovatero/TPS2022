@@ -86,7 +86,27 @@ $(document).ready(function(){
       window.selectStateChange($(vthis).parent().parent().find($(".select-state"))[0], city_id, city_name, state_code, country_code);
     }, 300);
   });
-//   $(".select-state").each(function(){
-//      window.selectStateChange(this);
-//   });
+  $(".side-menu").hover(function(){
+      var leftBarWidth = $(".app-container .content-container .side-menu").width();
+      if(leftBarWidth >= 60 && leftBarWidth <= 124){
+        leftBarWidth = 250;
+      }
+      var newWidth = $(window).width() - leftBarWidth;
+      $(".navbar-fixed-top").css("width", newWidth+"px");
+    }, function(){
+      var leftBarWidth = $(".app-container .content-container .side-menu").width();
+      if(leftBarWidth <= 250 && leftBarWidth >= 125){
+        leftBarWidth = 60;
+      }
+      var newWidth = $(window).width() - leftBarWidth;
+      $(".navbar-fixed-top").css("width", newWidth+"px");
+    }
+  );
+  $(".admin-left > ul li>a").each(function(){
+    var elemClasses = $(this).find($("span")).first().attr('class').split(/\s+/);
+    var isImg = elemClasses[1].toLowerCase().includes('/images/voyager_menu/');
+    if(isImg){
+      $(this).find($("span")).first().addClass('voyager-custom-menu-img').css('background-image', 'url(' + elemClasses[1] + ')');
+    }
+  })
 });

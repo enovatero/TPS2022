@@ -118,7 +118,7 @@
                                                 $data->{$row->field} = $data->{$row->field.'_browse'};
                                             }
                                             @endphp
-                                            <td>
+                                            <td class="offer__list--td">
                                                 @if (isset($row->details->view))
                                                     @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $data->{$row->field}, 'action' => 'browse', 'view' => 'browse', 'options' => $row->details])
                                                 @elseif($row->type == 'image')

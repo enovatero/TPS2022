@@ -3,10 +3,13 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OfferType extends Model
 {
+    use SoftDeletes;
+    protected $dates = ['deleted_at'];
+  
     public function children() {
       return $this->hasMany(OfferType::class, 'parent_id')
           ->with('children')

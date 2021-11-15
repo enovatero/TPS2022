@@ -191,9 +191,12 @@
             $(document).ready(function () {
                 $('.side-body').multilingual();
             });
+
+
         </script>
     @endif
     <script>
+        
         var deleteFormAction;
         $('.delete').on('click', function (e) {
             var form = $('#delete_form')[0];
@@ -211,4 +214,7 @@
         });
 
     </script>
+    
 @stop
+
+

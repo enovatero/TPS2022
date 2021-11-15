@@ -6,6 +6,8 @@ use App\Http\Controllers\VoyagerOfferTypeController;
 use App\Http\Controllers\VoyagerRulesPricesController;
 use App\Http\Controllers\VoyagerProductsController;
 use App\Http\Controllers\VoyagerOfferController;
+use App\Http\Controllers\VoyagerController;
+use App\Http\Controllers\FanCourierController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +32,7 @@ Route::post('/saveNewAddress', [AddressController::class, 'saveNewAddress']);
 
 Route::group(['prefix' => 'admin'], function () {
     Voyager::routes();
+//     Route::get('/', [VoyagerController::class,'index'])->middleware('admin.user');
     Route::post('orderOffer', [VoyagerOfferTypeController::class,'order_item'])->middleware('admin.user');
     Route::get('offers/relation', [VoyagerOfferTypeController::class,'relation'])->name('voyager.offers.relation');
     Route::post('/saveOfferTypeProducts', [VoyagerOfferTypeController::class, 'saveOfferTypeProducts'])->middleware('admin.user');
@@ -37,4 +40,19 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('/getAttributesByParent', [VoyagerProductsController::class, 'getAttributesByParent'])->middleware('admin.user');
     Route::post('/getPricesByProductAndCategory', [VoyagerOfferController::class, 'getPricesByProductAndCategory'])->middleware('admin.user');
     Route::put('/ajaxSaveUpdateOffer', [VoyagerOfferController::class, 'ajaxSaveUpdateOffer'])->middleware('admin.user');
+    Route::get('/generatePDF', [VoyagerOfferController::class, 'generatePDF'])->middleware('admin.user');
+    Route::post('/retrieveOffersPerYearMonth', [VoyagerOfferController::class, 'retrieveOffersPerYearMonth'])->middleware('admin.user');
+    Route::get('/forceFetchProductsWinMentor', [VoyagerProductsController::class, 'forceFetchProductsWinMentor'])->middleware('admin.user');
+    Route::get('/forceFetchProductsWinMentor', [VoyagerProductsController::class, 'forceFetchProductsWinMentor'])->middleware('admin.user');
+    Route::get('/products-complete', [VoyagerProductsController::class, 'productsComplete'])->middleware('admin.user');
+    Route::get('/products-incomplete', [VoyagerProductsController::class, 'productsIncomplete'])->middleware('admin.user');
+    // Fancourier
+    Route::post('generateAwb', [FanCourierController::class, 'generateAwb'])->middleware('admin.user');
 });
+
+Route::get('counties', [FanCourierController::class, 'getCounties']);
+Route::post('cities', [FanCourierController::class, 'getCities']);
+Route::post('citiesWithId', [FanCourierController::class, 'getCitiesWithId']);
+Route::post('cityAgentie', [FanCourierController::class, 'getCitiesAgency']);
+Route::get('km-exteriori/{id_localitate}', [FanCourierController::class, 'getKmExteriori']);
+Route::get('getSedii/{localitate}', [FanCourierController::class, 'getSedii']);

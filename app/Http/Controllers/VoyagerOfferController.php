@@ -22,6 +22,8 @@ use App\UserAddress;
 use App\LegalEntity;
 use App\Individual;
 use App\Product;
+use App\ProductParent;
+use PDF;
 
 class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
 {
@@ -120,7 +122,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         event(new BreadDataAdded($dataType, $data));
       
         $offer = Offer::find($data->id);
-        $offer->status = 'noua';
+        $offer->status = '1';
         $offer->serie = $data->id.''.(new self())->generateRandomId(3);
         $offer->save();
       
@@ -240,6 +242,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 
         if($request->input('delivery_address_user') != null){
           $data->delivery_address_user = $request->input('delivery_address_user') == -2 ? null : $request->input('delivery_address_user');
+          $data->total_general = $request->input('totalGeneral') != null ? number_format(floatval($request->input('totalGeneral')), 2, '.', '') : 0;
+          $data->reducere = $request->input('reducere') != null ? number_format(floatval($request->input('reducere')), 2, '.', '') : 0;
+          $data->total_final = $request->input('totalCalculatedPrice') != null ? number_format(floatval($request->input('totalCalculatedPrice')), 2, '.', '') : 0;
           $data->save();
         }
       
@@ -249,7 +254,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         event(new BreadDataUpdated($dataType, $data));
 
         if (auth()->user()->can('browse', app($dataType->model_name))) {
-            $redirect = redirect()->route("voyager.{$dataType->slug}.index");
+//             $redirect = redirect()->route("voyager.{$dataType->slug}.index");
+            $redirect = redirect("admin/offers/".$data->id."/edit");
         } else {
             $redirect = redirect()->back();
         }
@@ -283,6 +289,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
   
   public function ajaxSaveUpdateOffer(Request $request){
+//     dd($request->all());
     $offer_id = $request->input('offer_id');
     if($offer_id != null){
       $offer = Offer::find($offer_id);
@@ -290,20 +297,25 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offer = new Offer;
     }
     
-    $attributes = $request->input('selectedAttribute');
+    $attributes = $request->input('selectedAttribute') != null ? $request->input('selectedAttribute') : [];
     $parentIds = $request->input('parentIds');
     $offerQty = $request->input('offerQty');
+    $selectedProducts = $request->input('selectedProducts');
+    if($selectedProducts != null){
+      $selectedProducts = array_map('intval', explode(',', $selectedProducts));
+    }
     
     $attributesArray = [];
-    if($attributes && count($attributes) > 0){
-      foreach($attributes as $key => $attr){
-        if(array_key_exists($key, $offerQty)){
-          $attributesArray[] = [
-            'parent' => $parentIds[$key],
-            'attribute' => $attr,
-            'qty' => $offerQty[$key],
-          ];
+    if($offerQty && count($offerQty) > 0){
+      foreach($offerQty as $key => $qty){
+        $par = null;
+        if(array_key_exists($key, $parentIds)){
+          $par = $parentIds[$key];
         }
+        $attributesArray[] = [
+          'parent' => $par,
+          'qty' => $qty,
+        ];
       }
     }
     
@@ -321,10 +333,61 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->updated_at = $request->input('updated_at');
     $offer->status = $request->input('status');
     $offer->serie = $request->input('serie');
-    $offer->attributes = json_encode($attributesArray);
+    $offer->attributes = count($attributes) > 0 ? json_encode($attributes) : null;
+    $offer->prices = json_encode($attributesArray);
+    $offer->total_general = $request->input('totalGeneral') != null ? number_format(floatval($request->input('totalGeneral')), 2, '.', '') : 0;
+    $offer->reducere = $request->input('reducere') != null ? number_format(floatval($request->input('reducere')), 2, '.', '') : 0;
+    $offer->total_final = $request->input('totalCalculatedPrice') != null ? number_format(floatval($request->input('totalCalculatedPrice')), 2, '.', '') : 0;
+    $offer->selected_products = $selectedProducts;
     $offer->save();
     
     
     return ['success' => true, 'offer_id' => $offer->id];
+  }
+  
+//   public function generatePDF(Request $request){
+  public function generatePDF(){
+    $offer = Offer::with(['distribuitor', 'client', 'delivery_address'])->find(7);
+    $dimension = 0;
+    $boxes = 0;
+    $totalQty = 0;
+    if($offer != null){
+      $offer->prices = json_decode($offer->prices, true);
+      if($offer->prices && count($offer->prices) > 0){
+        $newPrices = [];
+        foreach($offer->prices as $item){
+          $parent = ProductParent::find($item['parent']);
+          array_push($newPrices, [
+            'dimension' => $parent->dimension,
+            'parent' => $item['parent'],
+            'qty' => $item['qty'],
+          ]);
+          $dimension += $dimension != null && $dimension != 0 ? $dimension*$item['qty'] : $item['qty'];
+          $totalQty += $item['qty'];
+        }
+        $boxes = intval(ceil($totalQty/25)); // rotunjire la urmatoarea valoare
+        $offer->prices = $newPrices;
+      }
+    }
+    $offer->dimension = $dimension;
+    $offer->boxes = $boxes;
+//     dd($offer->toArray());
+    $pdf = PDF::loadView('vendor.pdfs.offer_pdf',['offer' => $offer]);
+    return $pdf->stream('invoice.pdf');
+  }
+  
+  public function retrieveOffersPerYearMonth(Request $request){
+    $year = $request->input('year');
+    $month = $request->input('month');
+    $calendarOrders = Offer::with('status_name')->select('offer_date','serie', 'status')->whereRaw('YEAR(offer_date) = '.$year.' AND MONTH(offer_date) = '.$month)->get();
+    if($calendarOrders && count($calendarOrders) > 0){
+      foreach($calendarOrders as &$order){
+        $order->day = \Carbon\Carbon::parse($order->offer_date)->format('d');
+        $order->month = \Carbon\Carbon::parse($order->offer_date)->format('m');
+        $order->year = \Carbon\Carbon::parse($order->offer_date)->format('Y');
+        $order->status = $order->status_name != null ? $order->status_name->title : 'noua';
+      }
+    }
+    return ['success' => true, 'calendarOrders' => $calendarOrders];
   }
 }

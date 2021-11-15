@@ -5,6 +5,7 @@ namespace App\Providers;
 use TCG\Voyager\Facades\Voyager;
 use App\Admin\FormFields\AddressFormField;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        Paginator::useBootstrap();
         //
     }
 }

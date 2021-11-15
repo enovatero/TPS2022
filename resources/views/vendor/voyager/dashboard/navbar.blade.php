@@ -1,4 +1,4 @@
-<nav class="navbar navbar-default navbar-fixed-top navbar-top">
+<nav class="navbar navbar-default  navbar-fixed-top navbar-top">
     <div class="container-fluid">
         <div class="navbar-header">
         <button class="hamburger btn-link">
@@ -51,9 +51,9 @@
                     @foreach($nav_items as $name => $item)
                     <li {!! isset($item['classes']) && !empty($item['classes']) ? 'class="'.$item['classes'].'"' : '' !!}>
                         @if(isset($item['route']) && $item['route'] == 'voyager.logout')
-                        <form action="{{ route('voyager.logout') }}" method="POST">
+                        <form class="btn__logout--container" action="{{ route('voyager.logout') }}" method="POST">
                             {{ csrf_field() }}
-                            <button type="submit" class="btn btn-danger btn-block">
+                            <button type="submit" class="btn btn-danger btn-block btn__logout">
                                 @if(isset($item['icon_class']) && !empty($item['icon_class']))
                                 <i class="{!! $item['icon_class'] !!}"></i>
                                 @endif

@@ -2,6 +2,7 @@
   $cleanRulePrices = \App\RulesPrice::get();
 @endphp
 <div class="box-body table-responsive no-padding table-prices">
+  <input name="selectedProducts" class="selectedProducts" type="hidden"/>
   <table class="table table-hover items">
     <tbody>
       <tr>
@@ -31,7 +32,7 @@
                       'rel_id' => $attr->id,
                       'attr_id' => $attr->attribute_id,
                       'type' => $attr->getType(),
-                      'value' => json_decode($attr->value, true)
+                      'value' => json_decode($attr->value, true) && json_last_error() != 4 ? json_decode($attr->value, true) : $attr->value
                     ]);
                   }
                 }
@@ -55,7 +56,7 @@
                   $foundedAttributes = json_encode($foundedAttributes);
                 @endphp
                 <input style="display: none;" type="text" par_id="{{$parent->id}}" prod_id="{{$product->id}}" cat_id="{{$parent->category->id}}" attributes="{{$foundedAttributes}}" numberOfAttributes="{{count($product->selectedAttributes)}}" parent_id="parent-{{$parent->id}}" product_id="product-{{$product->id}}" class="attributeSelector" value="{{$product->price}}"/>
-                <input style="display: none;" type="hidden" name="parentIds[]" value="{{$parent->id}}"/>
+                <input style="display: none;" type="hidden" value="{{$parent->id}}"/>
               @endforeach
             </td>
             <td style="text-align: left;"> {{$parent->title}}</td>
@@ -83,6 +84,7 @@
                 <span class="parent-{{$parent->id}} baseRule-{{$rule->id}}">0.00</span>
               </td>
             @endforeach
+            <input style="display: none;" type="hidden" name="parentIds[]" value="{{$parent->id}}"/>
           </tr>
         @endforeach
       @endif
@@ -91,7 +93,7 @@
         <td colspan="6" class="totals" style="text-align: right;font-weight: bold;">
           <b style="font-weight: bold;">Total general cu TVA inclus - RON -</b>
         </td>
-        <td class="totals"><b><span class="totalGeneralCuTva" style="font-weight: bold;">0.00</span></b><input type="hidden"></td>
+        <td class="totals"><b><span class="totalGeneralCuTva" style="font-weight: bold;">0.00</span></b><input name="totalGeneral" type="hidden"></td>
         <td style="background: lightgrey"></td>
         <td style="text-align: center;font-weight: bold;"><span class="totalPricePi">0.00</span></td>
         @foreach($cleanRulePrices as $rule)
@@ -100,7 +102,7 @@
       </tr>
       <tr class="total">
         <td colspan="6" class="totals" style="text-align: right;font-weight: bold;"><b style="font-weight: bold;">Reducere - RON -</b></td>
-        <td class="totals"><b><span class="reducereRon" style="font-weight: bold;">0.00</span></b><input type="hidden"></td>
+        <td class="totals"><b><span class="reducereRon" style="font-weight: bold;">{{$reducere != null || $reducere != 0 ? $reducere : '0.00'}}</span></b><input name="reducere" type="hidden" value="{{$reducere}}"></td>
         <td style="background: lightgrey"></td>
         <th style="text-align:right;font-weight: bold;">PI</th>
         @foreach($cleanRulePrices as $rule)
@@ -109,10 +111,10 @@
       </tr>
       <tr class="total">
         <td colspan="6" class="totals" style="text-align: right;"><b style="font-weight: bold;">Total final - RON -</b></td>
-        <td class="totals"><b><span class="totalFinalRon" style="font-weight: bold;">0.00</span></b><input type="hidden"></td>
+        <td class="totals"><b><span class="totalFinalRon" style="font-weight: bold;">0.00</span></b><input name="totalFinal" type="hidden"></td>
       </tr>
       <tr class="totals">
-        <td colspan="7" class="totals"><input type="text" class="totalHandled" class="form-control" style="width: 100px; float: right; text-align: right"></td>
+        <td colspan="7" class="totals"><input type="number" class="totalHandled" class="form-control" style="width: 100px; float: right; text-align: right" name="totalCalculatedPrice"></td>
       </tr>
     </tbody>
   </table>
