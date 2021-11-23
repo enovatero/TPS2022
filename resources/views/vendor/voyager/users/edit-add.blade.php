@@ -151,6 +151,7 @@
 
 @section('javascript')
     <script>
+       
         $('document').ready(function () {
             $('.toggleswitch').bootstrapToggle();
         });

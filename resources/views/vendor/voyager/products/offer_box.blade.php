@@ -111,11 +111,15 @@
       </tr>
       <tr class="total">
         <td colspan="6" class="totals" style="text-align: right;"><b style="font-weight: bold;">Total final - RON -</b></td>
-        <td class="totals"><b><span class="totalFinalRon" style="font-weight: bold;">0.00</span></b><input name="totalFinal" type="hidden"></td>
+        <td class="totals">
+          <input type="number" class="totalHandled" class="form-control" style="width: 100px; float: right; text-align: right" name="totalCalculatedPrice">
+          <b style="display: none !important;"><span class="totalFinalRon" style="font-weight: bold;">0.00</span></b>
+          <input name="totalFinal" type="hidden">
+        </td>
       </tr>
-      <tr class="totals">
+<!--       <tr class="totals">
         <td colspan="7" class="totals"><input type="number" class="totalHandled" class="form-control" style="width: 100px; float: right; text-align: right" name="totalCalculatedPrice"></td>
-      </tr>
+      </tr> -->
     </tbody>
   </table>
 </div>

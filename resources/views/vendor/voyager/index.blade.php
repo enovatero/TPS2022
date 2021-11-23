@@ -562,7 +562,7 @@
               description: 'Comanda #'+serie+' '+ord.status+'!',
               isComplete: false,
               dates: new Date(ord.year, ord.month - 1, ord.day),
-              color: ord.status === 'noua' ? 'red' : ord.status === 'finalizata' && 'green',
+              color: ord.status === 'noua' ? 'red' : ord.status === 'livrata' && 'green',
             }
        );
      }
@@ -570,5 +570,6 @@
   }
         
 </script>
+
 
 @stop

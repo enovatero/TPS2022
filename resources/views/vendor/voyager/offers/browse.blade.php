@@ -168,7 +168,15 @@
                                                         @endif
 
                                                 @elseif(($row->type == 'select_dropdown' || $row->type == 'radio_btn') && property_exists($row->details, 'options'))
-                                                   {!! $row->details->options->{$data->{$row->field}} ?? '' !!}
+                                                    @if($row->field == "delivery_type")
+                                                      @if($data->delivery_type == null)
+                                                        -
+                                                      @else
+                                                        {!! $row->details->options->{$data->{$row->field}} ?? '' !!}
+                                                      @endif
+                                                    @else
+                                                      {!! $row->details->options->{$data->{$row->field}} ?? '' !!}
+                                                    @endif
                                                 @elseif($row->type == 'date' || $row->type == 'timestamp')
                                                     @if ( property_exists($row->details, 'format') && !is_null($data->{$row->field}) )
                                                         {{ \Carbon\Carbon::parse($data->{$row->field})->formatLocalized($row->details->format) }}
@@ -395,6 +403,10 @@
             $('input[name="row_id"]').each(function() {
                 if ($(this).is(':checked')) {
                     ids.push($(this).val());
+                   $(this).parent().parent().css("background-color", "#6B76D8")
+                }else{
+                   $(this).parent().parent().css("background-color", "#fff")
+
                 }
             });
             $('.selected_ids').val(ids);

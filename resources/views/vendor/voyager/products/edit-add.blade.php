@@ -252,7 +252,7 @@
                       toastr.error(res.error, 'Eroare');
                   } else{
                     $(".containerAttributes").html(res.html_attributes);
-                    $(".retrievedAttribute").select2();
+//                     $(".retrievedAttribute").select2();
                     $(".selectColor").select2({templateSelection: formatState, templateResult: formatState});
                   }
               })
@@ -288,7 +288,7 @@
                $(".retrievedAttribute").select2();
             }
             if($(".selectColor")[0]){
-               $(".selectColor").select2({templateSelection: formatState, templateResult: formatState});
+               $(".selectColor").select2({ templateSelection: formatState, templateResult: formatState});
             }
         });
     </script>

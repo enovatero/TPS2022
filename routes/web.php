@@ -8,6 +8,7 @@ use App\Http\Controllers\VoyagerProductsController;
 use App\Http\Controllers\VoyagerOfferController;
 use App\Http\Controllers\VoyagerController;
 use App\Http\Controllers\FanCourierController;
+use App\Http\Controllers\ColorsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,7 +41,8 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('/getAttributesByParent', [VoyagerProductsController::class, 'getAttributesByParent'])->middleware('admin.user');
     Route::post('/getPricesByProductAndCategory', [VoyagerOfferController::class, 'getPricesByProductAndCategory'])->middleware('admin.user');
     Route::put('/ajaxSaveUpdateOffer', [VoyagerOfferController::class, 'ajaxSaveUpdateOffer'])->middleware('admin.user');
-    Route::get('/generatePDF', [VoyagerOfferController::class, 'generatePDF'])->middleware('admin.user');
+    Route::get('/generatePDF/{offer_id}', [VoyagerOfferController::class, 'generatePDF'])->middleware('admin.user');
+    Route::get('/generatePDFFisa/{offer_id}', [VoyagerOfferController::class, 'generatePDFFisa'])->middleware('admin.user');
     Route::post('/retrieveOffersPerYearMonth', [VoyagerOfferController::class, 'retrieveOffersPerYearMonth'])->middleware('admin.user');
     Route::get('/forceFetchProductsWinMentor', [VoyagerProductsController::class, 'forceFetchProductsWinMentor'])->middleware('admin.user');
     Route::get('/forceFetchProductsWinMentor', [VoyagerProductsController::class, 'forceFetchProductsWinMentor'])->middleware('admin.user');
@@ -48,6 +50,9 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('/products-incomplete', [VoyagerProductsController::class, 'productsIncomplete'])->middleware('admin.user');
     // Fancourier
     Route::post('generateAwb', [FanCourierController::class, 'generateAwb'])->middleware('admin.user');
+    Route::post('changeStatus', [VoyagerOfferController::class, 'changeStatus'])->middleware('admin.user');
+    Route::post('launchOrder', [VoyagerOfferController::class, 'launchOrder'])->middleware('admin.user');
+    Route::get('uploadColors', [ColorsController::class, 'uploadColors'])->middleware('admin.user');
 });
 
 Route::get('counties', [FanCourierController::class, 'getCounties']);

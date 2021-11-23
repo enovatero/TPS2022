@@ -22,6 +22,11 @@ class Offer extends Model
     public function delivery_address(){
       return $this->belongsTo(UserAddress::class, 'delivery_address_user', 'id');
     }
+  
+    public function offerType(){
+      return $this->hasOne(OfferType::class, 'id', 'type');
+    }
+  
     public function attrs(){
       $attributes = $this->attributes;
       $createdAttrs = [];

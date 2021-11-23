@@ -18,7 +18,7 @@
                             <i class="icon voyager-archive"></i>
                         </template>
                         <template v-else-if="fileIs(file, 'folder')">
-                            <i class="icon voyager-folder"></i>
+                        <i class="icon voyager-folder"></i>
                         </template>
                         <template v-else>
                             <i class="icon voyager-file-text"></i>
@@ -47,7 +47,7 @@
                 {{ __('voyager::generic.upload') }}
             </button>
             <button type="button " class="btn btn-primary green__btn-folder" v-if="allowCreateFolder" data-toggle="modal" :data-target="'#create_dir_modal_'+this._uid">
-                <i class="voyager-folder"></i>
+            <i class="icon voyager-folder"></i>
                 {{ __('voyager::generic.add_folder') }}
             </button>
         </div>
@@ -110,7 +110,7 @@
                                     <i class="icon voyager-archive"></i>
                                 </template>
                                 <template v-else-if="fileIs(file, 'folder')">
-                                    <i class="icon voyager-folder"></i>
+                                <img :src="isFileSelected(file) ? '/images/folder-w.svg' : '/images/folder.svg'" />
                                 </template>
                                 <template v-else>
                                     <i class="icon voyager-file-text"></i>
@@ -172,7 +172,7 @@
                                 <i class="voyager-archive"></i>
                             </div>
                             <div v-else-if="fileIs(selected_file, 'folder')">
-                                <i class="voyager-folder"></i>
+                            <img src="/images/folder.svg" />
                             </div>
                             <div v-else>
                                 <i class="voyager-file-text"></i>
@@ -251,7 +251,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title"><i class="voyager-folder"></i> {{ __('voyager::media.add_new_folder') }}</h4>
+                    <h4 class="modal-title"><i class="icon voyager-folder"></i> {{ __('voyager::media.add_new_folder') }}</h4>
                 </div>
 
                 <div class="modal-body">

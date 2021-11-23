@@ -22,6 +22,7 @@ use App\UserAddress;
 use App\LegalEntity;
 use App\Individual;
 use App\Product;
+use App\Status;
 use App\ProductParent;
 use PDF;
 
@@ -123,7 +124,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       
         $offer = Offer::find($data->id);
         $offer->status = '1';
-        $offer->serie = $data->id.''.(new self())->generateRandomId(3);
+        $offer->serie = $data->id;
+        $offer->distribuitor_id = $request->input('distribuitor_id');
         $offer->save();
       
         if($data->client_id == -1){
@@ -243,7 +245,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if($request->input('delivery_address_user') != null){
           $data->delivery_address_user = $request->input('delivery_address_user') == -2 ? null : $request->input('delivery_address_user');
           $data->total_general = $request->input('totalGeneral') != null ? number_format(floatval($request->input('totalGeneral')), 2, '.', '') : 0;
-          $data->reducere = $request->input('reducere') != null ? number_format(floatval($request->input('reducere')), 2, '.', '') : 0;
+          $data->reducere = $request->input('reducere') != null ? number_format(floatval(abs($request->input('reducere'))), 2, '.', '') : 0;
           $data->total_final = $request->input('totalCalculatedPrice') != null ? number_format(floatval($request->input('totalCalculatedPrice')), 2, '.', '') : 0;
           $data->save();
         }
@@ -336,8 +338,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->attributes = count($attributes) > 0 ? json_encode($attributes) : null;
     $offer->prices = json_encode($attributesArray);
     $offer->total_general = $request->input('totalGeneral') != null ? number_format(floatval($request->input('totalGeneral')), 2, '.', '') : 0;
-    $offer->reducere = $request->input('reducere') != null ? number_format(floatval($request->input('reducere')), 2, '.', '') : 0;
+    $offer->reducere = $request->input('reducere') != null ? number_format(floatval(abs($request->input('reducere'))), 2, '.', '') : 0;
     $offer->total_final = $request->input('totalCalculatedPrice') != null ? number_format(floatval($request->input('totalCalculatedPrice')), 2, '.', '') : 0;
+    $offer->transparent_band = $request->input('transparent_band') == 'on' ? 1 : 0;
+    $offer->packing = $request->input('packing');
+    $offer->delivery_details = $request->input('delivery_details');
+    $offer->delivery_type = $request->input('delivery_type');
     $offer->selected_products = $selectedProducts;
     $offer->save();
     
@@ -346,8 +352,37 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
   }
   
 //   public function generatePDF(Request $request){
-  public function generatePDF(){
-    $offer = Offer::with(['distribuitor', 'client', 'delivery_address'])->find(7);
+  public function generatePDF($offer_id){
+    $offer = Offer::with(['distribuitor', 'client', 'delivery_address'])->find($offer_id);
+    $dimension = 0;
+    $boxes = 0;
+    $totalQty = 0;
+    if($offer != null){
+      $offer->prices = json_decode($offer->prices, true);
+      if($offer->prices && count($offer->prices) > 0){
+        $newPrices = [];
+        foreach($offer->prices as $item){
+          $parent = ProductParent::find($item['parent']);
+          array_push($newPrices, [
+            'dimension' => $parent->dimension,
+            'parent' => $item['parent'],
+            'qty' => $item['qty'],
+          ]);
+          $dimension += $dimension != null && $dimension != 0 ? $dimension*$item['qty'] : $item['qty'];
+          $totalQty += $item['qty'];
+        }
+        $boxes = intval(ceil($totalQty/25)); // rotunjire la urmatoarea valoare
+        $offer->prices = $newPrices;
+      }
+    }
+    $offer->dimension = $dimension;
+    $offer->boxes = $boxes;
+    $pdf = PDF::loadView('vendor.pdfs.offer_pdf',['offer' => $offer]);
+    return $pdf->download('Oferta_TPS'.$offer->serie.'_'.date('m-d-Y').'.pdf');
+  }
+  
+  public function generatePDFFisa($offer_id){
+    $offer = Offer::with(['distribuitor', 'client', 'delivery_address'])->find($offer_id);
     $dimension = 0;
     $boxes = 0;
     $totalQty = 0;
@@ -372,8 +407,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->dimension = $dimension;
     $offer->boxes = $boxes;
 //     dd($offer->toArray());
-    $pdf = PDF::loadView('vendor.pdfs.offer_pdf',['offer' => $offer]);
-    return $pdf->stream('invoice.pdf');
+    $pdf = PDF::loadView('vendor.pdfs.offer_pdf_order',['offer' => $offer]);
+    return $pdf->stream('Fisa Comanda_TPS'.$offer->numar_comanda.'_'.date('m-d-Y').'.pdf');
   }
   
   public function retrieveOffersPerYearMonth(Request $request){
@@ -390,4 +425,40 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
     return ['success' => true, 'calendarOrders' => $calendarOrders];
   }
+  
+  public function changeStatus(Request $request){
+    if($request->input('order_id') == null){
+      return ['success' => false, 'msg' => 'Te rugam sa selectezi o comanda pentru a schimba statusul!'];
+    }
+    if($request->input('status') == null){
+      return ['success' => false, 'msg' => 'Te rugam sa selectezi un status!'];
+    }
+    try{
+      $offer = Offer::find($request->input('order_id'));
+      $status = Status::where('title', 'like', '%'.$request->input('status').'%')->first();
+      $offer->status = $status != null ? $status->id : 1;
+      $offer->save();
+      return ['success' => true, 'msg' => 'Statusul a fost modificat cu succes!'];
+    } catch(\Exception $e){
+      return ['success' => false, 'msg' => 'Statusul nu a putut fi modificat!'];
+    }
+  }
+  
+  public function launchOrder(Request $request){
+    if($request->input('order_id') == null){
+      return ['success' => false, 'msg' => 'Te rugam sa selectezi o comanda pentru a lansa comanda!'];
+    }
+    try{
+      $offer = Offer::find($request->input('order_id'));
+      $status = Status::where('title', 'like' , '%productie%')->first();
+      $offer->status = $status != null ? $status->id : 1;
+      $nextOrderNumber = Offer::where('numar_comanda', '!=', null)->count() + 1;
+      $offer->numar_comanda = $nextOrderNumber;
+      $offer->save();
+      return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => $status->title];
+    } catch(\Exception $e){
+      return ['success' => false, 'msg' => 'Statusul nu a putut fi modificat!'];
+    }
+  }
+  
 }

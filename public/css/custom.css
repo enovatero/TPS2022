@@ -531,3 +531,16 @@ table, th, td{
 .table-prices input[type=number] {
   -moz-appearance: textfield;
 }
+#mod_livrare, .delivery-method{
+  display: none;
+}
+.panel-delivery-method{
+  display: flex;
+  flex-direction: column;
+}
+.panel-delivery-method #mod_livrare_detaliu{
+  display: block;
+}
+#mod_livrare_detaliu span.select2{
+  border: 1px solid #cecece;
+}

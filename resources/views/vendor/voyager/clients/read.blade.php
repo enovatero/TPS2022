@@ -185,6 +185,8 @@
     </div><!-- /.modal -->
 @stop
 
+
+
 @section('javascript')
     @if ($isModelTranslatable)
         <script>
@@ -194,6 +196,8 @@
         </script>
     @endif
     <script>
+        
+
         var deleteFormAction;
         $('.delete').on('click', function (e) {
             var form = $('#delete_form')[0];

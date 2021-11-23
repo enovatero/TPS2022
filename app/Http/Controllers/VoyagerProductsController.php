@@ -307,15 +307,19 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
                 $foundedColor = array_key_first($value);
                 $val = $value[$foundedColor];
                 if($selected){
-                  $html_attributes .= '<option value="'.$attribute->id.'_'.$foundedColor.'_'.$val.'" selected></option>';
+                  $html_attributes .= '<option value="'.$attribute->id.'_'.$foundedColor.'_'.$val.'" selected>'.$val.'</option>';
                 } else{
-                  $html_attributes .= '<option value="'.$attribute->id.'_'.$foundedColor.'_'.$val.'"></option>';
+                  $html_attributes .= '<option value="'.$attribute->id.'_'.$foundedColor.'_'.$val.'">'.$val.'</option>';
                 }
               } else{
                 if($selected){
                   $html_attributes .= '<option value="'.$attribute->id.'_'.$value.'" selected>'.$value.'</option>';
                 } else{
-                  $html_attributes .= '<option value="'.$attribute->id.'_'.$value.'">'.$value.'</option>';
+                  if($attribute->title == 'Dimensiune sistem scurgere' && $value == "125/087"){
+                    $html_attributes .= '<option value="'.$attribute->id.'_'.$value.'" selected>'.$value.'</option>';
+                  } else{
+                    $html_attributes .= '<option value="'.$attribute->id.'_'.$value.'">'.$value.'</option>';
+                  }
                 }
               }
             }
@@ -368,7 +372,10 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
             $model = app($dataType->model_name);
 
             // preiau toate produsele care au inclusiv campurile pret si parinte selectate, deci sunt produse complete
-            $query = $model::select($dataType->name.'.*')->where('price', '!=', null)->where('parent_id', '!=', null);
+            $query = $model::select($dataType->name.'.*')->where(function($query){
+               $query->where('price', '!=', null);
+               $query->orWhere('parent_id', '!=', null);
+            });
 
             if ($dataType->scope && $dataType->scope != '' && method_exists($model, 'scope'.ucfirst($dataType->scope))) {
                 $query->{$dataType->scope}();
@@ -506,6 +513,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
         ));
   }
     public function productsInComplete(Request $request){
+//         \DB::enableQueryLog();
             // GET THE SLUG, ex. 'posts', 'pages', etc.
         $slug = 'products';
 
@@ -536,7 +544,10 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
             $model = app($dataType->model_name);
 
             // preiau toate produsele care au inclusiv campurile pret si parinte selectate, deci sunt produse complete
-            $query = $model::select($dataType->name.'.*')->where('price', null)->orWhere('parent_id', null);
+            $query = $model::select($dataType->name.'.*')->where(function($query){
+               $query->where('price', null);
+               $query->orWhere('parent_id', null);
+            });
 
             if ($dataType->scope && $dataType->scope != '' && method_exists($model, 'scope'.ucfirst($dataType->scope))) {
                 $query->{$dataType->scope}();
@@ -655,6 +666,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
         }
       
         $dataType->display_name_plural = 'Articole DRAFT';
+//         dd(\DB::getQueryLog());
 
         return Voyager::view($view, compact(
             'actions',
@@ -684,7 +696,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
     $tva = floatVal(setting('admin.tva_products'))/100;
     $formula = $rulePrice != null && $rulePrice['formulas'] ? json_decode($rulePrice['formulas'], true) : [];
     $foundedFormula = null;
-    $currency = $currency == null ? : ($offerype->exchange != null ? $offerype->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
+    $currency = $currency == null ? : ($offerype && $offerype->exchange != null ? $offerype->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
     if(count($formula) > 0){
       foreach($formula as $itm){
         if($itm['categorie'] == $category_id){
@@ -699,6 +711,6 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
       $priceWithTva = $basePriceRon+($basePriceRon*$tva);
       $totalPriceWithTva = number_format($priceWithTva*$qty, 2, '.', '');
     }
-    return ['priceWithTva' => $priceWithTva, 'totalPriceWithTva' => $totalPriceWithTva];
+    return ['priceWithTva' => $priceWithTva, 'totalPriceWithTva' => $totalPriceWithTva, 'eurPrice' => $price];
   }
 }

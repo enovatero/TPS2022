@@ -22,11 +22,7 @@
                 </a>
             @endif
         @endcan
-        @can('delete', app($dataType->model_name))
-            @if($usesSoftDeletes)
-                <input type="checkbox" @if ($showSoftDeleted) checked @endif id="show_soft_deletes" data-toggle="toggle" data-on="{{ __('voyager::bread.soft_deletes_off') }}" data-off="{{ __('voyager::bread.soft_deletes_on') }}">
-            @endif
-        @endcan
+        
         @foreach($actions as $action)
             @if (method_exists($action, 'massAction'))
                 @include('voyager::bread.partials.actions', ['action' => $action, 'data' => null])
@@ -35,6 +31,11 @@
         <a class="btn btn-success btn-add-new btnForceWinMentor" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
             <i class="voyager-download" style="margin-right: 10px;"></i> <span> Preia produse WinMentor</span>
         </a>
+        @can('delete', app($dataType->model_name))
+            @if($usesSoftDeletes)
+                <div class="input__toggle--btn"><input class="input__toggle--btn" type="checkbox" @if ($showSoftDeleted) checked @endif id="show_soft_deletes" data-toggle="toggle" data-on="{{ __('voyager::bread.soft_deletes_off') }}" data-off="{{ __('voyager::bread.soft_deletes_on') }}"></div>
+            @endif
+        @endcan
         @include('voyager::multilingual.language-selector')
     </div>
 @stop
@@ -274,7 +275,7 @@
                                         'all' => $dataTypeContent->total()
                                     ]) }}</div>
                             </div>
-                            <div class="pull-right">
+                            <div class="pull-right tra">
                                 {{ $dataTypeContent->appends([
                                     's' => $search->value,
                                     'filter' => $search->filter,

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Validator;
 use App\UserAddress;
 use App\Offer;
+use App\Client;
 
 class AddressController extends Controller
 {
@@ -98,13 +99,14 @@ class AddressController extends Controller
           return ['success' => false, 'msg' => $validator->errors()->all()];  
       } else{
         $address = UserAddress::where('id', $request->input('user_id'))->get();
+        $client = Client::find($request->input('user_id'));
         foreach($address as &$addr){
           $addr->city_name = $addr->city_name();
           $addr->state_name = $addr->state_name();
           $addr->phone = $addr->delivery_phone != null ? $addr->delivery_phone : $addr->userData()->phone;
           $addr->name = $addr->delivery_contact != null ? $addr->delivery_contact : $addr->userData()->name;
         }
-        return ['success' => true, 'userAddresses' => $address];
+        return ['success' => true, 'userAddresses' => $address, 'transparent_band' => $client->transparent_band];
       }
     }
     public function saveNewAddress(Request $request){

@@ -103,17 +103,10 @@
                                     @endif
                                 </div>
                             @endforeach
-                            <div class="panel-footer">
-                                @section('submit-buttons')
-                                    <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>
-                                @stop
-                                @yield('submit-buttons')
-                            </div>
-
-                        </div><!-- panel-body -->
+                            </div><!-- panel-body -->
                           @if($edit)
-                            <div class="panel-body col-md-7">
-                              <h4 class="col-md-12" style="margin-bottom: 25px;">Aplicatii regula</h4>
+                            <div class="panel-body col-md-7" style="width: 100%;">
+                              <h4 class="col-md-12" style="margin-bottom: 25px;margin-bottom: 25px;border-top: 1px solid #CECECE;padding-top: 2rem;border-bottom: 1px solid #cecece;padding-bottom: 2rem;">Detalii regula</h4>
                               <div>
                                 <div class="box-body">
                                     <table class="table table-hover">
@@ -170,20 +163,90 @@
                                             <input name="formula" class="" type="number"/>
                                           </td>
                                           <td class="al_right">
-                                            <button type="button" class="btn btn-primary btn-xs btnAddFormula" style="margin-left:1%" title="Adauga formula">Adauga formula</button>
+                                            <button type="button" class="btn btn-primary btn-xs btnAddFormula btnAddFormula2" style="margin-left:1%" title="Adauga formula">Adauga formula</button>
                                           </td>
                                         </tr>
                                     </tbody>
                                   </table>
-                                <p><b>Reguli formula:</b>
+                                  <!-- <table class="table table-hover">
+                                      <tbody>
+                                     
+                                        @if($formulas)
+                                          @foreach($formulas as $formula)
+                                            <tr>
+                                              <td>{{$formula['tip_obiect']}}</td>
+                                              <td>{{$formula['categorie_name']}}</td>
+                                              <td>{{$formula['full_formula']}}</td>
+                                              <td class="al_right">
+                                                <button type="button" class="btn btn-danger btn-xs btnRemoveFormula" title="sterge">Sterge</button>
+                                              </td>
+                                              <td style="display: none !important;"><div class="json_input" formula='{{json_encode($formula)}}'></div></td>
+                                            </tr>  
+                                          @endforeach
+                                        @endif
+                                        </tr>
+                                    </tbody>
+                                  </table>
+                                    <div class="inputs__container">
+                                      <div class="name__select--container">
+                                        <span>Tip obiect</span>
+                                        <select name="object_type">
+                                              <option selected disabled>Alege...</option>
+                                              <option value="category">Categorie</option>
+                                            </select>
+                                      </div>
+                                      <div class="name__select--container">
+                                      <span>Denumire obiect</span>
+                                      <select name="object_id">
+                                              <option selected disabled>Alege...</option>
+                                              @foreach($categories as $category)
+                                                <option value="{{$category->id}}">{{$category->title}}</option>
+                                              @endforeach
+                                            </select>
+                                      </div>
+                                      <div class="name__select--container">
+                                      <span>Formula(Variabile, Operator, Alte date)</span>
+                                     <div class="selectors__container">
+                                     <select name="variabila">
+                                              <option selected disabled>Alege...</option>
+                                              <option value="PI">PI</option>
+                                            </select>
+                                            <select name="operator">
+                                              <option selected disabled>Alege...</option>
+                                              <option value="+">+</option>
+                                              <option value="-">-</option>
+                                              <option value="*">*</option>
+                                              <option value="/">/</option>
+                                              <option value="%">%</option>
+                                              <option value="^">^</option>
+                                            </select>
+                                            <input name="formula" class="" type="number"/>
+                                            <td class="al_right">
+                                            <button type="button" class="btn btn-primary btn-xs btnAddFormula" style="margin-left:1%" title="Adauga formula">Adauga formula</button>
+                                          </td>
+                                  </div>
+                                      </div>
+                                  </div> -->
+
+                                <p style="margin-top: 1rem;border-bottom: 1px solid #cecece;padding-bottom: 2rem;"><b>Reguli formula:</b>
                                   <br>- Variabile:<br>PI = pret de intrare produs
                                   <br>- Operanzi: * (inmultire), / (impartire), + (adunare), - (scadere), % (procent), ^ (ridicare la putere)
                                   <br>Ex.: PI*1.25 (25% peste pretul de baza)</p>
                                 </div>
+
                             </div>
+
                           </div>
                           @endif
                         </div>
+                            <div class="panel-footer">
+                                @section('submit-buttons')
+                                    <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>
+                                @stop
+                                @yield('submit-buttons')
+                            </div>
+
+                      
                     </form>
 
                     <iframe id="form_target" name="form_target" style="display:none"></iframe>

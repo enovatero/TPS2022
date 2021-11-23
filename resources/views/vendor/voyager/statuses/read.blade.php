@@ -38,7 +38,7 @@
                
                 <div class="panel panel-bordered" style="padding-bottom:5px;">
                 <div class="clients__see--cont">
-                    <span class="form__client--detail">Detalii utilizator</span>
+                    <span class="form__client--detail">Detalii regula pret</span>
                     @can('edit', $dataTypeContent)
             <a href="{{ route('voyager.'.$dataType->slug.'.edit', $dataTypeContent->getKey()) }}" class="btn btn-info btn__edit--see">
                 <i class="glyphicon glyphicon-pencil"></i> <span class="hidden-xs hidden-sm">{{ __('voyager::generic.edit') }}</span>
@@ -77,7 +77,7 @@
                                 @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => 'read', 'view' => 'read', 'options' => $row->details])
                             @elseif($row->type == "image")
                                 <img class="img-responsive"
-                                     src="{{ filter_var($dataTypeContent->{$row->field}, FILTER_VALIDATE_URL) ? $dataTypeContent->{$row->field} : Voyager::image($dataTypeContent->{$row->field}) }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                                     src="{{ filter_var($dataTypeContent->{$row->field}, FILTER_VALIDATE_URL) ? $dataTypeContent->{$row->field} : Voyager::image($dataTypeContent->{$row->field}) }}">
                             @elseif($row->type == 'multiple_images')
                                 @if(json_decode($dataTypeContent->{$row->field}))
                                     @foreach(json_decode($dataTypeContent->{$row->field}) as $file)
@@ -121,7 +121,7 @@
                             @elseif($row->type == 'checkbox')
                                 @if(property_exists($row->details, 'on') && property_exists($row->details, 'off'))
                                     @if($dataTypeContent->{$row->field})
-                                    <span class="label label-info trr">{{ $row->details->on }}</span>
+                                    <span class="label label-info">{{ $row->details->on }}</span>
                                     @else
                                     <span class="label label-primary">{{ $row->details->off }}</span>
                                     @endif
@@ -193,7 +193,6 @@
             });
         </script>
     @endif
-
     <script>
         var deleteFormAction;
         $('.delete').on('click', function (e) {
@@ -210,5 +209,6 @@
 
             $('#delete_modal').modal('show');
         });
+
     </script>
 @stop

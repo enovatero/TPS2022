@@ -108,5 +108,26 @@ $(document).ready(function(){
     if(isImg){
       $(this).find($("span")).first().addClass('voyager-custom-menu-img').css('background-image', 'url(' + elemClasses[1] + ')');
     }
-  })
+  });
+  $("input[type=number]").attr("changedType", "number").attr("type", "text");
+  (function($) {
+    $.fn.inputFilter = function(inputFilter) {
+      return this.on("contextmenu drop input keydown keyup mousedown mouseup select", function() {
+        if (inputFilter(this.value)) {
+          this.oldValue = this.value;
+          this.oldSelectionStart = this.selectionStart;
+          this.oldSelectionEnd = this.selectionEnd;
+        } else if (this.hasOwnProperty("oldValue")) {
+          this.value = this.oldValue;
+          this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+        } else {
+          this.value = "";
+        }
+      });
+    };
+  }(jQuery));
+  $("input[changedType=number]").inputFilter(function(value) {
+    return /^-?\d*[.]?\d{0,4}$/.test(value); 
+  });
+  
 });

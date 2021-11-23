@@ -776,6 +776,22 @@ input[type="time"].form-control {
   justify-content: space-around !important;
   margin-left: 2rem !important;
 }
+.btnAddFormula2 {
+  color: #5a8ae9 !important;
+  background-color: #fff !important;
+  border: none !important;
+  border-left: 6px solid #5a8ae9 !important;
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px !important;
+  border-top-right-radius: 1rem !important;
+  border-bottom-right-radius: 1rem !important;
+  margin-right: 0.7rem !important;
+  min-width: 8rem !important;
+  height: 3rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+  margin-left: 1.1rem !important;
+}
 
 .tr-functions td select {
   padding: 0.3rem;
@@ -1124,7 +1140,7 @@ input[type="time"].form-control {
   top: -1.3rem;
 }
 .navbar-fixed-top {
-  z-index: 99999999999;
+  z-index: 99999999998;
   width: calc(100% - 250px);
   padding-left: 0px !important;
   margin-left: auto;
@@ -1499,7 +1515,7 @@ input[type="time"].form-control {
   li.dropdown
   > a:after {
   content: url("../images/nav_arrow.svg") !important;
-  top: 29% !important;
+  /*   top: 29% !important; */
 }
 .app-container.expanded
   .content-container
@@ -1521,4 +1537,182 @@ input[type="time"].form-control {
 
 .voyager div.dataTables_paginate li.previous a::before {
   /* content: url("/images/arrow.svg") !important; */
+}
+
+#dataTable_paginate {
+  display: none !important;
+}
+
+#toast-container,
+#bulk_delete_modal {
+  z-index: 99999999999;
+}
+#toast-container > div {
+  z-index: 99999999999;
+}
+.butoane-oferta {
+  width: 100%;
+  display: flex;
+}
+
+.voyager .breadcrumb a {
+  color: #6b76d8 !important;
+}
+
+#search-input {
+  border: none !important;
+}
+
+#search-input input {
+  border: 1.4px solid #eaeaf1;
+  border-radius: 0.7rem;
+  width: 35%;
+  margin-left: 0.2rem;
+}
+.input-group-btn,
+.input-group-btn > .btn {
+  display: none;
+}
+
+#files li .file_link .img_icon,
+#files li .file_link img {
+  display: flex !important;
+}
+
+.detail_img {
+  background: none !important;
+}
+
+.detail_img img {
+  width: 3.2rem;
+  margin-left: 1.5rem;
+  margin-top: 2rem;
+}
+
+#files li .file_link .link_icon {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-open .modal {
+  z-index: 9999999999;
+}
+#files li .file_link .img_icon,
+#files li .file_link img {
+  width: 2rem !important;
+}
+#files li .details .folder h4 {
+  margin-top: 0 !important;
+}
+
+#files li .details h4 {
+  margin-top: 0 !important;
+}
+#files li .file_link .details {
+  display: flex;
+  align-items: center;
+}
+#files li .file_link.selected,
+#files li .file_link {
+  padding: 1rem !important;
+}
+textarea {
+  resize: none;
+}
+
+.tr-functions td:nth-child(3) input {
+  margin-top: 0.5rem !important;
+}
+
+.input__toggle--btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle.btn {
+  height: 50px !important;
+  background-color: #ebac15;
+
+  border-left: 6px solid #ebac15;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 11rem !important;
+  height: 4rem;
+  justify-content: space-around;
+  border-top-right-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  margin-right: 1.2rem !important;
+}
+
+.toggle-off,
+.toggle-on {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.container-doua-coloane {
+  flex-direction: column;
+}
+
+.box-body {
+  margin-left: 1.2rem;
+}
+
+.inputs__container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 85%;
+}
+
+.name__select--container {
+  display: flex;
+  flex-direction: column;
+}
+
+.selectors__container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.name__select--container span {
+  margin-bottom: 0.5rem;
+}
+
+.tr-functions > td > select {
+  width: 12rem;
+  margin-right: 1rem;
+  background-color: #fff;
+  height: 3rem;
+  border: 0;
+  border: 1px solid #cecece;
+  border-radius: 0.5rem;
+}
+
+.tr-functions > td > input {
+  height: 3rem;
+  border: 1px solid #cecece;
+  border-radius: 0.5rem;
+}
+
+.table > tbody > tr > td,
+.table > tbody > tr > th,
+.table > tfoot > tr > td,
+.table > tfoot > tr > th,
+.table > thead > tr > td {
+  border-top: none;
+}
+
+.butoane-oferta {
+  padding-left: 0 !important;
+  margin-bottom: 1rem;
 }

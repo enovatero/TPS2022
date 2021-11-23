@@ -116,15 +116,13 @@ class VoyagerRulesPricesController extends \TCG\Voyager\Http\Controllers\Voyager
   public function saveRulePrice(Request $request){
     try{
       $formulas = [];
-      if($request->has('formulasArray') && $request->input('formulasArray') != null){
-        $formulasArray = json_encode($request->input('formulasArray'));
-        $rule_id = $request->input('rule_id');
-        RulesPrice::where('id', $rule_id)->update(['formulas' => $formulasArray]);
-        if($request->input('type') == 'add'){
-          return ['success' => true, 'msg' => 'Formula a fost adaugata cu succes!'];
-        } else{
-          return ['success' => true, 'msg' => 'Formula a fost stearsa cu succes!'];
-        }
+      $formulasArray = $request->input('formulasArray') != null ? json_encode($request->input('formulasArray')) : null;
+      $rule_id = $request->input('rule_id');
+      RulesPrice::where('id', $rule_id)->update(['formulas' => $formulasArray]);
+      if($request->input('type') == 'add'){
+        return ['success' => true, 'msg' => 'Formula a fost adaugata cu succes!'];
+      } else{
+        return ['success' => true, 'msg' => 'Formula a fost stearsa cu succes!'];
       }
     } catch(\Exception $e){
       return ['success' => false, 'error' => 'S-a produs o eroare pe server iar datele nu au putut fi salvate!'];

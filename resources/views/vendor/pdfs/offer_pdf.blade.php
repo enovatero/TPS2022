@@ -53,11 +53,13 @@
 	</style>
 </head>
 <body>
-
+@php
+    $offerType = $offer->offerType;
+@endphp
 <table width="100%">
 	<tr>
 		<td width="10%"><img src="{{Voyager::image(setting('admin.icon_image'))}}" style="height: 80px"></td>
-		<td width="50%" style="color:#0000BB;">
+		<td width="{{$offerType && $offerType->header_img != null ? '45%' : '50%'}}" style="color:#0000BB;">
 			<span style="font-weight: bold; font-size: 12pt;">{{setting('admin.title')}}</span><br>
 			Sediu: {{setting('admin.sediu_tps')}}<br>
 			CUI: {{setting('admin.cui_tps')}} | Reg. Com.: {{setting('admin.reg_com_tps')}}<br>
@@ -65,7 +67,7 @@
 			<b>Email:</b> {{$offer->agent ? $offer->agent->email : ''}}<br>
 			<b>Distribuitor:</b> {{$offer->distribuitor ? $offer->distribuitor->title : ''}}
 		</td>
-		<td width="40%" style="text-align: right; font-size: 10pt">
+		<td width="{{$offerType && $offerType->header_img != null ? '35%' : '40%'}}" style="text-align: right; font-size: 10pt">
 			Oferta: <b>{{'TPS'.$offer->id}} {{$offer->serie}} / {{\Carbon\Carbon::parse($offer->offer_date)->format('d-m-Y')}}</b>
 			<p style="font-size: 8pt;"><br>
         @if($offer->attrs() && count($offer->attrs())>0)
@@ -74,6 +76,11 @@
           @endforeach
         @endif
       </p>
+      @if($offerType && $offerType->header_img != null)
+        <td width="10%">
+          <img src="{{Voyager::image($offerType->header_img)}}" style="width: 80px;"/>
+        </td>
+      @endif
 		</td>
 	</tr>
 </table>
@@ -98,6 +105,14 @@
 	</tr>
 </table>
 
+@if($offerType && $offerType->header_img != null)
+  <table>
+    <tr>
+      <td>
+        <img src="{{Voyager::image($offerType->left_img)}}" style="width: 140px;">
+      </td>
+      <td>
+@endif
 <table class="items" width="100%" cellpadding="1">
 	<thead>
 	<tr>
@@ -115,6 +130,8 @@
     @php
       $parentsWithProducts = $offer->parentsWithProducts();
       $counter = 0;
+      $reducere = $offer->reducere;
+      $totalFinal = 0;
     @endphp
     
   @if($parentsWithProducts)
@@ -126,6 +143,7 @@
             $productPrices = [];
             if(in_array($product->id, $offer->selected_products)){
               $productPrices = \App\Http\Controllers\VoyagerProductsController::getPricesByProductOffer($product->price, $product->getparent->category->id, $offer->type, $offer->price_grid_id, $offer->curs_eur, $parent->qty);
+              $totalFinal += $productPrices['totalPriceWithTva'];
             }
           @endphp
           <tr class="items {{in_array($product->id, $offer->selected_products) ? 'item_wborder' : ''}}">
@@ -133,7 +151,7 @@
             <td>{{$product->name}}</td>
             <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->um_title->title}}</td>
             <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{in_array($product->id, $offer->selected_products) ? $parent->qty : ''}}</td>
-            <td align="right" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{number_format($product->price, 2, '.','')}}</td>
+            <td align="right" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{in_array($product->id, $offer->selected_products) && array_key_exists('eurPrice', $productPrices) ? $productPrices['eurPrice'] : ''}}</td>
             <td align="right" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>
               @if(in_array($product->id, $offer->selected_products))
                 {{$productPrices['priceWithTva']}}
@@ -156,37 +174,38 @@
     
 	<tr class="total">
 		<td colspan="6" class="totals"><b>Total general cu TVA inclus - RON -</b></td>
-		<td class="totals"><b>{{$offer->total_general}}</b></td>
+		<td class="totals"><b>{{$totalFinal}}</b></td>
 	</tr>
 	<tr class="total">
 		<td colspan="6" class="totals"><b>Reducere - RON -</b></td>
-		<td class="totals"><b>-{{$offer->reducere}}</b></td>
+		<td class="totals"><b>{{$reducere != 0 ? '- '.$reducere : '0.00'}}</b></td>
 	</tr>
 	<tr class="total">
 		<td colspan="6" class="totals"><b>Total final - RON -</b></td>
-		<td class="totals"><b>{{$offer->total_final}}</b></td>
+		<td class="totals"><b>{{$totalFinal - $reducere}}</b></td>
 	</tr>
 	</tbody>
 </table>
+
+@if($offerType && $offerType->header_img != null)
+      </td>
+    </tr>
+  </table>   
+@endif
 <table width="100%">
 	<tr>
 		<td width="70%">
 			<p>
-				{{setting('admin.title')}} ofera garantie de 15 ani<br>
-				Valabilitate oferta: 10 zile<br>
-				Transportul este Gratuit<br>
-				Plata se face ramburs prin curier<br>
-				Cutia contine 25 buc si suruburile aferente cantitatii de sipca<br>
-				Continutul unei cutii reprezinta necesarul estimativ de material pentru 3 ml gard<br>
-				Recomandam montarea acesteia pe teava rectangulara de 2 x 4 cm<br>
-				Necesarul de teava rectangulara : >1,5m 2 bare
+				{!! $offerType && $offerType->footer_left_text ? $offerType->footer_left_text : '' !!}
 			</p>
 		</td>
-		<td width="30%" align="right">
-            <br>
-            Lungime totala: <b>{{$offer->dimension}}</b><br><br>
-            Total cutii: <b>{{$offer->boxes}}</b>
-		</td>
+    @if($offerType && $offerType->show_length_boxes == 1)
+      <td width="30%" align="right">
+              <br>
+              Lungime totala: <b>{{$offer->dimension}}</b><br><br>
+              Total cutii: <b>{{$offer->boxes}}</b>
+      </td>
+    @endif
 	</tr>
 	<tr>
 		<td>

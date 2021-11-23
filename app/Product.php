@@ -3,10 +3,14 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 class Product extends Model
 {
+    use SoftDeletes;
+    protected $dates = ['deleted_at'];
+  
     public function allAttributes(){
       return $this->belongsToMany(Attribute::class, 'product_attributes', 'product_id', 'attribute_id')->withPivot('value')->orderBy('type', 'DESC');
     }

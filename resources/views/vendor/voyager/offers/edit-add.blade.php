@@ -96,13 +96,13 @@ if($edit){
 @section('page_header')
     <h1 class="page-title">
         <i class="{{ $dataType->icon }}"></i>
-        Oferta {{$edit ? '#'.$dataTypeContent->serie : 'noua'}}
+        Oferta {{$edit ? '#'.$dataTypeContent->serie : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
     </h1>
     @include('voyager::multilingual.language-selector')
 @stop
 
 @section('content')
-    <div class="page-content edit-add container-fluid">
+    <div class="page-content edit-add container-fluid {{$edit && $dataTypeContent->status_name->title == 'productie' ? 'comanda-productie' : ''}}">
         <div class="row">
             @if($edit)
               <div class="col-md-12">
@@ -115,6 +115,38 @@ if($edit){
                   </li>
                 </ul>
               </div>
+              @if($edit)
+                <div class="col-md-12 butoane-oferta" test="{{$dataTypeContent->status_name->title}}">
+                  <a class="btn btn-success btn-add-new" href="/admin/generatePDF/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                      <i class="voyager-download" style="margin-right: 10px;"></i> <span> Descarca oferta PDF</span>
+                  </a>  
+                  @if($dataTypeContent->numar_comanda == null)
+                    <a class="btn btn-success btn-add-new btnAcceptOffer" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;" order_id="{{$dataTypeContent->id}}">
+                        <i class="voyager-pen" style="margin-right: 10px;"></i> <span>Oferta acceptata - lanseaza comanda</span>
+                    </a>  
+                  @endif
+                  @if($dataTypeContent->numar_comanda != null)
+                    <a class="btn btn-success btn-add-new btnFisaComanda" href="/admin/generatePDFFisa/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                        <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
+                    </a> 
+                    @if($dataTypeContent->status_name->title == 'noua' || $dataTypeContent->status_name->title == 'anulata' || $dataTypeContent->status_name->title == 'modificata')
+                      <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                          <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
+                      </a> 
+                    @endif
+                    @if($dataTypeContent->status_name->title == 'expediata')
+                      <a class="btn btn-success btn-add-new btnSchimbaStatus" status="livrata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                          <i class="voyager-truck" style="margin-right: 10px;"></i> <span>Comanda livrata</span>
+                      </a> 
+                    @endif
+                    @if($dataTypeContent->status_name->title == 'livrata' || $dataTypeContent->status_name->title == 'expediata')
+                      <a class="btn btn-success btn-add-new btnSchimbaStatus" status="retur" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                          <i class="voyager-warning" style="margin-right: 10px;"></i> <span>Comanda retur</span>
+                      </a> 
+                    @endif
+                  @endif
+                </div>
+              @endif
             @endif
             <div class="col-md-12" id="oferta">
 
@@ -167,12 +199,22 @@ if($edit){
 
                                 <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif @if($add) style="width: 100%;" @else style="width: 48%;" @endif>
                                     {{ $row->slugify }}
-                                    <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+                                    @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
+                                      <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+                                    @endif
+                                    @if($row->field != "offer_belongsto_status_relationship")
+                                      <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+                                    @endif
                                     @include('voyager::multilingual.input-hidden-bread-edit-add')
                                     @if (isset($row->details->view))
                                         @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add'), 'view' => ($edit ? 'edit' : 'add'), 'options' => $row->details])
                                     @elseif ($row->type == 'relationship')
-                                        @include('voyager::formfields.relationship', ['options' => $row->details])
+                                        @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
+                                         @include('voyager::formfields.relationship', ['options' => $row->details])
+                                        @endif
+                                        @if($row->field != "offer_belongsto_status_relationship")
+                                          @include('voyager::formfields.relationship', ['options' => $row->details])
+                                        @endif
                                     @else
                                         {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
                                     @endif
@@ -217,7 +259,7 @@ if($edit){
                                                         $retrievedAttr = $attr['id'].'_'.$val;
                                                         $isSelected = $retrievedAttr != null && $offerAttributes != null && in_array($retrievedAttr, $offerAttributes) ? true : false;
                                                       @endphp
-                                                      <option value="{{$attr['id']}}_{{$val}}" @if($isSelected) selected @endif>{{$val}}</option>
+                                                      <option value="{{$attr['id']}}_{{$val}}" @if($isSelected || ($attr['title'] == 'Dimensiune sistem scurgere' && $val == '125/087')) selected @endif>{{$val}}</option>
                                                     @endif
                                                   @endforeach
                                               </select>
@@ -230,7 +272,7 @@ if($edit){
                             @if($edit)
                             <div class="form-group  col-md-12" style="width: 48%;">
                                 <div class="form-group  col-md-12" style="width: 100%;">
-                                  <label class="control-label">Date livrare</label>
+                                  <label class="control-label">Adresa livrare</label>
                                   <select name="delivery_address_user" class="form-control">
                                     <option value="-1" selected disabled>Alege adresa de livrare</option>
                                     <option value="-2">Adauga adresa noua</option>
@@ -364,6 +406,36 @@ if($edit){
                               @include('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $dataTypeContent->reducere])
                             </div>
                           </div>
+                          <div class="col-md-12 butoane-oferta">
+                            <a class="btn btn-success btn-add-new" href="/admin/generatePDF/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                <i class="voyager-download" style="margin-right: 10px;"></i> <span> Descarca oferta PDF</span>
+                            </a>  
+                            @if($dataTypeContent->numar_comanda == null)
+                              <a class="btn btn-success btn-add-new btnAcceptOffer" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;" order_id="{{$dataTypeContent->id}}">
+                                  <i class="voyager-pen" style="margin-right: 10px;"></i> <span>Oferta acceptata - lanseaza comanda</span>
+                              </a>
+                            @endif
+                            @if($dataTypeContent->numar_comanda != null)
+                              <a class="btn btn-success btn-add-new btnFisaComanda" href="/admin/generatePDFFisa/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                  <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
+                              </a> 
+                              @if($dataTypeContent->status_name->title != 'livrata' && $dataTypeContent->status_name->title != 'retur' && $dataTypeContent->status_name->title != 'expediata')
+                                <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                    <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
+                                </a> 
+                              @endif
+                              @if($dataTypeContent->status_name->title == 'expediata')
+                                <a class="btn btn-success btn-add-new btnSchimbaStatus" status="livrata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                    <i class="voyager-truck" style="margin-right: 10px;"></i> <span>Comanda livrata</span>
+                                </a> 
+                              @endif
+                              @if($dataTypeContent->status_name->title == 'livrata' || $dataTypeContent->status_name->title == 'expediata')
+                                <a class="btn btn-success btn-add-new btnSchimbaStatus" status="retur" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                    <i class="voyager-warning" style="margin-right: 10px;"></i> <span>Comanda retur</span>
+                                </a> 
+                              @endif
+                            @endif
+                          </div>
                         @endif
                         <div class="panel-footer">
                             @section('submit-buttons')
@@ -371,6 +443,7 @@ if($edit){
                             @stop
                             @yield('submit-buttons')
                         </div>
+                      <input name="delivery_type" id="mod_livrare_trick" type="hidden" style="display: none !important;" @if($dataTypeContent && $dataTypeContent->delivery_type != null) value="{{$dataTypeContent->delivery_type}}" @else value="fan" @endif/>
                     </form>
 
                     <iframe id="form_target" name="form_target" style="display:none"></iframe>
@@ -385,151 +458,21 @@ if($edit){
                 </div>
             </div>
           <div class="col-md-12" id="awb" style="display: none;">
-            <div class="panel">
-              <form class="panel-body" method="POST">
+            <div class="panel panel-delivery-method">
+              <form class="panel-body form-fan-courier delivery-method delivery-fan" method="POST" @if($edit && $dataTypeContent->delivery_type == 'fan' || $dataTypeContent->delivery_type == null) style="display: block;" @endif>
                 {{csrf_field()}}
                 <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label for="message-text" class="col-form-label" style="margin-right: 25px;font-size: 14px;">Agentie FAN*</label>
-                    <select name="expeditor_agentie" class="form-control" style="width: 230px;">
-                      <option value="232">Adjud</option>
-                      <option value="1">Alba Iulia</option>
-                      <option value="234">Alesd</option>
-                      <option value="2">Alexandria</option>
-                      <option value="3">Arad</option>
-                      <option value="253">Babeni</option>
-                      <option value="4">Bacau</option>
-                      <option value="5">Baia Mare</option>
-                      <option value="256">Baile Govora</option>
-                      <option value="6">Barlad</option>
-                      <option value="274">Beius</option>
-                      <option value="248">Bicaz</option>
-                      <option value="7">Bistrita</option>
-                      <option value="8">Botosani</option>
-                      <option value="9">Braila</option>
-                      <option value="10">Brasov</option>
-                      <option value="11">Bucuresti</option>
-                      <option value="12">Buzau</option>
-                      <option value="258">Calafat</option>
-                      <option value="13">Calarasi</option>
-                      <option value="251">Calimanesti</option>
-                      <option value="285">Campeni</option>
-                      <option value="15">Campia Turzii</option>
-                      <option value="14">Campina</option>
-                      <option value="16">Campulung</option>
-                      <option value="237">Campulung Moldovenesc</option>
-                      <option value="17">Caracal</option>
-                      <option value="224">Caransebes</option>
-                      <option value="252">Carei</option>
-                      <option value="18">Cernavoda</option>
-                      <option value="286">Chisoda</option>
-                      <option value="19">Cluj-Napoca</option>
-                      <option value="269">Comanesti</option>
-                      <option value="20">Constanta</option>
-                      <option value="21">Craiova</option>
-                      <option value="247">Cristuru Secuiesc</option>
-                      <option value="22">Curtea de Arges</option>
-                      <option value="23">Dej</option>
-                      <option value="24">Deva</option>
-                      <option value="245">Dragasani</option>
-                      <option value="25">Drobeta-Turnu Severin</option>
-                      <option value="297">Dumbravita</option>
-                      <option value="26">Fagaras</option>
-                      <option value="270">Falticeni</option>
-                      <option value="233">Fetesti</option>
-                      <option value="241">Filiasi</option>
-                      <option value="271">Floresti</option>
-                      <option value="27">Focsani</option>
-                      <option value="263">Gaesti</option>
-                      <option value="28">Galati</option>
-                      <option value="262">Gheorgheni</option>
-                      <option value="29">Giurgiu</option>
-                      <option value="243">Gura Humorului</option>
-                      <option value="268">Harsova</option>
-                      <option value="254">Hateg</option>
-                      <option value="244">Horezu</option>
-                      <option value="30">Huedin</option>
-                      <option value="31">Hunedoara</option>
-                      <option value="32">Husi</option>
-                      <option value="33">Iasi</option>
-                      <option value="265">Iernut</option>
-                      <option value="266">Ineu</option>
-                      <option value="264">Ludus</option>
-                      <option value="34">Lugoj</option>
-                      <option value="152">Mangalia</option>
-                      <option value="284">Marghita</option>
-                      <option value="37">Medias</option>
-                      <option value="35">Miercurea-Ciuc</option>
-                      <option value="260">Moldova Noua</option>
-                      <option value="257">Motru</option>
-                      <option value="273">Novaci</option>
-                      <option value="38">Odorheiu Secuiesc</option>
-                      <option value="39">Oltenita</option>
-                      <option value="40">Onesti</option>
-                      <option value="41">Oradea</option>
-                      <option value="276">Orastie</option>
-                      <option value="255">Orsova</option>
-                      <option value="43">Pascani</option>
-                      <option value="44">Petrosani</option>
-                      <option value="42">Piatra-Neamt</option>
-                      <option value="45">Pitesti</option>
-                      <option value="46">Ploiesti</option>
-                      <option value="267">Radauti</option>
-                      <option value="221">Ramnicu Sarat</option>
-                      <option value="49">Ramnicu Valcea</option>
-                      <option value="47">Reghin</option>
-                      <option value="48">Resita</option>
-                      <option value="50">Roman</option>
-                      <option value="222">Rosiori de Vede</option>
-                      <option value="249">Roznov</option>
-                      <option value="272">Salonta</option>
-                      <option value="51">Satu Mare</option>
-                      <option value="242">Sebes</option>
-                      <option value="52">Sfantu Gheorghe</option>
-                      <option value="192">Sibiu</option>
-                      <option value="54">Sighetu Marmatiei</option>
-                      <option value="55">Sighisoara</option>
-                      <option value="298">Simleu Silvaniei</option>
-                      <option value="56">Sinaia</option>
-                      <option value="57">Slatina</option>
-                      <option value="58">Slobozia</option>
-                      <option value="275">Sovata</option>
-                      <option value="59">Suceava</option>
-                      <option value="250">Talmaciu</option>
-                      <option value="60">Targoviste</option>
-                      <option value="235">Targu Frumos</option>
-                      <option value="63">Targu Jiu</option>
-                      <option value="62">Targu Mures</option>
-                      <option value="223">Targu Neamt</option>
-                      <option value="236">Targu Secuiesc</option>
-                      <option value="227">Tarnaveni</option>
-                      <option value="61">Tecuci</option>
-                      <option value="64">Timisoara</option>
-                      <option value="261">Toplita</option>
-                      <option value="65">Tulcea</option>
-                      <option value="226">Turnu Magurele</option>
-                      <option value="66">Urziceni</option>
-                      <option value="279">Valenii de Munte</option>
-                      <option value="67">Vaslui</option>
-                      <option value="238">Vatra Dornei</option>
-                      <option value="246">Videle</option>
-                      <option value="76">Zalau</option>
-                    </select>
-                  </div>
-                  
-                  <div class="form-group">
-                    <label for="message-text" class="col-form-label" style="margin-right: 25px;font-size: 14px;">Localitatea*</label>
-                    <select name="expeditor_localitate" class="form-control" style="width: 230px;">
-                    </select>
-                  </div>
-<!--                   <div class="form-group">
                     <label for="deliveryAccount">Cont FAN</label>
                     <select name="deliveryAccount" id="deliveryAccount" class="form-control">
-                      <option disabled="" selected="">Alege...</option>
-                      <option value="7155019">BERCENI</option>
+                        <option disabled="" selected="">Alege...</option>
+                        <option value="7155019">BERCENI</option>
+                        <option value="7165267">MPOS</option>
+                        <option value="7177309">IASI</option>
+                        <option value="7038192">STANDARD</option>
                     </select>
-                  </div> -->
+                  </div>
                 </div>
                 <div class="col-md-12">
                   <div class="row col-md-3" style="margin-right: 3px !important;">
@@ -801,6 +744,8 @@ if($edit){
                     var html_awb_addresses = html_addr[1];
                     $("#deliveryAddressAWB").html(html_awb_addresses);
                     $("select[name=delivery_address_user]").html(html_user_addresses);
+                    var transparent_band = res.transparent_band == 1 ? true : false;
+                    $("input[name=transparent_band]").prop("checked", transparent_band).trigger("click");
                   }
               })
               .fail(function(xhr, status, error) {
@@ -1055,15 +1000,12 @@ if($edit){
                 } else{
                   $(parentEl).text('0.00');
                 }
+                $(".ronCuTVA.parent-"+parent_id).val((rule.formulas.ron_cu_tva*1).toFixed(2));
+                $(".eurFaraTVA.parent-"+parent_id).val((rule.formulas.eur_prod_price*1).toFixed(2));
                 if(qty == 0){
-                  $(".eurFaraTVA.parent-"+parent_id).val((rule.formulas.eur_prod_price*1).toFixed(2));
-                  $(".ronCuTVA.parent-"+parent_id).val((rule.formulas.ron_cu_tva*1).toFixed(2));
-//                   $(".ronTotal.parent-"+parent_id).val((rule.formulas.ron_fara_tva*1).toFixed(2));
                   $(".ronTotal.parent-"+parent_id).val('0.00');
                   $(".pret-intrare.parent-"+parent_id).val((rule.formulas.product_price*1).toFixed(2));
                 } else{
-                  $(".eurFaraTVA.parent-"+parent_id).val((rule.formulas.eur_prod_price*qty).toFixed(2));
-                  $(".ronCuTVA.parent-"+parent_id).val((rule.formulas.ron_cu_tva*qty).toFixed(2));
                   $(".ronTotal.parent-"+parent_id).val((rule.formulas.ron_fara_tva*qty).toFixed(2));
                   $(".pret-intrare.parent-"+parent_id).val((rule.formulas.product_price*qty).toFixed(2));
                 }
@@ -1072,6 +1014,7 @@ if($edit){
                 }
               }
             } else{
+              qty = qty == 0 ? 1 : qty;
               $(".baseParent-"+parent_id).each(function(){
                 var basePrice = $(this).val();
                 var calcPrice = (basePrice*qty).toFixed(2);
@@ -1104,6 +1047,8 @@ if($edit){
             return result;
           }
           function arraysEqual(a, b) {
+            a.sort();
+            b.sort();
             if (a === b) return true;
             if (a == null || b == null) return false;
             if (a.length !== b.length) return false;
@@ -1128,6 +1073,7 @@ if($edit){
                       toastr.error(res.error, 'Eroare');
                   } else{
                     window.ruleprices = res.rulePrices;
+                    console.log(window.ruleprices);
                     if(window.ruleprices.length > 0){
                       completeAllInputsWithPrices(parent_id, window.ruleprices, selQty);
                     }
@@ -1155,6 +1101,8 @@ if($edit){
           }
           $("select[name=price_grid_id]").on('select2:select', function (e) {
             var data = e.params.data;
+            $(".reducereRon").text('0.00');
+            $("input[name=reducere]").val('');
             recalculateTotalPrice(data.id);
           });
           function calculateTotalPricePage(){
@@ -1232,6 +1180,27 @@ if($edit){
               }, 500);
           });
           
+  
+          $("body .comanda-productie .selectAttribute").prop("disabled", true).css("cursor", "no-drop");
+          $("body .comanda-productie input[name=curs_eur]").prop("disabled", true).css("cursor", "no-drop");
+          $("body .comanda-productie .changeQty").prop("disabled", true).css("cursor", "no-drop");
+          $("body .comanda-productie select[name=price_grid_id]").prop("disabled", true).css("cursor", "no-drop");
+          $("body .comanda-productie .totalHandled").prop("disabled", true).css("cursor", "no-drop");
+
+          $("#packing>textarea[name=packing]").attr("maxlength", 30);
+          $("#delivery_details>textarea[name=delivery_details]").attr("maxlength", 100);
+          
+          $(".panel-delivery-method").prepend($("#mod_livrare"));
+          $(".panel-delivery-method").find("#mod_livrare").attr("id", "mod_livrare_detaliu");
+          $(".panel-delivery-method").find("#mod_livrare_detaliu").attr("name", "");
+          
+          $("#mod_livrare_detaliu").on('select2:select', function (e) {
+            var data = e.params.data;
+            $(".delivery-method").hide();
+            $(".delivery-"+data.id).show();
+            $("#mod_livrare_trick").val(data.id);
+          });
+          
           function saveNewDataToDb(){
             $.ajax({
                 method: 'POST',
@@ -1267,23 +1236,63 @@ if($edit){
             $("span.totalFinalRon").text(parseFloat(totalFinal).toFixed(2));
           });
           
-          $("select[name=expeditor_agentie]").change(function(){
-            var selected_county = $(this).val();
+          
+          $(".btnGenerateAwb").click(function(){
+            
+          });
+          $(document).on("click", ".btnSchimbaStatus", function(){
+            var order_id = $(this).attr("order_id");
+            var status = $(this).attr("status");
+            var vthis = this;
             $.ajax({
                 method: 'POST',
-                url: '/cityAgentie',//remove this address on POST message after i get all the address data
+                url: '/admin/changeStatus',//remove this address on POST message after i get all the address data
                 data: {
-                  county: selected_county,
+                  order_id: order_id,
+                  status: status,
                 },
                 context: this,
                 async: true,
                 cache: false,
                 dataType: 'json'
             }).done(function(resp) {
-                var $dropdown = $("select[name=expeditor_localitate]");
-                $dropdown.empty();
-                for(var i = 0; i < resp.length; i++){
-                  $dropdown.append($("<option />").val(resp[i].localitate).text(resp[i].localitate));
+                if(resp.success){
+                  $(vthis).remove();
+                  var html_append = '';
+                  if(status != 'livrata' && status != 'retur' && status != 'expediata'){
+                    html_append += 
+                      `
+                         <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                            <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
+                        </a> 
+                      `;
+                  }
+                  if(status == 'expediata' && status != 'retur'){
+                    html_append +=
+                    `
+                     <a class="btn btn-success btn-add-new btnSchimbaStatus" status="livrata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                          <i class="voyager-truck" style="margin-right: 10px;"></i> <span>Comanda livrata</span>
+                      </a> 
+                    `;
+                  }
+                  if((status == 'livrata' || status == 'expediata')){
+                    $(".butoane-oferta").find($(".btnSchimbaStatus[status=retur]")).remove();
+                    html_append +=
+                    `
+                     <a class="btn btn-success btn-add-new btnSchimbaStatus" status="retur" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                          <i class="voyager-warning" style="margin-right: 10px;"></i> <span>Comanda retur</span>
+                      </a>
+                    `;
+                    
+                  }
+                  if(status == 'retur'){
+                    $(".butoane-oferta").find($(".btnSchimbaStatus[status=livrata]")).remove();
+                    $(".page-title").text($(".page-title").text() + ' - RETUR');
+                  }
+                  $(".butoane-oferta").append(html_append);
+                  toastr.success(resp.msg);
+                } else{
+                  toastr.error(resp.msg);
                 }
             })
             .fail(function(xhr, status, error) {
@@ -1294,11 +1303,51 @@ if($edit){
             });
             return true;
           });
-          
-          $(".btnGenerateAwb").click(function(){
-            
+          $(document).on("click", ".btnAcceptOffer", function(){
+            var order_id = $(this).attr("order_id");
+            var vthis = this;
+            $.ajax({
+                method: 'POST',
+                url: '/admin/launchOrder',//remove this address on POST message after i get all the address data
+                data: {
+                  order_id: order_id,
+                },
+                context: this,
+                async: true,
+                cache: false,
+                dataType: 'json'
+            }).done(function(resp) {
+                if(resp.success){
+                  $(vthis).remove();
+                  var html_append = '';
+                  if(resp.status == 'productie'){
+                    $(".page-content.edit-add.container-fluid").addClass("comanda-productie");
+                    $("body .comanda-productie .selectAttribute").prop("disabled", true).css("cursor", "no-drop");
+                    $("body .comanda-productie input[name=curs_eur]").prop("disabled", true).css("cursor", "no-drop");
+                    $("body .comanda-productie .changeQty").prop("disabled", true).css("cursor", "no-drop");
+                    $("body .comanda-productie select[name=price_grid_id]").prop("disabled", true).css("cursor", "no-drop");
+                    $("body .comanda-productie .totalHandled").prop("disabled", true).css("cursor", "no-drop");
+                    html_append += 
+                      `
+                         <a class="btn btn-success btn-add-new btnFisaComanda" href="/admin/generatePDFFisa/${order_id}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                              <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
+                          </a> 
+                      `;
+                  }
+                  $(".butoane-oferta").append(html_append);
+                  toastr.success(resp.msg);
+                } else{
+                  toastr.error(resp.msg);
+                }
+            })
+            .fail(function(xhr, status, error) {
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                    .indexOf("CSRF token mismatch") >= 0) {
+                    window.location.reload();
+                }
+            });
+            return true;
           });
-          
         });
     </script>
 @stop
