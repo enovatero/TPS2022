@@ -104,7 +104,11 @@
                                         {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
                                     </span>
                                         @if($row->field == 'exchange')
-                                          <button type="button" class="btn btn-success ml-5 btnCursBnr">Curs EUR BNR</button>
+                                        <img style="margin-right: 1rem;" src="/images/arrows.png" />
+                                          <button type="button" class="btn btn-success ml-5 btnCursBnr">
+                                              <img style="margin-right: 0.5rem;" src="/images/euro.png" />
+                                              Curs EUR BNR
+                                          </button>
                                         @endif
                                         </div>
                                     @endif
@@ -135,6 +139,9 @@
                     <iframe id="form_target" name="form_target" style="display:none"></iframe>
                     <form id="my_form" action="{{ route('voyager.upload') }}" target="form_target" method="post"
                             enctype="multipart/form-data" style="width:0;height:0;overflow:hidden">
+                            <label for="upload_file" class="custom-file-upload">
+    Custom Upload
+</label>
                         <input name="image" id="upload_file" type="file"
                                  onchange="$('#my_form').submit();this.value='';">
                         <input type="hidden" name="type_slug" id="type_slug" value="{{ $dataType->slug }}">

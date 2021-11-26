@@ -50,6 +50,7 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('/products-incomplete', [VoyagerProductsController::class, 'productsIncomplete'])->middleware('admin.user');
     // Fancourier
     Route::post('generateAwb', [FanCourierController::class, 'generateAwb'])->middleware('admin.user');
+    Route::get('printAwb/{awb}/{client_id}', [FanCourierController::class, 'printAwb'])->middleware('admin.user');
     Route::post('changeStatus', [VoyagerOfferController::class, 'changeStatus'])->middleware('admin.user');
     Route::post('launchOrder', [VoyagerOfferController::class, 'launchOrder'])->middleware('admin.user');
     Route::get('uploadColors', [ColorsController::class, 'uploadColors'])->middleware('admin.user');

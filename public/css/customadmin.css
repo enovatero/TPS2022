@@ -693,6 +693,14 @@ tbody td img {
   background-color: #4ea71b;
 }
 
+.offer__status--red {
+  background-color: #e44e15;
+}
+
+.offer__status--blue {
+  background-color: #179bcc;
+}
+
 #data_oferta input {
   padding-top: 0.5rem !important;
   font-weight: 500;
@@ -1539,10 +1547,6 @@ input[type="time"].form-control {
   /* content: url("/images/arrow.svg") !important; */
 }
 
-#dataTable_paginate {
-  display: none !important;
-}
-
 #toast-container,
 #bulk_delete_modal {
   z-index: 99999999999;
@@ -1633,9 +1637,8 @@ textarea {
 
 .toggle.btn {
   height: 50px !important;
-  background-color: #ebac15;
 
-  border-left: 6px solid #ebac15;
+  border-left: 6px solid #eaeaea;
   font-size: 1.2rem;
   display: flex;
   align-items: center;
@@ -1647,6 +1650,15 @@ textarea {
   border-bottom-right-radius: 1rem;
   box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
   margin-right: 1.2rem !important;
+}
+
+.toggle-group span {
+  width: 1.5rem !important;
+  background-color: #eaeaea !important;
+}
+
+.voyager .btn.btn-default:hover {
+  background-color: #6b76d8;
 }
 
 .toggle-off,
@@ -1715,4 +1727,17 @@ textarea {
 .butoane-oferta {
   padding-left: 0 !important;
   margin-bottom: 1rem;
+}
+
+.toggle {
+  margin-left: 1rem;
+  margin-top: 0.3rem !important;
+}
+
+.form-group > .toggle {
+  margin-left: 0 !important;
+}
+
+.voyager input[type="file"] {
+  border-radius: 10px !important;
 }

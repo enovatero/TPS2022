@@ -272,6 +272,9 @@
                                     ]) }}</div>
                             </div>
                             <div class="pull-right">
+                               
+                            
+                               
                                 {{ $dataTypeContent->appends([
                                     's' => $search->value,
                                     'filter' => $search->filter,

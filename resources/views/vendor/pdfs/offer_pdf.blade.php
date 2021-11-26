@@ -139,34 +139,34 @@
       @if($parent->products && count($parent->products) > 0)
         @foreach($parent->products as $product)
           @php
-            $counter++;
             $productPrices = [];
             if(in_array($product->id, $offer->selected_products)){
+              if($parent->qty > 0){
+                $counter++;
+              } 
               $productPrices = \App\Http\Controllers\VoyagerProductsController::getPricesByProductOffer($product->price, $product->getparent->category->id, $offer->type, $offer->price_grid_id, $offer->curs_eur, $parent->qty);
               $totalFinal += $productPrices['totalPriceWithTva'];
             }
           @endphp
-          <tr class="items {{in_array($product->id, $offer->selected_products) ? 'item_wborder' : ''}}">
-            <td align="center">{{$counter}}</td>
-            <td>{{$product->name}}</td>
-            <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->um_title->title}}</td>
-            <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{in_array($product->id, $offer->selected_products) ? $parent->qty : ''}}</td>
-            <td align="right" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{in_array($product->id, $offer->selected_products) && array_key_exists('eurPrice', $productPrices) ? $productPrices['eurPrice'] : ''}}</td>
-            <td align="right" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>
-              @if(in_array($product->id, $offer->selected_products))
-                {{$productPrices['priceWithTva']}}
-              @else
-              
-              @endif
-            </td>
-            <td align="right" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>
-              @if(in_array($product->id, $offer->selected_products))
+          @if(in_array($product->id, $offer->selected_products) && $parent->qty > 0)
+            <tr class="items item_wborder">
+              <td align="center">{{$counter}}</td>
+              <td>{{$product->name}}</td>
+              <td align="center" class="bold">{{$parent->um_title->title}}</td>
+              <td align="center" class="bold">{{$parent->qty}}</td>
+              <td align="right" class="bold">{{array_key_exists('eurPrice', $productPrices) ? $productPrices['eurPrice'] : ''}}</td>
+              <td align="right" class="bold">
+                @if(in_array($product->id, $offer->selected_products))
+                  {{$productPrices['priceWithTva']}}
+                @else
+
+                @endif
+              </td>
+              <td align="right" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>
                 {{$productPrices['totalPriceWithTva']}}
-              @else
-              
-              @endif
-            </td>
-          </tr>
+              </td>
+            </tr>
+          @endif
         @endforeach
       @endif
     @endforeach

@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use FanCourier;
 use Validator;
 use App\Offer;
+use App\UserAddress;
+use App\FanOrder;
+use App\Models\User;
 
 class FanCourierController extends Controller
 {
@@ -103,7 +106,9 @@ class FanCourierController extends Controller
     print_r($awb);
   }
   
-  public static function printAwb($awb){
+  public static function printAwb($awb, $client_id){
+    config(['fancourier.client_id' => $client_id]);
+    app()->bind('fancourier','SeniorProgramming\FanCourier\Services\ApiService');
     if($awb){
       $awb_file = FanCourier::PrintAwb([
           'nr' => $awb,
@@ -149,127 +154,127 @@ class FanCourierController extends Controller
     return $price;
   }
   public static function generateAwb(Request $request){
-    // Datele required pe care le primesc din formular
        $form_data = $request->only([
-          'destinatar_name',
-          'destinatar_contact',
-          'destinatar_phone',
-          'destinatar_fax',
-          'destinatar_email',
-          'destinatar_county',
-          'destinatar_city',
-          'destinatar_km',
-          'sediu_fan',
-          'destinatar_strada',
-          'destinatar_nr',
-          'destinatar_cod_postal',
-          'destinatar_bloc',
-          'destinatar_observatii',
-          'destinatar_etaj',
-          'destinatar_apartament',
-          'expeditor_centru',
-          'expeditor_persoana_contact',
-          'expeditor_agentie',
-          'expeditor_localitate',
-          'tip_serviciu',
-          'numar_plicuri',
+          'order_id',
+          'deliveryAccount',
           'numar_colete',
           'greutate_totala',
-          'plata_ramburs',
           'ramburs_numerar',
-          'ramburs_currency',
-          'valoare_declarata',
           'inaltime_pachet',
           'latime_pachet',
           'lungime_pachet',
-          'observatii_pachet',
           'continut_pachet',
           'ridicare_sediu_fan',
-          'order_id',
+          'plata_expeditie',
+          'deliveryAddressAWB',
         ]);
       $validationRules = [
-          'destinatar_name' => ['required'],
-          'destinatar_phone' => ['required'],
-          'destinatar_county' => ['required'],
-          'destinatar_city' => ['required'],
-          'destinatar_strada' => ['required'],
-          'destinatar_cod_postal' => ['required'],
-          'expeditor_persoana_contact' => ['required'],
-          'expeditor_agentie' => ['required'],
-          'expeditor_localitate' => ['required'],
-          'tip_serviciu' => ['required'],
-          'numar_plicuri' => ['required'],
-          'numar_colete' => ['required'],
+          'order_id'        => ['required'],
+          'deliveryAccount' => ['required'],
+          'deliveryAddressAWB' => ['required'],
+          'numar_colete'    => ['required'],
           'greutate_totala' => ['required'],
+          'ramburs_numerar' => ['required'],
+          'inaltime_pachet' => ['required'],
+          'latime_pachet'   => ['required'],
+          'lungime_pachet'  => ['required'],
+          'continut_pachet' => ['required'],
       ]; 
-      if(isset($form_data['ridicare_sediu_fan']) && $form_data['ridicare_sediu_fan'] == 'on'){
-        $validationRules['sediu_fan'] = ['required'];
-      }
       $validationMessages = [
-          'destinatar_name.required' => 'Numele destinatarului este obligatoriu',
-          'destinatar_phone.required' => 'Numarul de telefon al destinatarului este obligatoriu',
-          'destinatar_county.required' => 'Judetul destinatarului este obligatoriu',
-          'destinatar_city.required' => 'Orasul destinatarului este obligatoriu',
-          // check if the "bifa" was checked
-          'sediu_fan.required' => 'Selectati un sediu FAN',
-          'destinatar_strada.required' => 'Strada destinatarului este obligatorie',
-          'destinatar_cod_postal.required' => 'Codul postal este obligatoriu',
-          'expeditor_persoana_contact.required' => 'Persoana de contact EXPEDITOR este obligatorie',
-          'expeditor_agentie.required' => 'Selectati o agentie FAN',
-          'expeditor_localitate.required' => 'Selectati localitatea agentiei FAN',
-          'tip_serviciu.required' => 'Tipul de serviciu este obligatoriu',
-          'numar_plicuri.required' => 'Adaugati un numar de plicuri',
-          'numar_colete.required' => 'Numarul de colete este obligatoriu',
-          'greutate_totala.required' => 'Greutatea totala este obligatorie',
+          'order_id.required'        => 'Selectati o comanda pentru a genera awb-ul',
+          'deliveryAccount.required' => 'Selectati un cont pentru FanCourier',
+          'deliveryAddressAWB.required' => 'Selectati o adresa de livrare',
+          'numar_colete.required'     => 'Numarul de colete este obligatoriu',
+          'greutate_totala.required'  => 'Greutatea totala este obligatorie',
+          'ramburs_numerar.required'  => 'Adaugati valoarea rambursului',
+          'inaltime_pachet.required'  => 'Adaugati inaltimea pachetului',
+          'latime_pachet.required'    => 'Adaugati latimea pachetului',
+          'lungime_pachet.required'   => 'Adaugati lungimea pachetului',
+          'continut_pachet.required'  => 'Adaugati continutul pachetului',
       ];
+//       if(isset($form_data['ridicare_sediu_fan']) && $form_data['ridicare_sediu_fan'] == 'on'){
+//         $form_data['sediu_fan'] = 'De adaugat sediu FAN daca va fi nevoie + implementare';
+//       }
       $validator = Validator::make($form_data, $validationRules, $validationMessages);
       if ($validator->fails()){
         return ['success' => false, 'msg' => $validator->errors()->toArray()];
       } else{
-//         dd($form_data);
+        $offer = Offer::with('fanData')->find($form_data['order_id']);
+        $agent = User::find($offer->agent_id);
+        $userAddress = UserAddress::find($form_data['deliveryAddressAWB']);
+        $userData = $userAddress->userData();
+        $totalPlata = $form_data['ramburs_numerar'];
+        
         $date_awb = [
-                'tip_serviciu' => 'standard', 
-                'banca' => '',
-                'iban' =>  '',
-                'nr_plicuri' => $form_data['numar_plicuri'],
-                'nr_colete' => $form_data['numar_colete'],
-                'greutate' => $form_data['greutate_totala'],
-                'plata_expeditie' => $form_data['plata_ramburs'],
-                'ramburs_bani' => $form_data['ramburs_numerar'],
-                'plata_ramburs_la' => $form_data['plata_ramburs'],
-                'valoare_declarata' => $form_data['valoare_declarata'],
-                'persoana_contact_expeditor' => $form_data['expeditor_persoana_contact'],
-                'observatii' => $form_data['observatii_pachet'],
-                'continut' => $form_data['continut_pachet'],
-                'nume_destinar' => $form_data['destinatar_name'],
-                'persoana_contact' => $form_data['destinatar_contact'] == null ? $form_data['destinatar_name'] : $form_data['destinatar_contact'] ,
-                'telefon' => $form_data['destinatar_phone'],
-                'fax' => $form_data['destinatar_fax'],
-                'email' => $form_data['destinatar_email'],
-                'judet' => $form_data['destinatar_county'],
-                'localitate' => $form_data['destinatar_city'],
-                'strada' => $form_data['destinatar_strada'],
-                'nr' => $form_data['destinatar_nr'],
-                'cod_postal' => $form_data['destinatar_cod_postal'],
-                'bl' => $form_data['destinatar_bloc'],
-                'scara' => $form_data['destinatar_observatii'],
-                'etaj'  => $form_data['destinatar_etaj'],
-                'apartament' => $form_data['destinatar_apartament'],
-                'inaltime_pachet' => $form_data['inaltime_pachet'],
-                'lungime_pachet' => $form_data['lungime_pachet'],
-                'latime_pachet' => $form_data['latime_pachet'],
-                'restituire' => '',
-                'centru_cost' => '',
-                'optiuni' => '',
-                'packing' => '',
-                'date_personale' => ''
-            ];
+            'tip_serviciu' => $totalPlata > 0 ? 'cont colector' : 'standard', 
+            'banca' => '',
+            'iban' =>  'RO24BTRL04501202U46323XX', // de pus in settings in admin
+            'nr_plicuri' => 0,
+            'nr_colete' => $form_data['numar_colete'],
+            'greutate' => $form_data['greutate_totala'],
+            'plata_expeditie' => $form_data['plata_expeditie'],
+            'ramburs_bani' => $totalPlata > 0 ? floatval($totalPlata) : '',
+            'plata_ramburs_la' => $totalPlata > 0 ? 'expeditor' : '',
+            'valoare_declarata' => $form_data['ramburs_numerar'],
+            'persoana_contact_expeditor' => $agent->name ?: 'Top Profil Sistem',
+            'persoana_contact_expeditor_adresa' => 'Sos. de Centura,  nr. 3',
+            'observatii' => 'A se contacta telefonic',
+            'continut' => $form_data['continut_pachet'] ?: 'Sisteme acoperis',
+            'nume_destinar' => $userAddress->delivery_contact,
+            'persoana_contact' => $userAddress->delivery_contact ?: $userData->name,
+            'telefon' => $userAddress->phone ?: $userData->phone,
+            'fax' => '',
+            'email' => $userAddress->email ?: $userData->email,
+            'judet' => $userAddress->state_name(),
+            'localitate' => $userAddress->city_name(),
+            'strada' => $userAddress->address,
+            'nr' => '',
+            'cod_postal' => '000000',
+            'bl' => '',
+            'scara' => '',
+            'etaj'  => '',
+            'apartament' => '',
+            'inaltime_pachet' => $form_data['inaltime_pachet'],
+            'lungime_pachet' => $form_data['lungime_pachet'],
+            'latime_pachet' => $form_data['latime_pachet'],
+            'restituire' => '',
+            'centru_cost' => '',
+            'optiuni' => '',
+            'packing' => '',
+            'date_personale' => ''
+        ];
         try{
+          config(['fancourier.client_id' => $form_data['deliveryAccount']]);
+          app()->bind('fancourier','SeniorProgramming\FanCourier\Services\ApiService');
+          
           $awb = FanCourier::generateAwb(['fisier' => [$date_awb]]);
-          $offer = Offer::find($form_data['id']);
-          $offer->awb_fancourier = $awb[0]->awb;
+          $created_at = date("Y-m-d H:i:s");
+          
+          if($offer->awb_id != null && $offer->delivery_type == 'fan'){
+            $fanOrder = FanOrder::find($offer->awb_id);
+          } else{
+            $fanOrder = new FanOrder();
+          }
+          
+          $fanOrder->order_id = $offer->id;
+          $fanOrder->cont_id = $form_data['deliveryAccount'];
+          $fanOrder->plata_expeditie = $form_data['plata_expeditie'];
+          $fanOrder->numar_colete = $form_data['numar_colete'];
+          $fanOrder->greutate_totala = $form_data['greutate_totala'];
+          $fanOrder->ramburs_numberar = floatval($totalPlata);
+          $fanOrder->inaltime_pachet = $form_data['inaltime_pachet'];
+          $fanOrder->latime_pachet = $form_data['latime_pachet'];
+          $fanOrder->lungime_pachet = $form_data['lungime_pachet'];
+          $fanOrder->continut_pachet = $form_data['continut_pachet'];
+          $fanOrder->adresa_livrare_id = $form_data['deliveryAddressAWB'];
+          $fanOrder->created_at = $created_at;
+          $fanOrder->updated_at = $created_at;
+          $fanOrder->awb = $awb[0]->awb;
+          $fanOrder->save();
+          
+          $offer->awb_id = $fanOrder->id;
           $offer->save();
-          return ['success' => true, 'msg' => 'AWB-ul s-a generat cu succes!', 'awb' => $offer->awb_fancourier, 'id' => $offer->id];
+          return ['success' => true, 'msg' => 'AWB-ul s-a generat cu succes!', 'awb' => $fanOrder->awb, 'id' => $offer->id, 'client_id' => $fanOrder->cont_id];
         } catch(Exception $e){
           return ['success' => false, 'msg' => 'Eroare: '.$e->getMessage()];
         }

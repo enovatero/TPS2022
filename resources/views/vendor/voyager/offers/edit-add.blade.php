@@ -82,6 +82,21 @@ if($edit){
       $attributesProds = $prodAttrs;
     }
   }
+  $offer = $dataTypeContent;
+   $offer->prices = json_decode($offer->prices, true);
+    if($offer->prices && count($offer->prices) > 0){
+      $newPrices = [];
+      foreach($offer->prices as $item){
+        $parent = \App\ProductParent::find($item['parent']);
+        array_push($newPrices, [
+          'dimension' => $parent->dimension,
+          'parent' => $item['parent'],
+          'qty' => $item['qty'],
+        ]);
+      }
+      $offer->prices = $newPrices;
+    }
+
 }
 @endphp
 
@@ -119,7 +134,12 @@ if($edit){
                 <div class="col-md-12 butoane-oferta" test="{{$dataTypeContent->status_name->title}}">
                   <a class="btn btn-success btn-add-new" href="/admin/generatePDF/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                       <i class="voyager-download" style="margin-right: 10px;"></i> <span> Descarca oferta PDF</span>
-                  </a>  
+                  </a> 
+                  @if($dataTypeContent->delivery_type == 'fan' && $dataTypeContent->fanData && $dataTypeContent->fanData->cont_id != null && $dataTypeContent->fanData->awb != null)
+                    <a target="_blank" class="btn btn-success btn-add-new" href="/admin/printAwb/{{$dataTypeContent->fanData->awb}}/{{$dataTypeContent->fanData->cont_id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                        <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Vizualizeaza AWB</span>
+                    </a> 
+                  @endif
                   @if($dataTypeContent->numar_comanda == null)
                     <a class="btn btn-success btn-add-new btnAcceptOffer" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;" order_id="{{$dataTypeContent->id}}">
                         <i class="voyager-pen" style="margin-right: 10px;"></i> <span>Oferta acceptata - lanseaza comanda</span>
@@ -403,7 +423,7 @@ if($edit){
                         <input name="offer_id" type="hidden" value="{{$dataTypeContent->getKey()}}"/>
                           <div class="col-md-12">
                             <div class="box">
-                              @include('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $dataTypeContent->reducere])
+                              @include('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $dataTypeContent->reducere, 'offer' => $offer])
                             </div>
                           </div>
                           <div class="col-md-12 butoane-oferta">
@@ -467,30 +487,51 @@ if($edit){
                     <label for="deliveryAccount">Cont FAN</label>
                     <select name="deliveryAccount" id="deliveryAccount" class="form-control">
                         <option disabled="" selected="">Alege...</option>
-                        <option value="7155019">BERCENI</option>
-                        <option value="7165267">MPOS</option>
-                        <option value="7177309">IASI</option>
-                        <option value="7038192">STANDARD</option>
+                        <option @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7155019') selected @endif value="7155019">BERCENI</option>
+                        <option @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7165267') selected @endif value="7165267">MPOS</option>
+                        <option @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7177309') selected @endif value="7177309">IASI</option>
+                        <option @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7038192') selected @endif value="7038192">STANDARD</option>
                     </select>
+                  </div>
+<!--                   <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="on">Ridicare sediu FAN</label>
+                      <select name="ridicare_sediu_fan" class="form-control">
+                        <option value="off" selected>Nu</option>
+                        <option value="on">Da</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <div class="sediu"></div>
+                    </div>
+                  </div> -->
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label>Plata expeditie</label>
+                      <select name="plata_expeditie" class="form-control">
+                        <option value="expeditor" @if($edit && (($dataTypeContent->fanData && $dataTypeContent->fanData->plata_expeditie == 'expeditor') || $dataTypeContent->fanData == null)) selected @endif>Expeditor</option>
+                        <option value="destinatar" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->plata_expeditie == 'destinatar') @endif>Destinatar</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="packages">Nr. colete</label>
-                      <input type="text" name="packages" id="packages" class="form-control" value="1">
+                      <input type="number" name="numar_colete" id="packages" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->numar_colete) value="{{$dataTypeContent->fanData->numar_colete}}" @else value="1" @endif>
                     </div>
                   </div>
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="weight">Greutate (kg)</label>
-                      <input type="text" name="weight" id="weight" class="form-control" value="1">
+                      <input type="number" name="greutate_totala" id="weight" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->greutate_totala) value="{{$dataTypeContent->fanData->greutate_totala}}" @else value="1" @endif>
                     </div>
                   </div>
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="cashback">Ramburs (ex: 2542.26)</label>
-                      <input type="text" name="cashback" id="cashback" class="form-control" value="0.00">
+                      <input type="number" name="ramburs_numerar" id="cashback" class="form-control" @if($edit) value="{{$dataTypeContent->total_final}}" @endif>
                     </div>
                   </div>
                 </div>
@@ -498,26 +539,26 @@ if($edit){
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="height">Inaltime (cm)</label>
-                      <input type="text" name="height" id="height" class="form-control">
+                      <input type="number" name="inaltime_pachet" id="height" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->inaltime_pachet) value="{{$dataTypeContent->fanData->inaltime_pachet}}" @endif>
                     </div>
                   </div>
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="Width">Latime (cm)</label>
-                      <input type="text" name="Width" id="Width" class="form-control">
+                      <input type="number" name="latime_pachet" id="Width" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->latime_pachet) value="{{$dataTypeContent->fanData->latime_pachet}}" @endif>
                     </div>
                   </div>
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="lenght">Lungime (cm)</label>
-                      <input type="text" name="lenght" id="lenght" class="form-control">
+                      <input type="number" name="lungime_pachet" id="lenght" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->lungime_pachet) value="{{$dataTypeContent->fanData->lungime_pachet}}" @endif>
                     </div>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
                     <label for="contents">Continut</label>
-                    <input type="text" name="contents" id="contents" class="form-control" value="sisteme acoperis">
+                    <input type="text" name="continut_pachet" id="contents" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->continut_pachet) value="{{$dataTypeContent->fanData->continut_pachet}}" @endif>
                   </div>
                 </div>
                 <div class="col-md-12">
@@ -526,7 +567,7 @@ if($edit){
                     <option disabled="" selected="">Alege...</option>
                     @if($userAddresses != null && count($userAddresses) > 0)
                       @foreach($userAddresses as $address)
-                        <option value="{{$address->id}}">
+                        <option value="{{$address->id}}" @if($edit && $dataTypeContent && $dataTypeContent->fanData && $dataTypeContent->fanData->adresa_livrare_id == $address->id) selected @endif>
                             {{$address->name}} - 
                             {{$address->address}}, 
                             {{$address->city_name}}, 
@@ -538,7 +579,7 @@ if($edit){
                   </select>
                 </div>
                 <div class="col-md-12 panel-footer">
-                  <button type="submit" class="btn btn-primary btnGreenNew btnGenerateAwb">Genereaza AWB</button>
+                  <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwb">Genereaza AWB</button>
                 </div>
               </form>
             </div>
@@ -706,19 +747,6 @@ if($edit){
             $("#tip_oferta").append("<input name='type' type='hidden' class='form-control' value='{{$dataTypeContent->type}}'/>");
             $("#tip_oferta").append("<input type='text' readonly class='form-control' value='{{$offerType->title ?? ''}}'/>");
             
-            var selPrices = {!! $dataTypeContent->prices != "" ? $dataTypeContent->prices : "[]"  !!};
-            var selAttributes = {!! $dataTypeContent->attributes != "" ? $dataTypeContent->attributes : "[]"  !!};
-            if(selPrices != null && selPrices.length > 0){
-              var selAttr = [];
-              for(var i = 0; i< selPrices.length; i++){
-                 if(selPrices[i].qty != null){ 
-                  $("input[parentId="+selPrices[i].parent+"]").val(selPrices[i].qty);
-                 }
-               }
-            }
-            if(selAttributes != null){
-              completePrices(selAttributes, false);
-            }
           }
           
           
@@ -959,7 +987,9 @@ if($edit){
               var category_id = $(".attributeSelector[product_id="+arrProductsClasses[k]+"]").attr("cat_id");
               var parent_id = $(".attributeSelector[product_id="+arrProductsClasses[k]+"]").attr("par_id");
               var selQty = $(".changeQty[parentId="+parent_id+"]").val();
-              prodIds.push(product_id);
+              if(selQty != 0 && selQty != ''){
+                prodIds.push(product_id);
+              }
               // fetch to get all prices by category and product and currency
               if(reset){
                 resetAllInputs();
@@ -1238,7 +1268,37 @@ if($edit){
           
           
           $(".btnGenerateAwb").click(function(){
-            
+            var order_id = "{!! $dataTypeContent && $dataTypeContent->id ? $dataTypeContent->id : 'null' !!}";
+            var vthis = this;
+            $.ajax({
+                method: 'POST',
+                url: '/admin/generateAwb',//remove this address on POST message after i get all the address data
+                data: $(".delivery-fan").serializeArray(),
+                context: this,
+                async: true,
+                cache: false,
+                dataType: 'json'
+            }).done(function(resp) {
+                if(resp.success){
+                  window.open(
+                    "/admin/printAwb/" + resp.awb + "/" + resp.client_id,
+                    '_blank' // <- This is what makes it open in a new window.
+                  );
+//                   window.location.href = "/admin/printAwb/" + resp.awb;
+                  toastr.success(resp.msg);
+                } else{
+                  for(var key in resp.msg) {
+                    toastr.error(resp.msg[key]);
+                  }
+                }
+            })
+            .fail(function(xhr, status, error) {
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                    .indexOf("CSRF token mismatch") >= 0) {
+                    window.location.reload();
+                }
+            });
+            return true;
           });
           $(document).on("click", ".btnSchimbaStatus", function(){
             var order_id = $(this).attr("order_id");

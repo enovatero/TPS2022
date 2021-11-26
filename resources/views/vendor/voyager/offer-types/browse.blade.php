@@ -399,6 +399,10 @@
             $('input[name="row_id"]').each(function() {
                 if ($(this).is(':checked')) {
                     ids.push($(this).val());
+                   $(this).parent().parent().css("background-color", "#6B76D8")
+                }else{
+                   $(this).parent().parent().css("background-color", "#fff")
+
                 }
             });
             $('.selected_ids').val(ids);

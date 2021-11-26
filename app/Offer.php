@@ -27,6 +27,10 @@ class Offer extends Model
       return $this->hasOne(OfferType::class, 'id', 'type');
     }
   
+    public function fanData(){
+      return $this->hasOne(FanOrder::class, 'order_id', 'id');
+    }
+  
     public function attrs(){
       $attributes = $this->attributes;
       $createdAttrs = [];

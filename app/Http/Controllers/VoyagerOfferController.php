@@ -126,6 +126,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $offer->status = '1';
         $offer->serie = $data->id;
         $offer->distribuitor_id = $request->input('distribuitor_id');
+        $offer->agent_id = Auth::user()->id;
         $offer->save();
       
         if($data->client_id == -1){
@@ -281,6 +282,18 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
   
     public function getPricesByProductAndCategory(Request $request){
+      
+      $product_id = $request->input("product_id");
+      $product = Product::find($product_id);
+      $category_id = $request->input("category_id");
+      $cleanRulePrices = \App\RulesPrice::getFormulaByCategory($category_id);
+      $cleanRulePrices = $cleanRulePrices->toArray();
+      $rulePrices = \App\RulesPrice::getFormulasWithPricesByProduct($cleanRulePrices, $product->price, $request->input('currency'));
+      
+      return ['success' => true, 'rulePrices' => $rulePrices];
+    }
+  
+    public function getPricesByProductAndCategoryOld(Request $request){
       $product_id = $request->input("product_id");
       $product = Product::find($product_id);
       $category_id = $request->input("category_id");
@@ -288,7 +301,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $cleanRulePrices = $cleanRulePrices->toArray();
       $rulePrices = \App\RulesPrice::getFormulasWithPricesByProduct($cleanRulePrices, $product->price, $request->input('currency'));
       return ['success' => true, 'rulePrices' => $rulePrices];
-    }
+  }
   
   public function ajaxSaveUpdateOffer(Request $request){
 //     dd($request->all());
@@ -327,7 +340,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->distribuitor_id = $request->input('distribuitor_id');
     $offer->price_grid_id = $request->input('price_grid_id');
     $offer->curs_eur = $request->input('curs_eur');
-    $offer->agent_id = $request->input('agent_id');
+    $offer->agent_id = Auth::user()->id;
     $offer->delivery_address_user = $request->input('delivery_address_user');
     $offer->delivery_date = $request->input('delivery_date');
     $offer->observations = $request->input('observations');

@@ -129,5 +129,7 @@ $(document).ready(function(){
   $("input[changedType=number]").inputFilter(function(value) {
     return /^-?\d*[.]?\d{0,4}$/.test(value); 
   });
-  
+  $(document).on('select2:open', () => {
+    document.querySelector('.select2-search__field').focus();
+  });
 });
