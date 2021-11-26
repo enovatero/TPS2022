@@ -117,7 +117,7 @@ if($edit){
 @stop
 
 @section('content')
-    <div class="page-content edit-add container-fluid {{$edit && $dataTypeContent->status_name->title == 'productie' ? 'comanda-productie' : ''}}">
+    <div class="page-content edit-add container-fluid {{$edit && $dataTypeContent->status != 1 ? 'comanda-productie' : ''}}">
         <div class="row">
             @if($edit)
               <div class="col-md-12">
@@ -149,7 +149,7 @@ if($edit){
                     <a class="btn btn-success btn-add-new btnFisaComanda" href="/admin/generatePDFFisa/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                         <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
                     </a> 
-                    @if($dataTypeContent->status_name->title == 'noua' || $dataTypeContent->status_name->title == 'anulata' || $dataTypeContent->status_name->title == 'modificata')
+                    @if($dataTypeContent->status_name->title == 'noua' || $dataTypeContent->status_name->title == 'anulata' || $dataTypeContent->status_name->title == 'modificata' || $dataTypeContent->status_name->title == 'productie')
                       <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                           <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
                       </a> 
@@ -439,7 +439,7 @@ if($edit){
                               <a class="btn btn-success btn-add-new btnFisaComanda" href="/admin/generatePDFFisa/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                   <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
                               </a> 
-                              @if($dataTypeContent->status_name->title != 'livrata' && $dataTypeContent->status_name->title != 'retur' && $dataTypeContent->status_name->title != 'expediata')
+                              @if($dataTypeContent->status_name->title == 'noua' || $dataTypeContent->status_name->title == 'anulata' || $dataTypeContent->status_name->title == 'modificata' || $dataTypeContent->status_name->title == 'productie')
                                 <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                     <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
                                 </a> 
@@ -463,7 +463,6 @@ if($edit){
                             @stop
                             @yield('submit-buttons')
                         </div>
-                      <input name="delivery_type" id="mod_livrare_trick" type="hidden" style="display: none !important;" @if($dataTypeContent && $dataTypeContent->delivery_type != null) value="{{$dataTypeContent->delivery_type}}" @else value="fan" @endif/>
                     </form>
 
                     <iframe id="form_target" name="form_target" style="display:none"></iframe>
@@ -846,14 +845,17 @@ if($edit){
                   dataType: 'json'
               }).done(function(res) {
                   if (res.success == false) {
-                      toastr.error(res.error, 'Eroare');
+                    console.log(res.error);
+                      for(var i = 0 ; i < res.error.length; i++){
+                        toastr.error(res.error[i], 'Eroare');
+                      }
                   } else{
                     var html_addr = completeWithAddresses(res.userAddresses, res.address.id);
                     var html_user_addresses = html_addr[0];
                     var html_awb_addresses = html_addr[1];
                     $("#deliveryAddressAWB").html(html_awb_addresses);
                     $("select[name=delivery_address_user]").html(html_user_addresses);
-                      toastr.success(res.msg, 'Success');
+                    toastr.success(res.msg, 'Success');
                   }
               })
               .fail(function(xhr, status, error) {
@@ -1220,15 +1222,34 @@ if($edit){
           $("#packing>textarea[name=packing]").attr("maxlength", 30);
           $("#delivery_details>textarea[name=delivery_details]").attr("maxlength", 100);
           
-          $(".panel-delivery-method").prepend($("#mod_livrare"));
+          var mod_livrare_cloned = $("#mod_livrare").clone();
+          mod_livrare_cloned.find("span").remove();
+          mod_livrare_cloned.find("select")
+            .removeClass("select2")
+            .removeClass("select2-hidden-accessible")
+            .removeAttr("data-select2-id")
+            .removeAttr("tabindex")
+            .removeAttr("aria-hidden")
+            .select2();
+          
+          $(".panel-delivery-method").prepend(mod_livrare_cloned[0]);
           $(".panel-delivery-method").find("#mod_livrare").attr("id", "mod_livrare_detaliu");
           $(".panel-delivery-method").find("#mod_livrare_detaliu").attr("name", "");
           
-          $("#mod_livrare_detaliu").on('select2:select', function (e) {
+          $(document).on('select2:select', '#mod_livrare_detaliu>select[name=delivery_type]', function (e) {
             var data = e.params.data;
+            console.log(data);
             $(".delivery-method").hide();
             $(".delivery-"+data.id).show();
-            $("#mod_livrare_trick").val(data.id);
+            $("#mod_livrare>select[name=delivery_type]").val(data.id).trigger("change");
+          });
+          
+          $("#mod_livrare>select[name=delivery_type]").on('select2:select', function (e) {
+            var data = e.params.data;
+            console.log(data);
+            $(".delivery-method").hide();
+            $(".delivery-"+data.id).show();
+            $("#mod_livrare_detaliu>select[name=delivery_type]").val(data.id).trigger("change");
           });
           
           function saveNewDataToDb(){

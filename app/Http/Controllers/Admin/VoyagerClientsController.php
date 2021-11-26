@@ -410,6 +410,11 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             $errMessages['cnp'] = [0 => 'Te rugam sa introduci un CNP valid!'];  
           }
         }
+        if(!preg_match('/^[0-9]{10}+$/', $request->input('phone'))){
+          $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];  
+          $addrErrs++;
+        }
+      
         // Validate fields with ajax
 //         $val = $this->validateBread($request->all(), $dataType->editRows, $dataType->name, $id)->validate();
         $val = $this->validateBread($request->all(), $dataType->editRows, $dataType->name, $id);
@@ -562,6 +567,10 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             $addrErrs++;
             $errMessages['iban'] = [0 => 'Te rugam sa introduci un iban valid!'];  
           }
+        }
+        if(!preg_match('/^[0-9]{10}+$/', $request->input('phone'))){
+          $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];  
+          $addrErrs++;
         }
         // Validate fields with ajax
         $val = $this->validateBread($request->all(), $dataType->addRows);

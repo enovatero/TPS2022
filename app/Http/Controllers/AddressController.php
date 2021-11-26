@@ -119,6 +119,7 @@ class AddressController extends Controller
         'state'    => ['required'],
         'delivery_address'    => ['required'],
         'delivery_phone'    => ['required'],
+        'delivery_phone'    => ['regex:/^[0-9]{10}+$/'],
         'delivery_contact'    => ['required'],
       ];
       $validationMessages = [
@@ -129,8 +130,10 @@ class AddressController extends Controller
           'state.required'    => "Te rugam sa selectezi un judet/regiune!",
           'delivery_address.required'    => "Adresa este obligatorie!",
           'delivery_phone.required'    => "Numarul de telefon este obligatoriu!",
+          'delivery_phone.regex'    => "Numarul de telefon nu respecta formatul corect! Ex. 0712345678!",
           'delivery_contact.required'    => "Persoana de contact este obligatorie!",
       ];
+      
       $validator = Validator::make($form_data, $validationRules, $validationMessages);
       if ($validator->fails()){
           return ['success' => false, 'error' => $validator->errors()->all()];  
