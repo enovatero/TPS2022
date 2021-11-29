@@ -19,6 +19,9 @@ class Offer extends Model
     public function client(){
       return $this->belongsTo(Client::class);
     }
+    public function category(){
+      return $this->belongsTo(Category::class);
+    }
     public function delivery_address(){
       return $this->belongsTo(UserAddress::class, 'delivery_address_user', 'id');
     }

@@ -56,10 +56,22 @@
 <body>
 @php
     $offerType = $offer->offerType;
+    $parentsWithProducts = $offer->parentsWithProducts();
+    $counter = 0;
+    $counter1 = 0;
+    $counter2 = 0;
+    $twoColumns = false;
+    if($parentsWithProducts){
+      foreach($parentsWithProducts as $parent){
+        if($parent->category && $parent->category->two_columns == 1){
+          $twoColumns = true;
+        }
+      }
+    }
 @endphp
 <table width="100%">
 	<tr>
-		<td width="50%">
+		<td width="48%">
       <p style="font-size: 18pt;">
         {{$offer->offerType->title}}
       </p>
@@ -69,7 +81,7 @@
 			<p style="font-size: 12pt">
         <strong>Client</strong>: {{$offer->client ? $offer->client->name : ''}}<br><br>
       </p>
-      @if(strpos($offer->offerType->title, 'tabl') === false || strpos($offer->offerType->title, 'tablă') === false)
+      @if(!$twoColumns)
         <p style="font-size: 12pt">
           <strong>Observatii</strong><br>{{$offer->observations != null ? ucfirst($offer->observations) : 'Fara observatii'}}
         </p>
@@ -83,7 +95,7 @@
 			<p style="text-align: left; font-size: 12pt">
         <strong>Detalii livrare:</strong> {{$offer->delivery_details != null ? $offer->delivery_details : '-'}}
       </p>
-      @if(strpos($offer->offerType->title, 'tabl') === false || strpos($offer->offerType->title, 'tablă') === false)
+      @if(!$twoColumns)
         <p style="text-align: left; font-size: 12pt">
           <strong>Ambalare:</strong> {{$offer->packing != null ? $offer->packing : '-'}}
         </p>
@@ -105,7 +117,7 @@
   <table width="100%">
   <tr>
 		<td width="100%" style="text-align: left; font-size: 18pt">
-      @if(strpos($offer->offerType->title, 'tabl') !== false || strpos($offer->offerType->title, 'tablă') !== false)
+      @if($twoColumns)
         <p style="font-size: 12pt">
           <strong>Observatii</strong><br>{{$offer->observations != null ? ucfirst($offer->observations) : 'Fara observatii'}}
         </p>
@@ -116,7 +128,7 @@
 <br><br>
 <table width="100%">
 	<tr>
-		<td width="50%">
+		<td width="48%">
 			<p style="font-size: 14pt">
         @if($offer->attrs() && count($offer->attrs())>0)
           @foreach($offer->attrs() as $attribute)
@@ -128,7 +140,11 @@
 	</tr>
 </table>
   
-<table class="items" width="100%" cellpadding="1">
+@if($twoColumns)
+  <table width="100%">
+	  <tr>
+      <td width="50%">
+  <table class="items" width="100%" cellpadding="1">
 	<thead>
 	<tr>
 		<td width="5%">Nr.<br>crt.</td>
@@ -138,11 +154,81 @@
 	</tr>
 	</thead>
 	<tbody>
-	
-    @php
-      $parentsWithProducts = $offer->parentsWithProducts();
-      $counter = 0;
-    @endphp
+    
+  @if($parentsWithProducts)
+    @foreach($parentsWithProducts as $parent)
+      @if($parent->products && count($parent->products) > 0)
+        @foreach($parent->products as $product)
+          @php
+            if(in_array($product->id, $offer->selected_products) && $parent->category->two_columns == 0){
+              $counter1++;
+            }
+          @endphp
+          @if(in_array($product->id, $offer->selected_products) && $parent->category->two_columns == 0)
+            <tr class="items {{in_array($product->id, $offer->selected_products) ? 'item_wborder' : ''}}">
+              <td align="center">{{$counter1}}</td>
+              <td>{{$product->name}}</td>
+              <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->um_title->title}}</td>
+              <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->qty}}</td>
+            </tr>
+          @endif
+        @endforeach
+      @endif
+    @endforeach
+  @endif
+	</tbody>
+</table>
+      </td>
+      <td width="50%">
+    <table class="items" width="100%" cellpadding="1">
+	<thead>
+	<tr>
+		<td width="5%">Nr.<br>crt.</td>
+		<td>Denumirea produselor</td>
+		<td width="5%">U.M.</td>
+		<td width="10%">Cantitate</td>
+	</tr>
+	</thead>
+	<tbody>
+    
+  @if($parentsWithProducts)
+    @foreach($parentsWithProducts as $parent)
+      @if($parent->products && count($parent->products) > 0)
+        @foreach($parent->products as $product)
+          @php
+            if(in_array($product->id, $offer->selected_products) && $parent->category->two_columns == 1){
+              $counter2++;
+            }
+          @endphp
+          @if(in_array($product->id, $offer->selected_products) && $parent->category->two_columns == 1)
+            <tr class="items {{in_array($product->id, $offer->selected_products) ? 'item_wborder' : ''}}">
+              <td align="center">{{$counter2}}</td>
+              <td>{{$product->name}}</td>
+              <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->um_title->title}}</td>
+              <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->qty}}</td>
+            </tr>
+          @endif
+        @endforeach
+      @endif
+    @endforeach
+  @endif
+	</tbody>
+</table>
+      </td>
+    </tr>
+  </table>
+  
+@else
+  <table class="items" width="100%" cellpadding="1">
+	<thead>
+	<tr>
+		<td width="5%">Nr.<br>crt.</td>
+		<td>Denumirea produselor</td>
+		<td width="5%">U.M.</td>
+		<td width="10%">Cantitate</td>
+	</tr>
+	</thead>
+	<tbody>
     
   @if($parentsWithProducts)
     @foreach($parentsWithProducts as $parent)
@@ -167,6 +253,9 @@
   @endif
 	</tbody>
 </table>
+
+@endif
+  
 
 <table width="100%">
 	<tr>

@@ -581,6 +581,87 @@ if($edit){
                   <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwb">Genereaza AWB</button>
                 </div>
               </form>
+              <form class="panel-body form-fan-courier delivery-method delivery-nemo" method="POST" @if($edit && $dataTypeContent->delivery_type == 'nemo' || $dataTypeContent->delivery_type == null) style="display: block;" @endif>
+                {{csrf_field()}}
+                <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
+                <div class="col-md-12">
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label>Plata expeditie</label>
+                      <select name="plata_expeditie" class="form-control">
+                        <option value="expeditor" @if($edit && (($dataTypeContent->fanData && $dataTypeContent->fanData->plata_expeditie == 'expeditor') || $dataTypeContent->fanData == null)) selected @endif>Expeditor</option>
+                        <option value="destinatar" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->plata_expeditie == 'destinatar') @endif>Destinatar</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="packages">Nr. colete</label>
+                      <input type="number" name="numar_colete" id="packages" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->numar_colete) value="{{$dataTypeContent->fanData->numar_colete}}" @else value="1" @endif>
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="weight">Greutate (kg)</label>
+                      <input type="number" name="greutate_totala" id="weight" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->greutate_totala) value="{{$dataTypeContent->fanData->greutate_totala}}" @else value="1" @endif>
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="cashback">Ramburs (ex: 2542.26)</label>
+                      <input type="number" name="ramburs_numerar" id="cashback" class="form-control" @if($edit) value="{{$dataTypeContent->total_final}}" @endif>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="height">Inaltime (cm)</label>
+                      <input type="number" name="inaltime_pachet" id="height" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->inaltime_pachet) value="{{$dataTypeContent->fanData->inaltime_pachet}}" @endif>
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="Width">Latime (cm)</label>
+                      <input type="number" name="latime_pachet" id="Width" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->latime_pachet) value="{{$dataTypeContent->fanData->latime_pachet}}" @endif>
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="lenght">Lungime (cm)</label>
+                      <input type="number" name="lungime_pachet" id="lenght" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->lungime_pachet) value="{{$dataTypeContent->fanData->lungime_pachet}}" @endif>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="contents">Continut</label>
+                    <input type="text" name="continut_pachet" id="contents" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->continut_pachet) value="{{$dataTypeContent->fanData->continut_pachet}}" @endif>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <label for="deliveryAddressAWB">Adresa de livrare</label>
+                  <select name="deliveryAddressAWB" id="deliveryAddressAWB" class="form-control">
+                    <option disabled="" selected="">Alege...</option>
+                    @if($userAddresses != null && count($userAddresses) > 0)
+                      @foreach($userAddresses as $address)
+                        <option value="{{$address->id}}" @if($edit && $dataTypeContent && $dataTypeContent->fanData && $dataTypeContent->fanData->adresa_livrare_id == $address->id) selected @endif>
+                            {{$address->name}} - 
+                            {{$address->address}}, 
+                            {{$address->city_name}}, 
+                            {{$address->state_name}},
+                            {{$address->phone}}
+                        </option>
+                      @endforeach
+                    @endif
+                  </select>
+                </div>
+                <div class="col-md-12 panel-footer">
+                  <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwb">Genereaza AWB</button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
