@@ -30,7 +30,12 @@ class Product extends Model
   public function getparent(){
     return $this->belongsTo(ProductParent::class, 'parent_id', 'id');
   }
-  public function category(){
-    return $this->belongsToMany(Category::class, 'product_categories', 'product_id', 'category_id');
+  public function categoryId(){
+    $parent = $this->getParent();
+    $categoryId = 5; // default
+    if($parent){
+      $categoryId = $parent->first()->category_id;
+    }
+    return $categoryId;
   }
 }

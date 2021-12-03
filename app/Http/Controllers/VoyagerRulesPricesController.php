@@ -17,6 +17,8 @@ use TCG\Voyager\Facades\Voyager;
 use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
 
 use App\RulesPrice;
+use App\RulePricesFormula;
+use App\Category;
 
 class VoyagerRulesPricesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
 {
@@ -116,16 +118,35 @@ class VoyagerRulesPricesController extends \TCG\Voyager\Http\Controllers\Voyager
   public function saveRulePrice(Request $request){
     try{
       $formulas = [];
-      $formulasArray = $request->input('formulasArray') != null ? json_encode($request->input('formulasArray')) : null;
+      $formulaArray = $request->input('formulaArray');
       $rule_id = $request->input('rule_id');
-      RulesPrice::where('id', $rule_id)->update(['formulas' => $formulasArray]);
-      if($request->input('type') == 'add'){
-        return ['success' => true, 'msg' => 'Formula a fost adaugata cu succes!'];
-      } else{
-        return ['success' => true, 'msg' => 'Formula a fost stearsa cu succes!'];
-      }
+      
+      $formulaForSave = new RulePricesFormula();
+      $formulaForSave->rule_id = $rule_id;
+      $formulaForSave->tip_obiect = $formulaArray['tip_obiect'];
+      $formulaForSave->categorie = $formulaArray['categorie'];
+      $formulaForSave->categorie_name = $formulaArray['categorie_name'];
+      $formulaForSave->variabila = $formulaArray['variabila'];
+      $formulaForSave->operator = $formulaArray['operator'];
+      $formulaForSave->formula = $formulaArray['formula'];
+      $formulaForSave->full_formula = $formulaArray['full_formula'];
+      $formulaForSave->save();
+      
+      return ['success' => true, 'msg' => 'Formula a fost adaugata cu succes!', 'categorie' => $formulaForSave->categorie];
     } catch(\Exception $e){
       return ['success' => false, 'error' => 'S-a produs o eroare pe server iar datele nu au putut fi salvate!'];
     }
   }
+    public function removeFormula(Request $request){
+    try{
+      $formula_id = $request->input('formula_id');
+      $formula = RulePricesFormula::where('id', $formula_id)->first();
+      $categoryForAdd = Category::find($formula->categorie);
+      $formula->delete();
+      return ['success' => true, 'msg' => 'Formula a fost stearsa cu succes!', 'categoryForAdd' => $categoryForAdd];
+    } catch(\Exception $e){
+      return ['success' => false, 'error' => 'S-a produs o eroare pe server iar datele nu au putut fi salvate!'];
+    }
+  }
+  
 }

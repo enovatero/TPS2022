@@ -33,6 +33,9 @@ class Offer extends Model
     public function fanData(){
       return $this->hasOne(FanOrder::class, 'order_id', 'id');
     }
+    public function nemoData(){
+      return $this->hasOne(NemoOrder::class, 'order_id', 'id');
+    }
   
     public function attrs(){
       $attributes = $this->attributes;
@@ -57,6 +60,10 @@ class Offer extends Model
       }
       return $createdAttrs;
     }
+  
+  public function products(){
+    return $this->hasMany(OfferProduct::class, 'offer_id', 'id');
+  }
   
   public function parentsWithProducts(){
     $prices = $this->prices != null && !is_array($this->prices) ? json_decode($this->prices) : (is_array($this->prices) ? $this->prices : []);

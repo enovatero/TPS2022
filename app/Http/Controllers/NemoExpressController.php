@@ -1,7 +1,19 @@
 <?php
 namespace App\Http\Controllers;
 
-class NemoExpressController
+use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Http\Request;
+use FanCourier;
+use Validator;
+use App\Offer;
+use App\UserAddress;
+use App\FanOrder;
+use App\Models\User;
+use App\NemoOrder;
+
+class NemoExpressController extends Controller
 {
     const CREATE_AWB_ENDPOINT = "create_awb";
     const PRICE_AWB_ENDPOINT = "get_price";
@@ -42,6 +54,121 @@ class NemoExpressController
     {
         $response = $this->callApi(self::CREATE_AWB_ENDPOINT, $data);
         return json_decode($response);
+    }
+  
+      public static function generateAwbNemo(Request $request){
+        $form_data = $request->only([
+            'order_id',
+            'deliveryAccount',
+            'numar_colete',
+            'greutate_totala',
+            'ramburs_numerar',
+            'inaltime_pachet',
+            'latime_pachet',
+            'lungime_pachet',
+            'continut_pachet',
+            'ridicare_sediu_fan',
+            'plata_expeditie',
+            'deliveryAddressAWB',
+            'fragil',
+          ]);
+        $validationRules = [
+            'order_id'        => ['required'],
+            'deliveryAccount' => ['required'],
+            'deliveryAddressAWB' => ['required'],
+            'numar_colete'    => ['required'],
+            'greutate_totala' => ['required'],
+            'ramburs_numerar' => ['required'],
+            'inaltime_pachet' => ['required'],
+            'latime_pachet'   => ['required'],
+            'lungime_pachet'  => ['required'],
+            'continut_pachet' => ['required'],
+        ]; 
+        $validationMessages = [
+            'order_id.required'        => 'Selectati o comanda pentru a genera awb-ul',
+            'deliveryAccount.required' => 'Selectati un cont pentru FanCourier',
+            'deliveryAddressAWB.required' => 'Selectati o adresa de livrare',
+            'numar_colete.required'     => 'Numarul de colete este obligatoriu',
+            'greutate_totala.required'  => 'Greutatea totala este obligatorie',
+            'ramburs_numerar.required'  => 'Adaugati valoarea rambursului',
+            'inaltime_pachet.required'  => 'Adaugati inaltimea pachetului',
+            'latime_pachet.required'    => 'Adaugati latimea pachetului',
+            'lungime_pachet.required'   => 'Adaugati lungimea pachetului',
+            'continut_pachet.required'  => 'Adaugati continutul pachetului',
+        ];
+        $validator = Validator::make($form_data, $validationRules, $validationMessages);
+        if ($validator->fails()){
+          return ['success' => false, 'msg' => $validator->errors()->toArray()];
+        } else{
+          $offer = Offer::with('fanData')->find($form_data['order_id']);
+          $agent = User::find($offer->agent_id);
+          $userAddress = UserAddress::find($form_data['deliveryAddressAWB']);
+          $userData = $userAddress->userData();
+          $totalPlata = $form_data['ramburs_numerar'];
+          $legalEntity = $userAddress->legal_entities();
+          $date_awb = [
+              'type' => 'package', 
+              'service_type' => 'regular', 
+              'ramburs' => $totalPlata > 0 ? floatval($totalPlata) : '',
+              'ramburs_type' => $totalPlata > 0 ? 'cont' : 'cash',
+              'payer' => $form_data['plata_expeditie'],
+              'weight' => $form_data['greutate_totala'],
+              'length' => $form_data['lungime_pachet'],
+              'width' => $form_data['latime_pachet'],
+              'height' => $form_data['inaltime_pachet'],
+              'content' => $form_data['continut_pachet'],
+              'cnt' => $form_data['numar_colete'],
+              'fragile' => $form_data['fragil'],
+              'use_default_from_address' => true, // pentru preluarea adresei de livrare default din contul de client nemo
+              'to_name' => $userAddress->delivery_contact,
+              'to_contact' => $userAddress->delivery_contact ?: $userData->name,
+              'to_address' => $userAddress->address,
+              'to_city' => $userAddress->city_name(),
+              'to_county' => $userAddress->state_name(),
+              'to_country' => $userAddress->country,
+              'to_zipcode' => "000000",
+              'to_email' => $userAddress->email ?: $userData->email,
+              'to_phone' => $userAddress->phone ?: $userData->phone,
+              'to_extra' => '',
+              'to_cui' => $legalEntity != null ? $legalEntity->cui : '',
+              'to_regcom' => $legalEntity != null ? $legalEntity->reg_com : '',
+          ];
+          try{
+            // creez obiectul nemo cu deliveryAccount
+            $apiKey = $form_data['deliveryAccount'] == 1 ? env('NEMO_API_KEY_IASI') : env('NEMO_API_KEY_BERCENI');
+            $awb = \App\Http\Controllers\NemoExpressController::generateAwbNemo($date_awb);
+            $created_at = date("Y-m-d H:i:s");
+
+            if($offer->awb_id != null && $offer->delivery_type == 'fan'){
+              $nemoOrder = NemoOrder::find($offer->awb_id);
+            } else{
+              $nemoOrder = new NemoOrder();
+            }
+
+            $nemoOrder->order_id = $offer->id;
+            $nemoOrder->cont_id = $form_data['deliveryAccount'];
+            $nemoOrder->plata_expeditie = $form_data['plata_expeditie'];
+            $nemoOrder->numar_colete = $form_data['numar_colete'];
+            $nemoOrder->greutate_totala = $form_data['greutate_totala'];
+            $nemoOrder->ramburs_numberar = floatval($totalPlata);
+            $nemoOrder->inaltime_pachet = $form_data['inaltime_pachet'];
+            $nemoOrder->latime_pachet = $form_data['latime_pachet'];
+            $nemoOrder->lungime_pachet = $form_data['lungime_pachet'];
+            $nemoOrder->continut_pachet = $form_data['continut_pachet'];
+            $nemoOrder->adresa_livrare_id = $form_data['deliveryAddressAWB'];
+            $nemoOrder->fragil = $form_data['fragil'];
+            $nemoOrder->created_at = $created_at;
+            $nemoOrder->updated_at = $created_at;
+            $nemoOrder->awb = $awb[0]->awb;
+            $nemoOrder->save();
+
+            $offer->awb_id = $nemoOrder->id;
+            $offer->save();
+            return ['success' => true, 'msg' => 'AWB-ul s-a generat cu succes!', 'awb' => $nemoOrder->awb, 'id' => $offer->id, 'client_id' => $nemoOrder->cont_id];
+          } catch(Exception $e){
+            return ['success' => false, 'msg' => 'Eroare: '.$e->getMessage()];
+          }
+     }
     }
 
     /**

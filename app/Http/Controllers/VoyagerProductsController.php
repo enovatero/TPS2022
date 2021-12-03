@@ -59,6 +59,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
             $attribute = explode("_", $attr);
             $insertProductAttribute = new ProductAttribute;
             $insertProductAttribute->product_id = $data->id;
+            $insertProductAttribute->parent_id = $data->parent_id;
             $insertProductAttribute->attribute_id = $attribute[0];
             if(array_key_exists(2, $attribute)){
               $colorHex = $attribute[1];
@@ -146,6 +147,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
               $insertProductAttribute = new ProductAttribute;
             }
             $insertProductAttribute->product_id = $data->id;
+            $insertProductAttribute->parent_id = $data->parent_id;
             $insertProductAttribute->attribute_id = $attribute[0];
             if(array_key_exists(2, $attribute)){
               $colorHex = $attribute[1];

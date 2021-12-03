@@ -1,5 +1,6 @@
 <html>
 <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<style>
       body{
         font-size: 9pt;
@@ -51,19 +52,30 @@
 		.bold {
 			font-weight: bold;
 		}
+    * {
+      box-sizing: border-box;
+    }
+   .row {
+      margin-left:-5px;
+      margin-right:-5px;
+     width: 100%;
+    }
+
+    .column {
+      width: 100%;
+      padding: 5px;
+    }
 	</style>
 </head>
 <body>
 @php
-    $offerType = $offer->offerType;
-    $parentsWithProducts = $offer->parentsWithProducts();
     $counter = 0;
     $counter1 = 0;
     $counter2 = 0;
     $twoColumns = false;
-    if($parentsWithProducts){
-      foreach($parentsWithProducts as $parent){
-        if($parent->category && $parent->category->two_columns == 1){
+    if($offerProducts){
+      foreach($offerProducts as $offerProduct){
+        if($offerProduct->getParent->category && $offerProduct->getParent->category->two_columns == 1){
           $twoColumns = true;
         }
       }
@@ -141,82 +153,104 @@
 </table>
   
 @if($twoColumns)
-  <table width="100%">
-	  <tr>
-      <td width="50%">
-  <table class="items" width="100%" cellpadding="1">
-	<thead>
-	<tr>
-		<td width="5%">Nr.<br>crt.</td>
-		<td>Denumirea produselor</td>
-		<td width="5%">U.M.</td>
-		<td width="10%">Cantitate</td>
-	</tr>
-	</thead>
-	<tbody>
-    
-  @if($parentsWithProducts)
-    @foreach($parentsWithProducts as $parent)
-      @if($parent->products && count($parent->products) > 0)
-        @foreach($parent->products as $product)
-          @php
-            if(in_array($product->id, $offer->selected_products) && $parent->category->two_columns == 0){
-              $counter1++;
-            }
-          @endphp
-          @if(in_array($product->id, $offer->selected_products) && $parent->category->two_columns == 0)
-            <tr class="items {{in_array($product->id, $offer->selected_products) ? 'item_wborder' : ''}}">
-              <td align="center">{{$counter1}}</td>
-              <td>{{$product->name}}</td>
-              <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->um_title->title}}</td>
-              <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->qty}}</td>
-            </tr>
-          @endif
-        @endforeach
+   @php 
+    $newProducts = []; 
+    $newProductsLeft = []; 
+    $newProductsRight = []; 
+   @endphp
+  
+   @if($offerProducts)
+    @foreach($offerProducts as $offerProduct)
+      @if($offerProduct->product && $offerProduct->product != null)
+        @php
+          if($offerProduct->getParent->category->two_columns == 0){
+            array_push($newProductsLeft, [
+              'parent' => $offerProduct->getParent,
+              'product' => $offerProduct->product,
+              'qty'    => $offerProduct->qty,
+              'two_columns' => 0,
+            ]);
+          }
+          if($offerProduct->getParent->category->two_columns == 1){
+            array_push($newProductsRight, [
+              'parent' => $offerProduct->getParent,
+              'product' => $offerProduct->product,
+              'qty'    => $offerProduct->qty,
+              'two_columns' => 1,
+            ]);
+          }
+        @endphp
       @endif
     @endforeach
-  @endif
-	</tbody>
-</table>
-      </td>
-      <td width="50%">
-    <table class="items" width="100%" cellpadding="1">
-	<thead>
-	<tr>
-		<td width="5%">Nr.<br>crt.</td>
-		<td>Denumirea produselor</td>
-		<td width="5%">U.M.</td>
-		<td width="10%">Cantitate</td>
-	</tr>
-	</thead>
-	<tbody>
-    
-  @if($parentsWithProducts)
-    @foreach($parentsWithProducts as $parent)
-      @if($parent->products && count($parent->products) > 0)
-        @foreach($parent->products as $product)
-          @php
-            if(in_array($product->id, $offer->selected_products) && $parent->category->two_columns == 1){
-              $counter2++;
+    @php
+      if($newProductsLeft && count($newProductsLeft) > 0 && $newProductsRight && count($newProductsRight) > 0){
+          foreach($newProductsLeft as $key => $item){
+            if(array_key_exists($key, $newProductsRight)){
+              array_push($newProducts, $item);
+              array_push($newProducts, $newProductsRight[$key]);
+            }else{
+              array_push($newProducts, $item);
             }
-          @endphp
-          @if(in_array($product->id, $offer->selected_products) && $parent->category->two_columns == 1)
-            <tr class="items {{in_array($product->id, $offer->selected_products) ? 'item_wborder' : ''}}">
-              <td align="center">{{$counter2}}</td>
-              <td>{{$product->name}}</td>
-              <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->um_title->title}}</td>
-              <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->qty}}</td>
-            </tr>
-          @endif
-        @endforeach
-      @endif
-    @endforeach
+          }
+        }else if($newProductsLeft && count($newProductsLeft) > 0){
+          $newProducts = $newProductsLeft;
+        }else{
+          $newProducts = $newProductsRight;
+        }
+        $counterLeft = 1;
+        $counterRight = 1;
+    @endphp
   @endif
-	</tbody>
-</table>
-      </td>
-    </tr>
-  </table>
+  <div class="row">
+      <div class="column">
+        <table class="items" width="100%" cellpadding="1">
+        <thead>
+        <tr>
+          <td width="5%">Nr.<br>crt.</td>
+          <td>Denumirea produselor</td>
+          <td width="5%">U.M.</td>
+          <td width="10%">Cantitate</td>
+          <td width="10%" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;"></td>
+          <td width="5%">Nr.<br>crt.</td>
+          <td>Denumirea produselor</td>
+          <td width="5%">U.M.</td>
+          <td width="10%">Cantitate</td>
+        </tr>
+        </thead>
+        <tbody>
+
+        @if($newProducts)
+          @foreach($newProducts as $key => $item)
+            @if($item['two_columns'] == 1)
+              continue;
+            @else
+              <tr class="items">
+                <td align="center">{{$counterLeft++}}</td>
+                <td>{{$item['product']->name}}</td>
+                <td align="center">{{$item['parent']->um_title->title}}</td>
+                <td align="center">{{$item['qty']}}</td>
+                @if(array_key_exists($key+1, $newProducts) && $newProducts[$key+1]['two_columns'] == 1)
+                  <td align="center" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;"></td>
+                  <td align="center">{{$counterRight++}}</td>
+                  <td>{{$newProducts[$key+1]['product']->name}}</td>
+                  <td align="center">{{$newProducts[$key+1]['parent']->um_title->title}}</td>
+                  <td align="center">{{$newProducts[$key+1]['qty']}}</td>
+                @else
+                  <td align="center" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;"></td>
+                  <td align="center">{{$counterRight++}}</td>
+                  <td align="center"></td>
+                  <td align="center"></td>
+                  <td align="center"></td>
+                @endif
+              </tr>
+            @endif
+            
+          @endforeach
+        @endif
+        </tbody>
+      </table>
+      </div>
+  </div>
   
 @else
   <table class="items" width="100%" cellpadding="1">
@@ -230,24 +264,15 @@
 	</thead>
 	<tbody>
     
-  @if($parentsWithProducts)
-    @foreach($parentsWithProducts as $parent)
-      @if($parent->products && count($parent->products) > 0)
-        @foreach($parent->products as $product)
-          @php
-            if(in_array($product->id, $offer->selected_products)){
-              $counter++;
-            }
-          @endphp
-          @if(in_array($product->id, $offer->selected_products))
-            <tr class="items {{in_array($product->id, $offer->selected_products) ? 'item_wborder' : ''}}">
-              <td align="center">{{$counter}}</td>
-              <td>{{$product->name}}</td>
-              <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->um_title->title}}</td>
-              <td align="center" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>{{$parent->qty}}</td>
+  @if($offerProducts)
+    @foreach($offerProducts as $offerProduct)
+       @if($offerProduct->product && $offerProduct->product != null)
+          <tr class="items item_wborder">
+              <td align="center">{{$counter++}}</td>
+              <td>{{$offerProduct->product->name}}</td>
+              <td align="center" class="bold">{{$offerProduct->getParent->um_title->title}}</td>
+              <td align="center" class="bold">{{$offerProduct->qty}}</td>
             </tr>
-          @endif
-        @endforeach
       @endif
     @endforeach
   @endif
@@ -255,18 +280,17 @@
 </table>
 
 @endif
-  
-
-<table width="100%">
-	<tr>
-		<td>
-			<p></p>
-		</td>
-    <td align="right" width="100%">
-        <p style="font-size: 15pt; width: 100%;"><b>Responsabil productie:</b></p>
-    </td>
-	</tr>
-</table>
+<div class="row">
+  <div class="column">
+      <table class="items" width="100%" cellpadding="1">
+      <thead>
+      <tr>
+        <p @if($twoColumns) style="font-size: 15pt; width: 100%;text-align:left;" @else style="font-size: 15pt; width: 100%;text-align:right;" @endif><b>Responsabil productie:</b></p>    
+        </tr>
+        </thead>
+      </table>
+  </div>
+</div>
 
 </body>
 </html>

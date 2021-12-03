@@ -55,7 +55,6 @@
 <body>
 @php
     $offerType = $offer->offerType;
-    $reducere= $offer->reducere;
 @endphp
 <table width="100%">
 	<tr>
@@ -129,42 +128,53 @@
 	<tbody>
 	
     @php
-      $counter = 1;
+      $parentsWithProducts = $offer->parentsWithProducts();
+      $counter = 0;
       $reducere = $offer->reducere;
       $totalFinal = 0;
-      $totalCalculat = 0;
-      $totalCalculatPi = 0;
     @endphp
     
-  @if($offerProducts)
-    @foreach($offerProducts as $offerProduct)
-      @if($offerProduct->product && $offerProduct->product != null)
-         @php
-            $checkRule = $offerProduct->prices->filter(function($item) use($offer){
-                return $item->rule_id == $offer->price_grid_id;
-            })->first();
-            $eurFaraTVA = $checkRule->eur_fara_tva;
-            $ronCuTVA = $checkRule->ron_cu_tva;
-            $ronTotal = $ronCuTVA*$offerProduct->qty;
-            $totalCalculat += $ronTotal;
-            $totalCalculatPi += $checkRule->base_price;
+  @if($parentsWithProducts)
+    @foreach($parentsWithProducts as $parent)
+      @if($parent->products && count($parent->products) > 0)
+        @foreach($parent->products as $product)
+          @php
+            $productPrices = [];
+            if(in_array($product->id, $offer->selected_products)){
+              if($parent->qty > 0){
+                $counter++;
+              } 
+              $productPrices = \App\Http\Controllers\VoyagerProductsController::getPricesByProductOffer($product->price, $product->getparent->category->id, $offer->type, $offer->price_grid_id, $offer->curs_eur, $parent->qty);
+              $totalFinal += $productPrices['totalPriceWithTva'];
+            }
           @endphp
-          <tr class="items item_wborder">
-              <td align="center">{{$counter++}}</td>
-              <td>{{$offerProduct->product->name}}</td>
-              <td align="center" class="bold">{{$offerProduct->getParent->um_title->title}}</td>
-              <td align="center" class="bold">{{$offerProduct->qty}}</td>
-              <td align="right" class="bold">{{$eurFaraTVA}}</td>
-              <td align="right" class="bold">{{$ronCuTVA}}</td>
-              <td align="right" class="bold">{{$ronTotal}}</td>
+          @if(in_array($product->id, $offer->selected_products) && $parent->qty > 0)
+            <tr class="items item_wborder">
+              <td align="center">{{$counter}}</td>
+              <td>{{$product->name}}</td>
+              <td align="center" class="bold">{{$parent->um_title->title}}</td>
+              <td align="center" class="bold">{{$parent->qty}}</td>
+              <td align="right" class="bold">{{array_key_exists('eurPrice', $productPrices) ? $productPrices['eurPrice'] : ''}}</td>
+              <td align="right" class="bold">
+                @if(in_array($product->id, $offer->selected_products))
+                  {{$productPrices['priceWithTva']}}
+                @else
+
+                @endif
+              </td>
+              <td align="right" @if(in_array($product->id, $offer->selected_products)) class="bold" @endif>
+                {{$productPrices['totalPriceWithTva']}}
+              </td>
             </tr>
+          @endif
+        @endforeach
       @endif
     @endforeach
   @endif
     
 	<tr class="total">
 		<td colspan="6" class="totals"><b>Total general cu TVA inclus - RON -</b></td>
-		<td class="totals"><b>{{$totalCalculat}}</b></td>
+		<td class="totals"><b>{{$totalFinal}}</b></td>
 	</tr>
 	<tr class="total">
 		<td colspan="6" class="totals"><b>Reducere - RON -</b></td>
@@ -172,7 +182,7 @@
 	</tr>
 	<tr class="total">
 		<td colspan="6" class="totals"><b>Total final - RON -</b></td>
-		<td class="totals"><b>{{$totalCalculat - $reducere}}</b></td>
+		<td class="totals"><b>{{$totalFinal - $reducere}}</b></td>
 	</tr>
 	</tbody>
 </table>

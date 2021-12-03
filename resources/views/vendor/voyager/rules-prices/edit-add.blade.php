@@ -4,11 +4,11 @@
     if($add){
       $categories = \App\Category::get();
     } else{
-      $formulas = json_decode($dataTypeContent->formulas, true);
+      $formulas = \App\RulePricesFormula::where('rule_id', $dataTypeContent->id)->get();
       $catIds = [];
-      if($formulas != null){
-        foreach($formulas as $cat){
-          array_push($catIds, $cat['categorie']);
+      if($formulas != null && count($formulas) > 0){
+        foreach($formulas as $form){
+          array_push($catIds, $form->categorie);
         }
         $categories = \App\Category::whereNotIn('id', $catIds)->get();
       } else{
@@ -117,14 +117,14 @@
                                           <th>Formula(Variabile, Operator, Alte date)</th>
                                           <th></th>
                                         </tr> 
-                                        @if($formulas)
+                                        @if($formulas && count($formulas) > 0)
                                           @foreach($formulas as $formula)
                                             <tr>
-                                              <td>{{$formula['tip_obiect']}}</td>
-                                              <td>{{$formula['categorie_name']}}</td>
-                                              <td>{{$formula['full_formula']}}</td>
+                                              <td>{{$formula->tip_obiect}}</td>
+                                              <td>{{$formula->categorie_name}}</td>
+                                              <td>{{$formula->full_formula}}</td>
                                               <td class="al_right">
-                                                <button type="button" class="btn btn-danger btn-xs btnRemoveFormula" title="sterge">Sterge</button>
+                                                <button type="button" class="btn btn-danger btn-xs btnRemoveFormula" formula_id="{{$formula->id}}" title="sterge">Sterge</button>
                                               </td>
                                               <td style="display: none !important;"><div class="json_input" formula='{{json_encode($formula)}}'></div></td>
                                             </tr>  
@@ -168,65 +168,6 @@
                                         </tr>
                                     </tbody>
                                   </table>
-                                  <!-- <table class="table table-hover">
-                                      <tbody>
-                                     
-                                        @if($formulas)
-                                          @foreach($formulas as $formula)
-                                            <tr>
-                                              <td>{{$formula['tip_obiect']}}</td>
-                                              <td>{{$formula['categorie_name']}}</td>
-                                              <td>{{$formula['full_formula']}}</td>
-                                              <td class="al_right">
-                                                <button type="button" class="btn btn-danger btn-xs btnRemoveFormula" title="sterge">Sterge</button>
-                                              </td>
-                                              <td style="display: none !important;"><div class="json_input" formula='{{json_encode($formula)}}'></div></td>
-                                            </tr>  
-                                          @endforeach
-                                        @endif
-                                        </tr>
-                                    </tbody>
-                                  </table>
-                                    <div class="inputs__container">
-                                      <div class="name__select--container">
-                                        <span>Tip obiect</span>
-                                        <select name="object_type">
-                                              <option selected disabled>Alege...</option>
-                                              <option value="category">Categorie</option>
-                                            </select>
-                                      </div>
-                                      <div class="name__select--container">
-                                      <span>Denumire obiect</span>
-                                      <select name="object_id">
-                                              <option selected disabled>Alege...</option>
-                                              @foreach($categories as $category)
-                                                <option value="{{$category->id}}">{{$category->title}}</option>
-                                              @endforeach
-                                            </select>
-                                      </div>
-                                      <div class="name__select--container">
-                                      <span>Formula(Variabile, Operator, Alte date)</span>
-                                     <div class="selectors__container">
-                                     <select name="variabila">
-                                              <option selected disabled>Alege...</option>
-                                              <option value="PI">PI</option>
-                                            </select>
-                                            <select name="operator">
-                                              <option selected disabled>Alege...</option>
-                                              <option value="+">+</option>
-                                              <option value="-">-</option>
-                                              <option value="*">*</option>
-                                              <option value="/">/</option>
-                                              <option value="%">%</option>
-                                              <option value="^">^</option>
-                                            </select>
-                                            <input name="formula" class="" type="number"/>
-                                            <td class="al_right">
-                                            <button type="button" class="btn btn-primary btn-xs btnAddFormula" style="margin-left:1%" title="Adauga formula">Adauga formula</button>
-                                          </td>
-                                  </div>
-                                      </div>
-                                  </div> -->
 
                                 <p style="margin-top: 1rem;border-bottom: 1px solid #cecece;padding-bottom: 2rem;"><b>Reguli formula:</b>
                                   <br>- Variabile:<br>PI = pret de intrare produs
@@ -403,32 +344,47 @@
             $("select[name=variabila]").prop('selectedIndex',0);
             $("select[name=operator]").prop('selectedIndex',0);
             $("input[name=formula]").val("");
-            var formulasArray = [];
-            $(".json_input").each(function(){
-              formulasArray.push(jQuery.parseJSON($(this).attr("formula")));  
-            });
-            sendFormulasToDb(formulasArray, categorie, 'add');
+            sendFormulasToDb(JSON.parse(created_formula_json), categorie, 'add');
           });
+          
           $(document).on("click", ".btnRemoveFormula", function(){
-            var categoryForAdd = $(this).parent().parent().find(".json_input").attr("formula");
-            categoryForAdd = jQuery.parseJSON(categoryForAdd);
-            console.log(categoryForAdd);
-            $("select[name=object_id]").append($('<option>', {
-                value: categoryForAdd.categorie,
-                text: categoryForAdd.categorie_name
-            }));
-            $(this).parent().parent().remove();
-            var formulasArray = [];
-            $(".json_input").each(function(){
-              formulasArray.push(jQuery.parseJSON($(this).attr("formula")));  
+            var formula_id = $(this).attr("formula_id");
+            var vthis = this;
+            $.ajax({
+                method: 'POST',
+                url: '/admin/removeFormula',
+                data: {_token: '{{csrf_token()}}',formula_id: formula_id},
+                context: this,
+                async: true,
+                cache: false,
+                dataType: 'json'
+            }).done(function(res) {
+                if (res.success == false) {
+                    toastr.error(res.error, 'Eroare');
+                } else{
+                  toastr.success(res.msg, 'Success');
+                  $(vthis).parent().parent().remove();
+                  var categorie = res.categoryForAdd;
+                  if(categorie != null){
+                    $("select[name=object_id]").append($('<option>', {
+                        value: categorie.id,
+                        text: categorie.title
+                    }));
+                  }
+                }
+            })
+            .fail(function(xhr, status, error) {
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                    .indexOf("CSRF token mismatch") >= 0) {
+                    window.location.reload();
+                }
             });
-            sendFormulasToDb(formulasArray, null, 'delete');
           });
-          function sendFormulasToDb(formulasArray, categorie, type){
+          function sendFormulasToDb(formulaArray, categorie, type){
             $.ajax({
                 method: 'POST',
                 url: '/admin/saveRulePrice',
-                data: {_token: '{{csrf_token()}}',rule_id:'{{$dataTypeContent->getKey()}}' , formulasArray: formulasArray, type: type},
+                data: {_token: '{{csrf_token()}}',rule_id:'{{$dataTypeContent->getKey()}}' , formulaArray: formulaArray},
                 context: this,
                 async: true,
                 cache: false,
@@ -439,8 +395,8 @@
                     $(".just-inserted").last().remove();
                 } else{
                   toastr.success(res.msg, 'Success');
-                  if(categorie != null){
-                    $("select[name=object_id] option[value='"+categorie+"']").remove();
+                  if(res.categorie != null){
+                    $("select[name=object_id] option[value='"+res.categorie+"']").remove();
                   }
                 }
             })

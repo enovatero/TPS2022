@@ -24,11 +24,6 @@ use App\Individual;
 use App\Product;
 use App\Status;
 use App\ProductParent;
-use App\RulePricesFormula;
-use App\OfferProduct;
-use App\OfferPrice;
-use App\ProductAttribute;
-use App\OfferType;
 use PDF;
 
 class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
@@ -309,8 +304,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $priceRules = null;
         $allProducts = null;
         $select_html_grids = null;
-        $offerProducts = null;
-        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'userAddresses', 'priceRules', 'allProducts', 'select_html_grids', 'offerProducts'));
+        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'userAddresses', 'priceRules', 'allProducts', 'select_html_grids'));
     }
   
     public function edit(Request $request, $id)
@@ -358,19 +352,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $view = "voyager::$slug.edit-add";
         }
       
-        $createdAttributes = [];
-        $offer = $dataTypeContent;
-        $userAddresses = \App\UserAddress::where('user_id', $offer->client_id)->get();
-        $offerType = OfferType::find($offer->type);
+        $userAddresses = \App\UserAddress::where('user_id', $dataTypeContent->client_id)->get();
+        $offerType = \App\OfferType::find($dataTypeContent->type);
         $offerType->parents = $offerType->parents();
-        $parentIds = $offerType->parents->pluck('id');
-        $offerProducts = null;
-      
-        $cursValutar = $offer->curs_eur != null ? $offer->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
-        $offer->curs_eur = $cursValutar;
+        $cursValutar = $dataTypeContent->curs_eur != null ? $dataTypeContent->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
+        $dataTypeContent->curs_eur = $cursValutar;
         $priceRules = \App\RulesPrice::get();
-        $priceGridId = $offer->price_grid_id != null ? $offer->price_grid_id : -1;
-        $selectedAddress = \App\UserAddress::find($offer->delivery_address_user);
+        $priceGridId = $dataTypeContent->price_grid_id != null ? $dataTypeContent->price_grid_id : -1;
+        $selectedAddress = \App\UserAddress::find($dataTypeContent->delivery_address_user);
         if($selectedAddress != null){
           $selectedAddress->city_name = $selectedAddress->city_name();
           $selectedAddress->state_name = $selectedAddress->state_name();
@@ -385,13 +374,21 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $addr->name = $addr->delivery_contact != null ? $addr->delivery_contact : $addr->userData()->name;
           }
         }
-        
-        // get attributs to put them into selectors
+      
+        $attributesProds = [];
+        $createdAttributes = [];
         if($offerType->parents && count($offerType->parents) > 0){
-          $prodIds = Product::select('id')->whereIn('parent_id', $parentIds)->get();
+          $prodIds = [];
+          foreach($offerType->parents as $parent){
+            if($parent->products && count($parent->products) > 0){
+              foreach($parent->products as &$product){
+                array_push($prodIds, $product->id);
+              }
+            }
+          }
           if(count($prodIds) > 0){
             $arrayOfAttrValues = [];
-            $prodAttrs = ProductAttribute::with('attrs')->whereIn('product_id', $prodIds)->get();
+            $prodAttrs = \App\ProductAttribute::with('attrs')->whereIn('product_id', $prodIds)->get();
             $prodAttrs = $prodAttrs->toArray();
             foreach($prodAttrs as $key => &$attr){
               $attr['attrs'] = $attr['attrs'][0];
@@ -404,13 +401,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
               }
             }
             $mergedAttributes = [];
-            
             foreach($createdAttributes as $key => &$attr){
               $copyElement = $attr;
               unset($copyElement['values']);
               $mergedAttributes[$attr['id']] = $copyElement;
             }
-            
             foreach($createdAttributes as $key => &$attr){
               if(!array_key_exists('values', $mergedAttributes[$attr['id']])){
                 $mergedAttributes[$attr['id']]['values'] = [];
@@ -428,21 +423,24 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 
                 array_multisort($sort_col, $dir, $arr);
             }
+
             array_sort_by_column($createdAttributes, 'type');
+
+            $attributesProds = $prodAttrs;
           }
-          $offerProducts = OfferProduct::with('prices')->where('offer_id', $offer->id)->get();
-          
-          if($offerProducts && count($offerProducts) > 0){
-            foreach($offerProducts as $offProd){
-              $checkedParent = $offerType->parents->filter(function($item) use($offProd){
-                  return $item->id == $offProd->parent_id;
-              })->first();
-              $checkedParent->offerProducts = $offProd;
-            }
+        }
+        $offer = $dataTypeContent;
+        $parents = $offerType->parents;
+        $allRules = (new self())->getRulesPrices($priceRules);
+        $allProducts = [];
+      
+        foreach($parents as $parent){
+          foreach($parent->products as &$product){
+            $product->rulesPrices = (new self())->getRulesPricesByProductCategory($allRules, $product->categoryId(), $product->price, $cursValutar);
+            array_push($allProducts, $product->toArray());
           }
         }
       
-        // transform price_grid_id input into select dropdown with selected value 
         $select_html_grids = "<select name='price_grid_id' class='form-control'>";
         if($priceRules){
           foreach($priceRules as $price){
@@ -465,116 +463,64 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           'selectedAddress',
           'offerType',
           'priceRules',
+          'allProducts',
           'select_html_grids',
-          'offerProducts',
         ));
     }
   
-    public function retrievePricesForSelectedAttributes(Request $request){
-      $offer = Offer::find($request->input('order_id'));
-      $offerType = OfferType::find($offer->type);
-      $offerType->parents = $offerType->parents();
-      $parentIds = $offerType->parents->pluck('id');
-      
-      $attributes = $request->input("attributes");
-      $offerProdsIds = [];
-      $allProducts = [];
-      foreach($attributes as $attr){
-        $attr = explode("_", $attr);
-        $attr_id = $attr[0];
-        if(array_key_exists(2, $attr)){
-          $attr_val = json_encode([$attr[1], $attr[2]]);
-        } else{
-          $attr_val = $attr[1];
-        }
-//         \DB::enableQueryLog();
-        $productAttr = ProductAttribute::where([
-          'attribute_id' => $attr_id,
-          'value' => $attr_val,
-        ])->whereIn('parent_id', $parentIds)->first();
-        
-        $parent_id = $productAttr != null ? $productAttr->parent_id : null;
-        if($productAttr != null){
-          $product_id = $productAttr->product_id;
-          if(!in_array($product_id, $offerProdsIds)){
-            array_push($offerProdsIds, $product_id);
-          }
-        }
-      }
-      $products = Product::whereIn('id', $offerProdsIds)->get();
-      $cursValutar = $offer->curs_eur != null ? $offer->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
-      
-      $created_at = date("Y-m-d H:i:s");
-      $offerProducts = OfferProduct::where('offer_id', $offer->id)->get();
-      
-      // daca am avut ceva selectat pana acum sterg
-      if($offerProducts && count($offerProducts) > 0){
-        foreach($offerProducts as $offProd){
-          OfferPrice::where('offer_products_id', $offProd->id)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
-          $offProd->delete();
-        }
-      }
-      // recreez noile valori pentru offer_products si offer_prices
-      foreach($products as $product){
-        $rulesPrices = (new self())->getRulesPricesByProductCategory($product->categoryId(), $product->price, $cursValutar);
-        if($rulesPrices != null && count($rulesPrices) > 0){
-          $offerProduct = new OfferProduct();
-          $offerProduct->offer_id = $offer->id;
-          $offerProduct->product_id = $product->id;
-          $offerProduct->parent_id = $product->parent_id;
-          $offerProduct->qty = 1; // default 1 pentru cele gasite. La edit trebuie sa iau ce cantitati se trimit
-          $offerProduct->created_at = $created_at;
-          $offerProduct->updated_at = $created_at;
-          $offerProduct->save();
-          
-          foreach($rulesPrices as $rule){
-            $addedDate = date("Y-m-d H:i:s");
-            $offerPrice = new OfferPrice();
-            $offerPrice->offer_products_id = $offerProduct->id;
-            $offerPrice->rule_price_id = $rule->id;
-            $offerPrice->rule_id = $rule->rule_id;
-            $offerPrice->tip_obiect = $rule->tip_obiect;
-            $offerPrice->categorie = $rule->categorie;
-            $offerPrice->categorie_name = $rule->categorie_name;
-            $offerPrice->variabila = $rule->variabila;
-            $offerPrice->operator = $rule->operator;
-            $offerPrice->formula = $rule->formula;
-            $offerPrice->full_formula = $rule->full_formula;
-            $offerPrice->base_price = $product->price;
-            $offerPrice->ron_cu_tva = $rule->ron_cu_tva;
-            $offerPrice->product_price = $rule->price;
-            $offerPrice->currency = $cursValutar;
-            $offerPrice->eur_fara_tva = $rule->eur_fara_tva;
-            $offerPrice->created_at = $addedDate;
-            $offerPrice->updated_at = $addedDate;
-            $offerPrice->save();
-          }
-        }
-      }
-      return ['success' => true, 'products' => $products];
-    }
-  
-  
-    public static function getRulesPricesByProductCategory($categoryId, $productPrice = null, $currency = null){
+    public static function getRulesPricesByProductCategory($allRules, $categoryId, $productPrice = null, $currency = null){
       $tva = floatVal(setting('admin.tva_products'))/100;
-      $rulePricesFilteredByCategory = RulePricesFormula::where('categorie', $categoryId)->get();
+      $rulePricesFilteredByCategory = $allRules[$categoryId];
+      
       foreach($rulePricesFilteredByCategory as &$item){
         $formula = str_replace("PI", $productPrice, $item['full_formula']);
         $price = eval('return '.$formula.';');
-        $formatedPriceFormula = floatVal(number_format($price ,3,'.', ''));
+        $formatedPriceFormula = floatVal(number_format($price ,2,'.', ''));
+        $item['price'] = number_format($formatedPriceFormula, 2, '.', '');
         if($currency == null){
           $currency = 1;
         }
-        // pret_de_baza * currency
-        $priceWithCurrency = $price*$currency;
+        $priceWithCurrency = $productPrice*$currency;
+        
         $priceWithTva = $priceWithCurrency+($priceWithCurrency*$tva);
+        $item['currency_price'] = number_format(floatVal($formatedPriceFormula)*floatVal($currency), 2, '.', '');
+        $item['eur_prod_price'] = number_format($productPrice, 2, '.', '');
+        $item['ron_cu_tva'] = number_format($priceWithTva, 2, '.', '');
+        $item['ron_fara_tva'] = number_format($productPrice*$currency, 2, '.', '');
         
-        $item['price'] = number_format($formatedPriceFormula, 3, '.', '');
-        $item['eur_fara_tva'] = number_format($price, 3, '.', '');
-        $item['ron_cu_tva'] = number_format($priceWithTva, 3, '.', '');
-        
+        $item['product_price'] = number_format(floatVal($productPrice)*floatVal($currency), 2, '.', '');
+        $item['product_price_tva'] = number_format($productPrice+$productPrice*$tva, 2, '.', '');
       }
       return $rulePricesFilteredByCategory;
+    }
+  
+    public static function getRulesPrices($priceRules){
+      foreach($priceRules as $rule){
+        $formulas = json_decode($rule->formulas, true);
+        foreach($formulas as $formula){
+          $allRules[$formula['categorie']] = [];
+        }
+      }
+      
+      foreach($priceRules as &$rule){
+        $rule->formulas = json_decode($rule->formulas, true);
+        foreach($rule->formulas as $formula){
+          $formArr = [
+            'id' => $rule->id,
+            'code' => $rule->code,
+            'title' => $rule->title,
+            'tip_obiect' => $formula['tip_obiect'],
+            'categorie' => $formula['categorie'],
+            'categorie_name' => $formula['categorie_name'],
+            'variabila' => $formula['variabila'],
+            'operator' => $formula['operator'],
+            'formula' => $formula['formula'],
+            'full_formula' => $formula['full_formula'],
+          ];
+          array_push($allRules[$formula['categorie']], $formArr);
+        }
+      }
+      return $allRules;
     }
   
     public static function generateRandomId($length = 5) {
@@ -615,7 +561,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
   public function ajaxSaveUpdateOffer(Request $request){
 //     dd($request->all());
     $offer_id = $request->input('offer_id');
-//     return ['success' => true, 'offer_id' => $offer_id];
     if($offer_id != null){
       $offer = Offer::find($offer_id);
     } else{
@@ -672,51 +617,36 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->selected_products = $selectedProducts;
     $offer->save();
     
-    if($request->input('offerProductIds') != null){
-      $offerProductIds = $request->input('offerProductIds');
-      
-      foreach($offerProductIds as $key => $id){
-        $offerProduct = OfferProduct::where('id', $id)->first();
-        $offerProduct->qty = $offerQty[$key];
-        $offerProduct->save();
-      }
-    }
     
     return ['success' => true, 'offer_id' => $offer->id];
   }
   
+//   public function generatePDF(Request $request){
   public function generatePDF($offer_id){
     $offer = Offer::with(['distribuitor', 'client', 'delivery_address'])->find($offer_id);
     $dimension = 0;
     $boxes = 0;
     $totalQty = 0;
     if($offer != null){
-      $offerProducts = OfferProduct::with(['prices', 'product', 'getParent'])->where('offer_id', $offer->id)->get();
-      $offerType = OfferType::find($offer->type);
-      $offerType->parents = $offerType->parents();
-      
-      if($offerProducts && count($offerProducts) > 0){
+      $offer->prices = json_decode($offer->prices, true);
+      if($offer->prices && count($offer->prices) > 0){
         $newPrices = [];
-        foreach($offerProducts as &$offProd){
-          $checkRule = $offProd->prices->filter(function($item) use($offer){
-              return $item->rule_id == $offer->price_grid_id;
-          })->first();
-          $offProd->selectedPrices = $checkRule;
+        foreach($offer->prices as $item){
+          $parent = ProductParent::find($item['parent']);
           array_push($newPrices, [
-            'dimension' => $offProd->getParent->dimension,
-            'parent' => $offProd->getParent,
-            'qty' => $offProd->qty,
+            'dimension' => $parent->dimension,
+            'parent' => $item['parent'],
+            'qty' => $item['qty'],
           ]);
-          $dimension += $dimension != null && $dimension != 0 ? $dimension*$offProd->qty : $offProd->qty;
-          $totalQty += $offProd->qty;
+          $dimension += $dimension != null && $dimension != 0 ? $dimension*$item['qty'] : $item['qty'];
+          $totalQty += $item['qty'];
         }
         $boxes = intval(ceil($totalQty/25)); // rotunjire la urmatoarea valoare
         $offer->prices = $newPrices;
-        
       }
       $offer->dimension = $dimension;
       $offer->boxes = $boxes;
-      $pdf = PDF::loadView('vendor.pdfs.offer_pdf',['offer' => $offer, 'offerProducts' => $offerProducts]);
+      $pdf = PDF::loadView('vendor.pdfs.offer_pdf',['offer' => $offer]);
       return $pdf->download('Oferta_TPS'.$offer->serie.'_'.date('m-d-Y').'.pdf');
     }
     return ['success' => false];
@@ -728,29 +658,29 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $boxes = 0;
     $totalQty = 0;
     if($offer != null){
-      $offerProducts = OfferProduct::with(['prices', 'product', 'getParent'])->where('offer_id', $offer->id)->get();
-      $offerType = OfferType::find($offer->type);
-      $offerType->parents = $offerType->parents();
-      
-      if($offerProducts && count($offerProducts) > 0){
-        foreach($offerProducts as &$offProd){
-          $checkRule = $offProd->prices->filter(function($item) use($offer){
-              return $item->rule_id == $offer->price_grid_id;
-          })->first();
-          $offProd->selectedPrices = $checkRule;
-          $dimension += $dimension != null && $dimension != 0 ? $dimension*$offProd->qty : $offProd->qty;
-          $totalQty += $offProd->qty;
+      $offer->prices = json_decode($offer->prices, true);
+      if($offer->prices && count($offer->prices) > 0){
+        $newPrices = [];
+        foreach($offer->prices as $item){
+          $parent = ProductParent::find($item['parent']);
+          array_push($newPrices, [
+            'dimension' => $parent->dimension,
+            'parent' => $item['parent'],
+            'qty' => $item['qty'],
+          ]);
+          $dimension += $dimension != null && $dimension != 0 ? $dimension*$item['qty'] : $item['qty'];
+          $totalQty += $item['qty'];
         }
         $boxes = intval(ceil($totalQty/25)); // rotunjire la urmatoarea valoare
-        
+        $offer->prices = $newPrices;
       }
-      $offer->dimension = $dimension;
-      $offer->boxes = $boxes;
-      $pdf = PDF::loadView('vendor.pdfs.offer_pdf_order',['offer' => $offer, 'offerProducts' => $offerProducts]);
-      return $pdf->download('Fisa Comanda_TPS'.$offer->numar_comanda.'_'.date('m-d-Y').'.pdf');
     }
-    return ['success' => false];
+    $offer->dimension = $dimension;
+    $offer->boxes = $boxes;
+    $pdf = PDF::loadView('vendor.pdfs.offer_pdf_order',['offer' => $offer]);
+    return $pdf->stream('Fisa Comanda_TPS'.$offer->numar_comanda.'_'.date('m-d-Y').'.pdf');
   }
+  
   public function retrieveOffersPerYearMonth(Request $request){
     $year = $request->input('year');
     $month = $request->input('month');

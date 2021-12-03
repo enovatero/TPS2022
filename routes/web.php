@@ -35,9 +35,11 @@ Route::group(['prefix' => 'admin'], function () {
     Voyager::routes();
 //     Route::get('/', [VoyagerController::class,'index'])->middleware('admin.user');
     Route::post('orderOffer', [VoyagerOfferTypeController::class,'order_item'])->middleware('admin.user');
+    Route::post('retrievePricesForSelectedAttributes', [VoyagerOfferController::class,'retrievePricesForSelectedAttributes'])->middleware('admin.user');
     Route::get('offers/relation', [VoyagerOfferTypeController::class,'relation'])->name('voyager.offers.relation');
     Route::post('/saveOfferTypeProducts', [VoyagerOfferTypeController::class, 'saveOfferTypeProducts'])->middleware('admin.user');
     Route::post('/saveRulePrice', [VoyagerRulesPricesController::class, 'saveRulePrice'])->middleware('admin.user');
+    Route::post('/removeFormula', [VoyagerRulesPricesController::class, 'removeFormula'])->middleware('admin.user');
     Route::post('/getAttributesByParent', [VoyagerProductsController::class, 'getAttributesByParent'])->middleware('admin.user');
     Route::post('/getPricesByProductAndCategory', [VoyagerOfferController::class, 'getPricesByProductAndCategory'])->middleware('admin.user');
     Route::put('/ajaxSaveUpdateOffer', [VoyagerOfferController::class, 'ajaxSaveUpdateOffer'])->middleware('admin.user');
@@ -51,6 +53,8 @@ Route::group(['prefix' => 'admin'], function () {
     // Fancourier
     Route::post('generateAwb', [FanCourierController::class, 'generateAwb'])->middleware('admin.user');
     Route::get('printAwb/{awb}/{client_id}', [FanCourierController::class, 'printAwb'])->middleware('admin.user');
+    Route::post('generateAwbNemo', [NemoExpressController::class, 'generateAwbNemo'])->middleware('admin.user');
+    Route::get('printAwbNemo/{awb}/{client_id}', [NemoExpressController::class, 'printAwbNemo'])->middleware('admin.user');
     Route::post('changeStatus', [VoyagerOfferController::class, 'changeStatus'])->middleware('admin.user');
     Route::post('launchOrder', [VoyagerOfferController::class, 'launchOrder'])->middleware('admin.user');
     Route::get('uploadColors', [ColorsController::class, 'uploadColors'])->middleware('admin.user');

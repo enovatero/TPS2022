@@ -1,5 +1,10 @@
 @php
-  $cleanRulePrices = \App\RulesPrice::get();
+  $cleanRulePrices = $priceRules;
+  $totalCalculat = 0;
+  $totalCalculatPi = 0;
+  foreach($priceRules as $rule){
+    $totalCalculatRules[$rule->id] = 0;
+  }
 @endphp
 <div class="box-body table-responsive no-padding table-prices">
   <input name="selectedProducts" class="selectedProducts" type="hidden"/>
@@ -20,70 +25,78 @@
         @endforeach
       </tr>
       @if($parents != null)
-        @foreach($parents as $key =>  $parent)
-          @php
-            if($parent->products && count($parent->products) > 0){
-              foreach($parent->products as &$product){
-                $attrs = \App\ProductAttribute::where('product_id', $product->id)->get();
-                $atribute = [];
-                if($attrs && count($attrs) > 0){
-                  foreach($attrs as $attr){
-                    array_push($atribute, [
-                      'rel_id' => $attr->id,
-                      'attr_id' => $attr->attribute_id,
-                      'type' => $attr->getType(),
-                      'value' => json_decode($attr->value, true) && json_last_error() != 4 ? json_decode($attr->value, true) : $attr->value
-                    ]);
-                  }
-                }
-                $product->selectedAttributes = $atribute;
+        @foreach($parents as $key => $parent)
+          <tr parent_id="{{$parent->id}}">
+            @if($parent->offerProducts != null) 
+              <input type="hidden" name="offerProductIds[]" value="{{$parent->offerProducts->id}}"/>
+            @endif
+            @php
+              if($parent->offerProducts != null && $parent->offerProducts->prices != null){
+                $checkRule = $parent->offerProducts->prices->filter(function($item) use($offer){
+                    return $item->rule_id == $offer->price_grid_id;
+                })->first();
+                $eurFaraTVA = $checkRule->eur_fara_tva;
+                $ronCuTVA = $checkRule->ron_cu_tva;
+                $ronTotal = $ronCuTVA*$parent->offerProducts->qty;
+                $totalCalculat += $ronTotal;
+                $totalCalculatPi += $checkRule->base_price;
+              } else{
+                $eurFaraTVA = 0;
+                $ronCuTVA = 0;
+                $ronTotal = 0;
               }
-            }
-          @endphp
-          <tr>
+            @endphp
             <td>
               {{$key+1}}
-              @foreach($parent->products as $product)
-                @php
-                  $foundedAttributes = [];
-                  foreach($product->selectedAttributes as $selectedAttr){
-                    if($selectedAttr['type'] == 1){
-                      array_push($foundedAttributes, $selectedAttr['attr_id'].'_'.$selectedAttr['value'][0].'_'.$selectedAttr['value'][1]);
-                    }else{
-                      array_push($foundedAttributes, $selectedAttr['attr_id'].'_'.$selectedAttr['value']);
-                    }
-                  }
-                  $foundedAttributes = json_encode($foundedAttributes);
-                @endphp
-                <input style="display: none;" type="text" par_id="{{$parent->id}}" prod_id="{{$product->id}}" cat_id="{{$parent->category->id}}" attributes="{{$foundedAttributes}}" numberOfAttributes="{{count($product->selectedAttributes)}}" parent_id="parent-{{$parent->id}}" product_id="product-{{$product->id}}" class="attributeSelector" value="{{$product->price}}"/>
-                <input style="display: none;" type="hidden" value="{{$parent->id}}"/>
-              @endforeach
             </td>
             <td style="text-align: left;"> {{$parent->title}}</td>
             <td style="text-align:center">{{$parent->um_title->title}}</td>
             <td style="text-align:center">
-              <input type="number" autocomplete="off" class="form-control input-sm changeQty parentId-{{$parent->id}}" parentId="{{$parent->id}}" style="width: 70px; display:inline" name="offerQty[]">
+              <input type="number"  @if($parent->offerProducts != null) name="offerQty[]" value="{{$parent->offerProducts->qty}}" @else readonly @endif autocomplete="off" class="form-control input-sm changeQty parentId-{{$parent->id}}" parentId="{{$parent->id}}" style="width: 70px; display:inline">
             </td>
             <td style="text-align:center;">
-              <input readonly type="number" autocomplete="off" class="form-control input-sm eurFaraTVA parent-{{$parent->id}}" style="width: 70px; display:inline; cursor: not-allowed;" value="0.00">
+              <input readonly type="number" autocomplete="off" class="form-control input-sm eurFaraTVA parent-{{$parent->id}}" style="width: 70px; display:inline; cursor: not-allowed;" @if($eurFaraTVA != 0) value="{{$eurFaraTVA}}" @else value="0.00" @endif>
             </td>
             <td style="text-align:center;">
-              <input readonly type="number" class="form-control input-sm ronCuTVA parent-{{$parent->id}}" style="width: 70px; display:inline; cursor: not-allowed;" value="0.00">
+              <input readonly type="number" class="form-control input-sm ronCuTVA parent-{{$parent->id}}" style="width: 70px; display:inline; cursor: not-allowed;" @if($ronCuTVA != 0) value="{{$ronCuTVA}}" @else value="0.00" @endif>
             </td>
             <td style="text-align:center;">
-              <input readonly type="number" class="form-control input-sm ronTotal parent-{{$parent->id}}" style="width: 70px; display:inline; cursor: not-allowed;" value="0.00">
+              <input readonly type="number" class="form-control input-sm ronTotal parent-{{$parent->id}}" style="width: 70px; display:inline; cursor: not-allowed;" @if($ronCuTVA != 0) value="{{$ronTotal}}" @else value="0.00" @endif>
             </td>
             <td style="background: lightgrey"></td>
             <td style="text-align: center;">
               <input class="pret-intrare parent-{{$parent->id}}" type="hidden"/>
-              <span class="pretIntrare parent-{{$parent->id}}">0.00</span>
+              @if($parent->offerProducts != null && $parent->offerProducts->prices != null)
+                <span class="pretIntrare parent-{{$parent->id}}">{{$parent->offerProducts->prices[0]->base_price}}</span>
+              @else
+                <span class="pretIntrare parent-{{$parent->id}}">0.00</span>
+              @endif
             </td>
-            @foreach($cleanRulePrices as $rule)
-              <td style="text-align: center;">
-                <input class="baseParent-{{$parent->id}} baseRule-{{$rule->id}} inputBaseRule" parent_id="{{$parent->id}}" base_rule_id="{{$rule->id}}" type="hidden" display="none"/>
-                <span class="parent-{{$parent->id}} baseRule-{{$rule->id}}">0.00</span>
-              </td>
-            @endforeach
+            @if($parent->offerProducts != null && $parent->offerProducts->prices != null)
+              @foreach($parent->offerProducts->prices as $rule)
+                @php
+                  $subtotalRule = $parent->offerProducts->qty*$rule->ron_cu_tva;
+                  $totalCalculatRules[$rule->rule_id] += $subtotalRule;
+                @endphp
+                  <td style="text-align: center;">
+                    <input class="baseParent-{{$parent->id}} baseRule-{{$rule->rule_id}} inputBaseRule" parent_id="{{$parent->id}}" base_rule_id="{{$rule->rule_id}}" type="hidden" display="none"/>
+                    <span class="parent-{{$parent->id}} baseRule-{{$rule->rule_id}}">{{$subtotalRule}}</span>
+                  </td>
+              @endforeach
+              @if(count($cleanRulePrices) > count($parent->offerProducts->prices))
+                <td style="text-align: center;">
+                  <input class="baseParent-{{$parent->id}} inputBaseRule" parent_id="{{$parent->id}}" type="hidden" display="none"/>
+                  <span class="parent-{{$parent->id}}">0.00</span>
+                </td>
+              @endif
+            @else
+              @foreach($cleanRulePrices as $rule)
+                <td style="text-align: center;">
+                  <input class="baseParent-{{$parent->id}} baseRule-{{$rule->id}} inputBaseRule" parent_id="{{$parent->id}}" base_rule_id="{{$rule->id}}" type="hidden" display="none"/>
+                  <span class="parent-{{$parent->id}} baseRule-{{$rule->id}}">0.00</span>
+                </td>
+              @endforeach
+            @endif
             <input style="display: none;" type="hidden" name="parentIds[]" value="{{$parent->id}}"/>
           </tr>
         @endforeach
@@ -93,11 +106,11 @@
         <td colspan="6" class="totals" style="text-align: right;font-weight: bold;">
           <b style="font-weight: bold;">Total general cu TVA inclus - RON -</b>
         </td>
-        <td class="totals"><b><span class="totalGeneralCuTva" style="font-weight: bold;">0.00</span></b><input name="totalGeneral" type="hidden"></td>
+        <td class="totals"><b><span class="totalGeneralCuTva" style="font-weight: bold;">{{$totalCalculat != 0 ? $totalCalculat : '0.00'}}</span></b><input name="totalGeneral" type="hidden"></td>
         <td style="background: lightgrey"></td>
-        <td style="text-align: center;font-weight: bold;"><span class="totalPricePi">0.00</span></td>
+        <td style="text-align: center;font-weight: bold;"><span class="totalPricePi">{{$totalCalculatPi != 0 ? $totalCalculatPi : '0.00'}}</span></td>
         @foreach($cleanRulePrices as $rule)
-          <td style="text-align: center;"><span class="totalPrice{{$rule->id}}">0.00</span></td>
+          <td style="text-align: center;"><span class="totalPrice{{$rule->id}}">{{array_key_exists($rule->id, $totalCalculatRules) && $totalCalculatRules[$rule->id] != 0 ? $totalCalculatRules[$rule->id] : '0.00'}}</span></td>
         @endforeach
       </tr>
       <tr class="total">
@@ -112,8 +125,8 @@
       <tr class="total">
         <td colspan="6" class="totals" style="text-align: right;"><b style="font-weight: bold;">Total final - RON -</b></td>
         <td class="totals">
-          <input type="number" class="totalHandled" class="form-control" style="width: 100px; float: right; text-align: right" name="totalCalculatedPrice">
-          <b style="display: none !important;"><span class="totalFinalRon" style="font-weight: bold;">0.00</span></b>
+          <input type="number" class="totalHandled" class="form-control" style="width: 100px; float: right; text-align: right" name="totalCalculatedPrice" value="{{$totalCalculat != 0 ? $totalCalculat : '0.00'}}">
+          <b style="display: none !important;"><span class="totalFinalRon" style="font-weight: bold;">{{$totalCalculat != 0 ? $totalCalculat : '0.00'}}</span></b>
           <input name="totalFinal" type="hidden">
         </td>
       </tr>

@@ -538,6 +538,9 @@ table, th, td{
 .panel-delivery-method #mod_livrare_detaliu{
   display: block;
 }
+.delivery-nemo{
+  display: none;
+}
 #mod_livrare_detaliu span.select2{
   border: 1px solid #cecece;
 }
