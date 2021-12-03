@@ -69,9 +69,9 @@
 </head>
 <body>
 @php
-    $counter = 0;
-    $counter1 = 0;
-    $counter2 = 0;
+    $counter = 1;
+    $counter1 = 1;
+    $counter2 = 1;
     $twoColumns = false;
     if($offerProducts){
       foreach($offerProducts as $offerProduct){
