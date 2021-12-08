@@ -29,6 +29,7 @@ class VoyagerAttributesController extends \TCG\Voyager\Http\Controllers\VoyagerB
      *
      * @return \Illuminate\Http\RedirectResponse
      */
+    // salvez un JSON cu atributele adaugate. Daca sunt culori, atunci am [hex:culoare], daca nu, am doar [valoare_atribut]
     public function store(Request $request)
     {
         $attributes = $request->input('attribute');
@@ -83,6 +84,7 @@ class VoyagerAttributesController extends \TCG\Voyager\Http\Controllers\VoyagerB
     }
   
     // POST BR(E)AD
+  // acelasi lucru si la update
     public function update(Request $request, $id)
     {
 //       dd($request->all());

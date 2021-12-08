@@ -40,7 +40,7 @@ class TrackStatusFan extends Command
      */
     public function handle()
     {
-      $offers = Offer::whereNotNull('awb_id')->get();
+      $offers = Offer::whereNotNull('awb_id')->where('delivery_type', 'fan')->get();
       if(count($offers) > 0){
         foreach($offers as $offer){
           config(['fancourier.client_id' => $offer->fanData->cont_id]);

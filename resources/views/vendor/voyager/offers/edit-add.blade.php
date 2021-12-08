@@ -8,6 +8,7 @@ $isNewClient = false;
 
 @section('css')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="../../../css/mention.css">
 @stop
 
 @section('page_title', __('voyager::generic.'.($edit ? 'edit' : 'add')).' '.$dataType->getTranslatedAttribute('display_name_singular'))
@@ -15,7 +16,11 @@ $isNewClient = false;
 @section('page_header')
     <h1 class="page-title">
         <i class="{{ $dataType->icon }}"></i>
-        Oferta {{$edit ? '#'.$dataTypeContent->serie : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
+        @if($edit && $dataTypeContent->numar_comanda != null)
+          Comanda #{{$dataTypeContent->numar_comanda}}
+        @else
+          Oferta {{$edit ? '#'.$dataTypeContent->serie : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
+        @endif
     </h1>
     @include('voyager::multilingual.language-selector')
 @stop
@@ -40,8 +45,13 @@ $isNewClient = false;
                       <i class="voyager-download" style="margin-right: 10px;"></i> <span> Descarca oferta PDF</span>
                   </a> 
                   @if($dataTypeContent->delivery_type == 'fan' && $dataTypeContent->fanData && $dataTypeContent->fanData->cont_id != null && $dataTypeContent->fanData->awb != null)
-                    <a target="_blank" class="btn btn-success btn-add-new" href="/admin/printAwb/{{$dataTypeContent->fanData->awb}}/{{$dataTypeContent->fanData->cont_id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
-                        <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Vizualizeaza AWB</span>
+                    <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbFan" href="/admin/printAwb/{{$dataTypeContent->fanData->awb}}/{{$dataTypeContent->fanData->cont_id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                        <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
+                    </a> 
+                  @endif
+                   @if($dataTypeContent->delivery_type == 'nemo' && $dataTypeContent->nemoData && $dataTypeContent->nemoData->cont_id != null && $dataTypeContent->nemoData->awb != null)
+                    <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbNemo" href="/admin/printAwbNemo/{{$dataTypeContent->nemoData->awb}}/{{$dataTypeContent->nemoData->cont_id}}/{{$dataTypeContent->nemoData->hash}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                        <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
                     </a> 
                   @endif
                   @if($dataTypeContent->numar_comanda == null)
@@ -198,59 +208,71 @@ $isNewClient = false;
                                 @endif
                             @endforeach
                             @if($edit)
-                            <div class="form-group  col-md-12" style="width: 48%;">
-                                <div class="form-group  col-md-12" style="width: 100%;">
-                                  <label class="control-label">Adresa livrare</label>
-                                  <select name="delivery_address_user" class="form-control">
-                                    <option value="-1" selected disabled>Alege adresa de livrare</option>
-                                    <option value="-2">Adauga adresa noua</option>
-                                    @if(count($userAddresses) > 0)
-                                      @foreach($userAddresses as $address)
-                                        @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
-                                          @php
-                                            $address = $selectedAddress;
-                                          @endphp
-                                          <option selected value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name}}" city_id="{{$address->city}}" city_name="{{$address->city_name}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name}}, {{$address->state_name}}</option>
-                                        @else
-                                          <option value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name()}}" city_id="{{$address->city}}" city_name="{{$address->city_name()}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name()}}, {{$address->state_name()}}</option>
-                                        @endif
-                                      @endforeach
-                                    @endif
-                                  </select>
-                                </div>
-                                <div class="form-group  col-md-12 container-elements-addresses" style="width: 100%; display: none;">
-                                    <div class="panel-body container-box-adresa">
-                                      <input class="trick-addr-id" value="" type="hidden"/>
-                                      <div class="form-group col-md-12 column-element-address" style="width: 100%">
-                                         <label class="control-label">Tara</label>
-                                         @include('vendor.voyager.formfields.countries', ['selected' => null])                       
+                              <div class="form-group  col-md-12" style="width: 48%;">
+                                  <div class="form-group  col-md-12" style="width: 100%;">
+                                    <label class="control-label">Adresa livrare</label>
+                                    <select name="delivery_address_user" class="form-control">
+                                      <option value="-1" selected disabled>Alege adresa de livrare</option>
+                                      <option value="-2">Adauga adresa noua</option>
+                                      @if(count($userAddresses) > 0)
+                                        @foreach($userAddresses as $address)
+                                          @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
+                                            @php
+                                              $address = $selectedAddress;
+                                            @endphp
+                                            <option selected value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name}}" city_id="{{$address->city}}" city_name="{{$address->city_name}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name}}, {{$address->state_name}}</option>
+                                          @else
+                                            <option value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name()}}" city_id="{{$address->city}}" city_name="{{$address->city_name()}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name()}}, {{$address->state_name()}}</option>
+                                          @endif
+                                        @endforeach
+                                      @endif
+                                    </select>
+                                  </div>
+                                  <div class="form-group  col-md-12 container-elements-addresses" style="width: 100%; display: none;">
+                                      <div class="panel-body container-box-adresa">
+                                        <input class="trick-addr-id" value="" type="hidden"/>
+                                        <div class="form-group col-md-12 column-element-address" style="width: 100%">
+                                           <label class="control-label">Tara</label>
+                                           @include('vendor.voyager.formfields.countries', ['selected' => null])                       
+                                        </div>
+                                        <div class="form-group col-md-12 column-element-address">
+                                           <label class="control-label" for="state">Judet/Regiune</label>
+                                           <select name="state" class="form-control select-state"></select>
+                                        </div>
+                                        <div class="form-group col-md-12 column-element-address">
+                                           <label class="control-label">Oras/Localitate/Sector</label>
+                                           <select name="city" class="form-control select-city"></select>        
+                                        </div>
+                                        <div class="form-group col-md-12 column-element-address" style="width: 100%;">
+                                           <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
+                                           <input class="control-label" type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>                          
+                                        </div>
+                                        <div class="form-group col-md-12 column-element-address">
+                                           <label class="control-label" for="state">Telefon</label>
+                                           <input name="delivery_phone" type="text" style="padding: 5px;"/>
+                                        </div>
+                                        <div class="form-group col-md-12 column-element-address">
+                                           <label class="control-label">Persoana de contact</label>
+                                           <input name="delivery_contact" type="text" style="padding: 5px;"/>        
+                                        </div>
                                       </div>
-                                      <div class="form-group col-md-12 column-element-address">
-                                         <label class="control-label" for="state">Judet/Regiune</label>
-                                         <select name="state" class="form-control select-state"></select>
+                                      <div class="col-md-12 panel-footer" style="    justify-content: flex-end;display: flex;width: 100%;">
+                                        <button type="button" class="btn btn-primary btnGreenNew btnSalveazaAdresa">Salveaza adresa noua</button>
                                       </div>
-                                      <div class="form-group col-md-12 column-element-address">
-                                         <label class="control-label">Oras/Localitate/Sector</label>
-                                         <select name="city" class="form-control select-city"></select>        
-                                      </div>
-                                      <div class="form-group col-md-12 column-element-address" style="width: 100%;">
-                                         <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
-                                         <input class="control-label" type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>                          
-                                      </div>
-                                      <div class="form-group col-md-12 column-element-address">
-                                         <label class="control-label" for="state">Telefon</label>
-                                         <input name="delivery_phone" type="text" style="padding: 5px;"/>
-                                      </div>
-                                      <div class="form-group col-md-12 column-element-address">
-                                         <label class="control-label">Persoana de contact</label>
-                                         <input name="delivery_contact" type="text" style="padding: 5px;"/>        
-                                      </div>
-                                    </div>
-                                    <div class="col-md-12 panel-footer" style="    justify-content: flex-end;display: flex;width: 100%;">
-                                      <button type="button" class="btn btn-primary btnGreenNew btnSalveazaAdresa">Salveaza adresa noua</button>
-                                    </div>
-                                </div>
-                            </div>
+                                  </div>
+                                  <div class="form-group col-md-12 mesaj-intern-container">
+                                    <label class="control-label">Mesaj intern</label>
+                                    <input name="mentions" type="hidden"/>
+                                    <textarea class="form-control" id="mentions" name="mentions_textarea" placeholder="Mentioneaza pe cineva cu @" rows="5"></textarea>
+                                    <button style="float: right;" type="button" class="btn btn-primary save btnSaveMention" order_id="{{$dataTypeContent->id}}">Salveaza mesaj</button>
+                                  </div>
+                              </div>
+                              <div class="form-group col-md-12 mesaj-intern-container log-evenimente">
+                                <label class="control-label">Log evenimente</label>
+                                  <div class="log-evenimente-list">
+                                    @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents]) 
+                                  </div>
+                              </div>
                             @endif
 
                         </div><!-- panel-body -->
@@ -334,14 +356,24 @@ $isNewClient = false;
                               @include('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $dataTypeContent->reducere, 'offer' => $offer])
                             </div>
                           </div>
-                          <div class="col-md-12 butoane-oferta">
+                          <div class="col-md-12 butoane-oferta" test="{{$dataTypeContent->status_name->title}}">
                             <a target="_blank" class="btn btn-success btn-add-new" href="/admin/generatePDF/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                 <i class="voyager-download" style="margin-right: 10px;"></i> <span> Descarca oferta PDF</span>
-                            </a>  
+                            </a> 
+                            @if($dataTypeContent->delivery_type == 'fan' && $dataTypeContent->fanData && $dataTypeContent->fanData->cont_id != null && $dataTypeContent->fanData->awb != null)
+                              <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbFan" href="/admin/printAwb/{{$dataTypeContent->fanData->awb}}/{{$dataTypeContent->fanData->cont_id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                  <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
+                              </a> 
+                            @endif
+                            @if($dataTypeContent->delivery_type == 'nemo' && $dataTypeContent->nemoData && $dataTypeContent->nemoData->cont_id != null && $dataTypeContent->nemoData->awb != null)
+                              <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbNemo" href="/admin/printAwbNemo/{{$dataTypeContent->nemoData->awb}}/{{$dataTypeContent->nemoData->cont_id}}/{{$dataTypeContent->nemoData->hash}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                  <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
+                              </a> 
+                            @endif
                             @if($dataTypeContent->numar_comanda == null)
                               <a class="btn btn-success btn-add-new btnAcceptOffer" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;" order_id="{{$dataTypeContent->id}}">
                                   <i class="voyager-pen" style="margin-right: 10px;"></i> <span>Oferta acceptata - lanseaza comanda</span>
-                              </a>
+                              </a>  
                             @endif
                             @if($dataTypeContent->numar_comanda != null)
                               <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank" href="/admin/generatePDFFisa/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
@@ -388,7 +420,7 @@ $isNewClient = false;
             </div>
           <div class="col-md-12" id="awb" style="display: none;">
             <div class="panel panel-delivery-method">
-              <form class="panel-body form-fan-courier delivery-method delivery-fan" method="POST" @if($edit && $dataTypeContent->delivery_type == 'fan' || $dataTypeContent->delivery_type == null) style="display: block;" @endif>
+              <form class="panel-body form-fan-courier delivery-method delivery-fan" method="POST" @if($edit && $dataTypeContent->delivery_type == 'fan' || $dataTypeContent->delivery_type == null) style="display: block;" @else style="display: none;" @endif>
                 {{csrf_field()}}
                 <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
                 <div class="col-md-12">
@@ -491,7 +523,7 @@ $isNewClient = false;
                   <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwb">Genereaza AWB</button>
                 </div>
               </form>
-              <form class="panel-body form-fan-courier delivery-method delivery-nemo" method="POST" @if($edit && $dataTypeContent->delivery_type == 'nemo' || $dataTypeContent->delivery_type == null) style="display: block;" @endif>
+              <form class="panel-body form-fan-courier delivery-method delivery-nemo" method="POST" @if($edit && $dataTypeContent->delivery_type == 'nemo' || $dataTypeContent->delivery_type == null) style="display: block;" @else style="display: none;" @endif>
                 {{csrf_field()}}
                 <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
                 <div class="col-md-12">
@@ -504,19 +536,23 @@ $isNewClient = false;
                         <option value="destinatar" @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'destinatar') @endif>Destinatar</option>
                       </select>
                     </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="on">Fragil?</label>
                       <select name="fragil" class="form-control">
-                        <option value="off" selected>Nu</option>
-                        <option value="on">Da</option>
+                        <option value="nu" selected>Nu</option>
+                        <option value="da">Da</option>
                       </select>
                     </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="deliveryAccount">Cont Nemo</label>
                       <select name="deliveryAccount" class="form-control">
                           <option disabled="" selected="">Alege...</option>
-                          <option @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '1') selected @endif value="1">Top Profil Sistem Iasi</option>
-                          <option @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '2') selected @endif value="2">Top Profil Sistem Berceni</option>
+                          <option @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->client_id == '1') selected @endif value="1">Top Profil Sistem Iasi</option>
+                          <option @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->client_id == '2') selected @endif value="2">Top Profil Sistem Berceni</option>
                       </select>
                     </div>
                   </div>
@@ -585,7 +621,7 @@ $isNewClient = false;
                   </select>
                 </div>
                 <div class="col-md-12 panel-footer">
-                  <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwbNemo">Genereaza AWB</button>
+                  <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwbNemo" already_generated="{{$dataTypeContent->awb_id && $dataTypeContent->delivery_type == 'nemo' ? 1 : 0}}">Genereaza AWB</button>
                 </div>
               </form>
             </div>
@@ -619,6 +655,7 @@ $isNewClient = false;
 
 @section('javascript')
 <script src="../../../js/lodash.min.js"></script>
+<script src="../../../js/mention.js"></script>
     <script>
         var params = {};
         var $file;
@@ -1028,14 +1065,22 @@ $isNewClient = false;
           });
           
           $('textarea').keyup(function() {
+            if($(this).attr("name") != "mentions_textarea"){
               clearTimeout(timeout);
+              timeout = setTimeout(function() {
+                  saveNewDataToDb(false);
+              }, 500);
+            }
+          });
+          
+          $('input[type=date]').change(function() {
               timeout = setTimeout(function() {
                   saveNewDataToDb(false);
               }, 500);
           });
           
-          $('input[type=date]').change(function() {
-              timeout = setTimeout(function() {
+          $('input[name=transparent_band]').change(function(){
+            timeout = setTimeout(function() {
                   saveNewDataToDb(false);
               }, 500);
           });
@@ -1132,11 +1177,11 @@ $isNewClient = false;
                 dataType: 'json'
             }).done(function(resp) {
                 if(resp.success){
+                  $(".btnDownloadAwb").attr("href", "/admin/printAwb/" + resp.awb + "/" + resp.client_id);
                   window.open(
                     "/admin/printAwb/" + resp.awb + "/" + resp.client_id,
-                    '_blank' // <- This is what makes it open in a new window.
+                    '_blank' 
                   );
-//                   window.location.href = "/admin/printAwb/" + resp.awb;
                   toastr.success(resp.msg);
                 } else{
                   for(var key in resp.msg) {
@@ -1151,6 +1196,43 @@ $isNewClient = false;
                 }
             });
             return true;
+          });
+          $(".btnGenerateAwbNemo").click(function(){
+            var order_id = "{!! $dataTypeContent && $dataTypeContent->id ? $dataTypeContent->id : 'null' !!}";
+            var already_generated = $(this).attr("already_generated");
+            if(already_generated == 1 && confirm("AWB-ul a fost deja generat. Doriti regenerarea AWB-ului?")){
+              var vthis = this;
+              $.ajax({
+                  method: 'POST',
+                  url: '/admin/generateAwbNemo',//remove this address on POST message after i get all the address data
+                  data: $(".delivery-nemo").serializeArray(),
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(resp) {
+                  if(resp.success){
+                    $(".btnDownloadAwbNemo").attr("href", "/admin/printAwbNemo/" + resp.awb + "/" + resp.client_id + "/" + resp.hash);
+                    window.open(
+                      "/admin/printAwbNemo/" + resp.awb + "/" + resp.client_id + "/" + resp.hash,
+                      '_blank' 
+                    );
+                    toastr.success(resp.msg);
+                  } else{
+                    for(var key in resp.msg) {
+                      toastr.error(resp.msg[key]);
+                    }
+                  }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
+            }
+            return false;
           });
           $(document).on("click", ".btnSchimbaStatus", function(){
             var order_id = $(this).attr("order_id");
@@ -1215,51 +1297,137 @@ $isNewClient = false;
             });
             return true;
           });
+          function checkDiff(arr) {
+            return arr.length !== 0 && new Set(arr).size !== 1;
+          }
           $(document).on("click", ".btnAcceptOffer", function(){
-            var order_id = $(this).attr("order_id");
-            var vthis = this;
-            $.ajax({
-                method: 'POST',
-                url: '/admin/launchOrder',//remove this address on POST message after i get all the address data
-                data: {
-                  order_id: order_id,
-                },
-                context: this,
-                async: true,
-                cache: false,
-                dataType: 'json'
-            }).done(function(resp) {
-                if(resp.success){
-                  $(vthis).remove();
-                  var html_append = '';
-                  if(resp.status == 'productie'){
-                    $(".page-content.edit-add.container-fluid").addClass("comanda-productie");
-                    $("body .comanda-productie .selectAttribute").prop("disabled", true).css("cursor", "no-drop");
-                    $("body .comanda-productie input[name=curs_eur]").prop("disabled", true).css("cursor", "no-drop");
-                    $("body .comanda-productie .changeQty").prop("disabled", true).css("cursor", "no-drop");
-                    $("body .comanda-productie select[name=price_grid_id]").prop("disabled", true).css("cursor", "no-drop");
-                    $("body .comanda-productie .totalHandled").prop("disabled", true).css("cursor", "no-drop");
-                    html_append += 
-                      `
-                         <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank" href="/admin/generatePDFFisa/${order_id}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
-                              <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
-                          </a> 
-                      `;
-                  }
-                  $(".butoane-oferta").append(html_append);
-                  toastr.success(resp.msg);
-                } else{
-                  toastr.error(resp.msg);
+            var selectedColors = [];
+            var launchOrder = false;
+            $('.selectColor').each(function(index){
+              if ($(this).has('option:selected')){
+                var valoareSelectata = $(this).val();
+                if(valoareSelectata != null){
+                  valoareSelectata = valoareSelectata.split("_");
+                  selectedColors.push(valoareSelectata[2]);
                 }
-            })
-            .fail(function(xhr, status, error) {
-                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
-                    .indexOf("CSRF token mismatch") >= 0) {
-                    window.location.reload();
-                }
+              }
             });
-            return true;
+            // verific daca exista diferente de culori pentru a afisa un mesaj
+            if(checkDiff(selectedColors)){
+              if(confirm("Comanda pe care urmeaza sa o lansati are culori diferite. Doriti sa lansati comanda?")){
+                launchOrder = true;
+              } else{
+                launchOrder = false;
+              }
+            } else{
+              launchOrder = true;
+            }
+            if(launchOrder){
+              var order_id = $(this).attr("order_id");
+              var vthis = this;
+              $.ajax({
+                  method: 'POST',
+                  url: '/admin/launchOrder',//remove this address on POST message after i get all the address data
+                  data: {
+                    order_id: order_id,
+                  },
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(resp) {
+                  if(resp.success){
+                    $(vthis).remove();
+                    var html_append = '';
+                    if(resp.status == 'productie'){
+                      $(".page-content.edit-add.container-fluid").addClass("comanda-productie");
+                      $("body .comanda-productie .selectAttribute").prop("disabled", true).css("cursor", "no-drop");
+                      $("body .comanda-productie input[name=curs_eur]").prop("disabled", true).css("cursor", "no-drop");
+                      $("body .comanda-productie .changeQty").prop("disabled", true).css("cursor", "no-drop");
+                      $("body .comanda-productie select[name=price_grid_id]").prop("disabled", true).css("cursor", "no-drop");
+                      $("body .comanda-productie .totalHandled").prop("disabled", true).css("cursor", "no-drop");
+                      html_append += 
+                        `
+                           <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank" href="/admin/generatePDFFisa/${order_id}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
+                            </a> 
+                        `;
+                    }
+                    $(".butoane-oferta").append(html_append);
+                    toastr.success(resp.msg);
+                  } else{
+                    toastr.error(resp.msg);
+                  }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
+            }
           });
+          if(isEdit){
+            var mentionsArray = [];
+            var users = @json($adminUsers);
+            console.log(users);
+            var myMention = new Mention({
+              input: document.querySelector('#mentions'),
+              reverse: true,
+              options: users,
+              update: function() {
+                var selectedElements = this.collect();
+                if(selectedElements.length > 0){
+                  var allIds = this.getAllIds();
+                  if(allIds.length > 0){
+                    $("input[name=mentions]").val(allIds);
+                  }
+                }
+              },
+              template: function(option) {
+                 return '<img style="width: 20px;height:20px;border-radius: 50%;overflow:hidden; margin-right: 5px;" src="../../../storage/'+option.avatar+'"/>' + option.name
+              }
+            });
+            $(".btnSaveMention").click(function(){
+              var order_id = $(this).attr("order_id");
+              var vthis = this;
+              var btnText = $(this).text();
+              $(this).text("Asteptati...");
+              $(this).prop('disabled', true);
+              $.ajax({
+                  method: 'POST',
+                  url: '/admin/saveMention',//remove this address on POST message after i get all the address data
+                  data: {
+                    order_id: order_id,
+                    mentionIds: $("input[name=mentions]").val(),
+                    message: $("textarea#mentions").val(),
+                  },
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(resp) {
+                  if(resp.success){
+                    $(".log-evenimente-list").html(resp.html_log);
+                    $("textarea#mentions").val("");
+                    $("input[name=mentions]").val("");
+                    toastr.success(resp.msg);
+                  } else{
+                    toastr.error(resp.msg);
+                  }
+                  $(vthis).prop('disabled', false);
+                  $(vthis).text(btnText);
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
+            });
+          }
         });
     </script>
 @stop

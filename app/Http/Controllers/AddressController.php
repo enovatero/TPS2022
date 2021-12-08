@@ -12,6 +12,7 @@ use App\Client;
 
 class AddressController extends Controller
 {
+  // functie pentru preluarea judetelor in functie de tara. Aici ideea e simpla: daca nu am unul din matching-uri tara - judet, atunci le iau din baza de date si le stochez in cache - pentru viteza
     public function getCountiesByCountry(Request $request){
 //       cache()->flush();exit;
       $counties = $this->getCounties();
@@ -19,6 +20,7 @@ class AddressController extends Controller
       if($request->input('country_code') != null){
         foreach($counties as $state){
           if($state->country_code == $request->input('country_code')){
+            // daca am intrat pe edit, trebuie sa imi creez selectul cu optiunea deja selectata
             if($request->input('selected_state') != null && $request->input('selected_state') == $state->state_code.'_'.$state->state_name){
               $selectHtml .= '<option selected value="'.$state->state_code.'">'.$state->state_name.'</option>';
             } else{
@@ -30,6 +32,7 @@ class AddressController extends Controller
       return ['success' => true, 'html' => $selectHtml];
     }
   
+    // functie pentru preluarea judetelor, fie din cache, fie din baza de date(daca nu exista in cache)
     public static function getCounties(){
       $counties = cache('counties');
       if($counties){
@@ -40,12 +43,14 @@ class AddressController extends Controller
       return $counties;
     } 
   
+    // acelasi mod de lucru ca la tara-judet, doar ca aici preiau orasul in functie de judet
     public function getCitiesByState(Request $request){
 //       cache()->flush();exit;
       $cities = $this->getCities($request->input('state_code'), $request->input('country_code'));
       $selectHtml = '<option selected disabled>Alege orasul</option>';
       if($cities != null){
         foreach($cities as $city){
+          // creez selectul cu optiunea selectata daca sunt pe edit
           if($request->input('selected_city') != null && $request->input('selected_city') == $city->id.'_'.$city->city_name){
             $selectHtml .= '<option selected value="'.$city->id.'">'.$city->city_name.'</option>';
           } else{
@@ -56,6 +61,7 @@ class AddressController extends Controller
       return ['success' => true, 'html' => $selectHtml];
     }
   
+    // preluare orase fie din cache, fie din baza de date
     public static function getCities($stateCode, $countryCode){
       $cities = cache('cities_'.$stateCode.'_'.$countryCode);
       if($cities){
@@ -66,6 +72,7 @@ class AddressController extends Controller
       return $cities;
     } 
   
+    // sterg o adresa in functie de id-ul adresei din baza de date, din user_addresses
     public function removeAddress(Request $request){
       $form_data = $request->only('id');
       $validationRules = [
@@ -85,7 +92,7 @@ class AddressController extends Controller
         return ['success' => true, 'msg' => 'Adresa stearsa cu succes!'];
       }
     }
-    
+    // preiau adresele user-ului cu id-ul X
     public function getUserAddresses(Request $request){
       $form_data = $request->only('user_id');
       $validationRules = [
@@ -109,6 +116,8 @@ class AddressController extends Controller
         return ['success' => true, 'userAddresses' => $address, 'transparent_band' => $client->transparent_band];
       }
     }
+  
+   // functie pentru salvarea/editarea unei adrese pentru user-ul X intr-o oferta
     public function saveNewAddress(Request $request){
       $form_data = $request->only('address_id', 'offer_id', 'client_id', 'country', 'city', 'state', 'delivery_address', 'delivery_phone', 'delivery_contact');
       $validationRules = [
@@ -152,6 +161,7 @@ class AddressController extends Controller
         $address->delivery_contact = $form_data['delivery_contact'];
         $address->save();
         
+        // updatez oferta cu noua adresa adaugata
         $offer = Offer::find($request->input('offer_id'));
         $offer->delivery_address_user = $address->id;
         $offer->save();

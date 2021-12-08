@@ -15,10 +15,13 @@ use TCG\Voyager\Events\BreadDataUpdated;
 use TCG\Voyager\Events\BreadImagesDeleted;
 use TCG\Voyager\Facades\Voyager;
 use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Mentions;
 
 use App\Offer;
 use App\Client;
 use App\UserAddress;
+use App\Models\User;
 use App\LegalEntity;
 use App\Individual;
 use App\Product;
@@ -29,11 +32,364 @@ use App\OfferProduct;
 use App\OfferPrice;
 use App\ProductAttribute;
 use App\OfferType;
+use App\OfferEvent;
 use PDF;
 
 class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
 {
    use BreadRelationshipParser;
+  
+    // listez ofertele (au numar_comanda null)
+    public function list_offers(Request $request)
+    {
+        // GET THE SLUG, ex. 'posts', 'pages', etc.
+        $slug = 'offers';
+
+        // GET THE DataType based on the slug
+        $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
+
+        // Check permission
+        $this->authorize('browse', app($dataType->model_name));
+
+        $getter = $dataType->server_side ? 'paginate' : 'get';
+
+        $search = (object) ['value' => $request->get('s'), 'key' => $request->get('key'), 'filter' => $request->get('filter')];
+
+        $searchNames = [];
+        if ($dataType->server_side) {
+            $searchNames = $dataType->browseRows->mapWithKeys(function ($row) {
+                return [$row['field'] => $row->getTranslatedAttribute('display_name')];
+            });
+        }
+
+        $orderBy = $request->get('order_by', $dataType->order_column);
+        $sortOrder = $request->get('sort_order', $dataType->order_direction);
+        $usesSoftDeletes = false;
+        $showSoftDeleted = false;
+
+        // Next Get or Paginate the actual content from the MODEL that corresponds to the slug DataType
+        if (strlen($dataType->model_name) != 0) {
+            $model = app($dataType->model_name);
+
+            // preiau toate produsele care au inclusiv campurile pret si parinte selectate, deci sunt produse complete
+            $query = $model::select($dataType->name.'.*')->where('numar_comanda', null);
+
+            if ($dataType->scope && $dataType->scope != '' && method_exists($model, 'scope'.ucfirst($dataType->scope))) {
+                $query->{$dataType->scope}();
+            }
+
+            // Use withTrashed() if model uses SoftDeletes and if toggle is selected
+            if ($model && in_array(SoftDeletes::class, class_uses_recursive($model)) && Auth::user()->can('delete', app($dataType->model_name))) {
+                $usesSoftDeletes = true;
+
+                if ($request->get('showSoftDeleted')) {
+                    $showSoftDeleted = true;
+                    $query = $query->withTrashed();
+                }
+            }
+
+            // If a column has a relationship associated with it, we do not want to show that field
+            $this->removeRelationshipField($dataType, 'browse');
+
+            if ($search->value != '' && $search->key && $search->filter) {
+                $search_filter = ($search->filter == 'equals') ? '=' : 'LIKE';
+                $search_value = ($search->filter == 'equals') ? $search->value : '%'.$search->value.'%';
+
+                $searchField = $dataType->name.'.'.$search->key;
+                if ($row = $this->findSearchableRelationshipRow($dataType->rows->where('type', 'relationship'), $search->key)) {
+                    $query->whereIn(
+                        $searchField,
+                        $row->details->model::where($row->details->label, $search_filter, $search_value)->pluck('id')->toArray()
+                    );
+                } else {
+                    if ($dataType->browseRows->pluck('field')->contains($search->key)) {
+                        $query->where($searchField, $search_filter, $search_value);
+                    }
+                }
+            }
+
+            $row = $dataType->rows->where('field', $orderBy)->firstWhere('type', 'relationship');
+            if ($orderBy && (in_array($orderBy, $dataType->fields()) || !empty($row))) {
+                $querySortOrder = (!empty($sortOrder)) ? $sortOrder : 'desc';
+                if (!empty($row)) {
+                    $query->select([
+                        $dataType->name.'.*',
+                        'joined.'.$row->details->label.' as '.$orderBy,
+                    ])->leftJoin(
+                        $row->details->table.' as joined',
+                        $dataType->name.'.'.$row->details->column,
+                        'joined.'.$row->details->key
+                    );
+                }
+
+                $dataTypeContent = call_user_func([
+                    $query->orderBy($orderBy, $querySortOrder),
+                    $getter,
+                ]);
+            } elseif ($model->timestamps) {
+                $dataTypeContent = call_user_func([$query->latest($model::CREATED_AT), $getter]);
+            } else {
+                $dataTypeContent = call_user_func([$query->orderBy($model->getKeyName(), 'DESC'), $getter]);
+            }
+
+            // Replace relationships' keys for labels and create READ links if a slug is provided.
+            $dataTypeContent = $this->resolveRelations($dataTypeContent, $dataType);
+        } else {
+            // If Model doesn't exist, get data from table name
+            $dataTypeContent = call_user_func([DB::table($dataType->name), $getter]);
+            $model = false;
+        }
+
+        // Check if BREAD is Translatable
+        $isModelTranslatable = is_bread_translatable($model);
+
+        // Eagerload Relations
+        $this->eagerLoadRelations($dataTypeContent, $dataType, 'browse', $isModelTranslatable);
+
+        // Check if server side pagination is enabled
+        $isServerSide = isset($dataType->server_side) && $dataType->server_side;
+
+        // Check if a default search key is set
+        $defaultSearchKey = $dataType->default_search_key ?? null;
+
+        // Actions
+        $actions = [];
+        if (!empty($dataTypeContent->first())) {
+            foreach (Voyager::actions() as $action) {
+                $action = new $action($dataType, $dataTypeContent->first());
+
+                if ($action->shouldActionDisplayOnDataType()) {
+                    $actions[] = $action;
+                }
+            }
+        }
+
+        // Define showCheckboxColumn
+        $showCheckboxColumn = false;
+        if (Auth::user()->can('delete', app($dataType->model_name))) {
+            $showCheckboxColumn = true;
+        } else {
+            foreach ($actions as $action) {
+                if (method_exists($action, 'massAction')) {
+                    $showCheckboxColumn = true;
+                }
+            }
+        }
+
+        // Define orderColumn
+        $orderColumn = [];
+        if ($orderBy) {
+            $index = $dataType->browseRows->where('field', $orderBy)->keys()->first() + ($showCheckboxColumn ? 1 : 0);
+            $orderColumn = [[$index, $sortOrder ?? 'desc']];
+        }
+
+        // Define list of columns that can be sorted server side
+        $sortableColumns = $this->getSortableColumns($dataType->browseRows);
+
+        $view = 'voyager::bread.browse';
+
+        if (view()->exists("voyager::$slug.browse")) {
+            $view = "voyager::$slug.browse";
+        }
+      
+        $dataType->display_name_plural = 'Lista oferte';
+      
+        $is_order_page = false;
+      
+        return Voyager::view($view, compact(
+            'actions',
+            'dataType',
+            'dataTypeContent',
+            'isModelTranslatable',
+            'search',
+            'orderBy',
+            'orderColumn',
+            'sortableColumns',
+            'sortOrder',
+            'searchNames',
+            'isServerSide',
+            'defaultSearchKey',
+            'usesSoftDeletes',
+            'showSoftDeleted',
+            'showCheckboxColumn',
+            'is_order_page'
+        ));
+    }
+  
+    // listez comenzile (au numar_comanda != null)
+      public function list_orders(Request $request)
+    {
+        // GET THE SLUG, ex. 'posts', 'pages', etc.
+        $slug = 'offers';
+
+        // GET THE DataType based on the slug
+        $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
+
+        // Check permission
+        $this->authorize('browse', app($dataType->model_name));
+
+        $getter = $dataType->server_side ? 'paginate' : 'get';
+
+        $search = (object) ['value' => $request->get('s'), 'key' => $request->get('key'), 'filter' => $request->get('filter')];
+
+        $searchNames = [];
+        if ($dataType->server_side) {
+            $searchNames = $dataType->browseRows->mapWithKeys(function ($row) {
+                return [$row['field'] => $row->getTranslatedAttribute('display_name')];
+            });
+        }
+
+        $orderBy = $request->get('order_by', $dataType->order_column);
+        $sortOrder = $request->get('sort_order', $dataType->order_direction);
+        $usesSoftDeletes = false;
+        $showSoftDeleted = false;
+
+        // Next Get or Paginate the actual content from the MODEL that corresponds to the slug DataType
+        if (strlen($dataType->model_name) != 0) {
+            $model = app($dataType->model_name);
+
+            // preiau toate produsele care au inclusiv campurile pret si parinte selectate, deci sunt produse complete
+            $query = $model::select($dataType->name.'.*')->where('numar_comanda', '!=', null);
+
+            if ($dataType->scope && $dataType->scope != '' && method_exists($model, 'scope'.ucfirst($dataType->scope))) {
+                $query->{$dataType->scope}();
+            }
+
+            // Use withTrashed() if model uses SoftDeletes and if toggle is selected
+            if ($model && in_array(SoftDeletes::class, class_uses_recursive($model)) && Auth::user()->can('delete', app($dataType->model_name))) {
+                $usesSoftDeletes = true;
+
+                if ($request->get('showSoftDeleted')) {
+                    $showSoftDeleted = true;
+                    $query = $query->withTrashed();
+                }
+            }
+
+            // If a column has a relationship associated with it, we do not want to show that field
+            $this->removeRelationshipField($dataType, 'browse');
+
+            if ($search->value != '' && $search->key && $search->filter) {
+                $search_filter = ($search->filter == 'equals') ? '=' : 'LIKE';
+                $search_value = ($search->filter == 'equals') ? $search->value : '%'.$search->value.'%';
+
+                $searchField = $dataType->name.'.'.$search->key;
+                if ($row = $this->findSearchableRelationshipRow($dataType->rows->where('type', 'relationship'), $search->key)) {
+                    $query->whereIn(
+                        $searchField,
+                        $row->details->model::where($row->details->label, $search_filter, $search_value)->pluck('id')->toArray()
+                    );
+                } else {
+                    if ($dataType->browseRows->pluck('field')->contains($search->key)) {
+                        $query->where($searchField, $search_filter, $search_value);
+                    }
+                }
+            }
+
+            $row = $dataType->rows->where('field', $orderBy)->firstWhere('type', 'relationship');
+            if ($orderBy && (in_array($orderBy, $dataType->fields()) || !empty($row))) {
+                $querySortOrder = (!empty($sortOrder)) ? $sortOrder : 'desc';
+                if (!empty($row)) {
+                    $query->select([
+                        $dataType->name.'.*',
+                        'joined.'.$row->details->label.' as '.$orderBy,
+                    ])->leftJoin(
+                        $row->details->table.' as joined',
+                        $dataType->name.'.'.$row->details->column,
+                        'joined.'.$row->details->key
+                    );
+                }
+
+                $dataTypeContent = call_user_func([
+                    $query->orderBy($orderBy, $querySortOrder),
+                    $getter,
+                ]);
+            } elseif ($model->timestamps) {
+                $dataTypeContent = call_user_func([$query->latest($model::CREATED_AT), $getter]);
+            } else {
+                $dataTypeContent = call_user_func([$query->orderBy($model->getKeyName(), 'DESC'), $getter]);
+            }
+
+            // Replace relationships' keys for labels and create READ links if a slug is provided.
+            $dataTypeContent = $this->resolveRelations($dataTypeContent, $dataType);
+        } else {
+            // If Model doesn't exist, get data from table name
+            $dataTypeContent = call_user_func([DB::table($dataType->name), $getter]);
+            $model = false;
+        }
+
+        // Check if BREAD is Translatable
+        $isModelTranslatable = is_bread_translatable($model);
+
+        // Eagerload Relations
+        $this->eagerLoadRelations($dataTypeContent, $dataType, 'browse', $isModelTranslatable);
+
+        // Check if server side pagination is enabled
+        $isServerSide = isset($dataType->server_side) && $dataType->server_side;
+
+        // Check if a default search key is set
+        $defaultSearchKey = $dataType->default_search_key ?? null;
+
+        // Actions
+        $actions = [];
+        if (!empty($dataTypeContent->first())) {
+            foreach (Voyager::actions() as $action) {
+                $action = new $action($dataType, $dataTypeContent->first());
+
+                if ($action->shouldActionDisplayOnDataType()) {
+                    $actions[] = $action;
+                }
+            }
+        }
+
+        // Define showCheckboxColumn
+        $showCheckboxColumn = false;
+        if (Auth::user()->can('delete', app($dataType->model_name))) {
+            $showCheckboxColumn = true;
+        } else {
+            foreach ($actions as $action) {
+                if (method_exists($action, 'massAction')) {
+                    $showCheckboxColumn = true;
+                }
+            }
+        }
+
+        // Define orderColumn
+        $orderColumn = [];
+        if ($orderBy) {
+            $index = $dataType->browseRows->where('field', $orderBy)->keys()->first() + ($showCheckboxColumn ? 1 : 0);
+            $orderColumn = [[$index, $sortOrder ?? 'desc']];
+        }
+
+        // Define list of columns that can be sorted server side
+        $sortableColumns = $this->getSortableColumns($dataType->browseRows);
+
+        $view = 'voyager::bread.browse';
+
+        if (view()->exists("voyager::$slug.browse")) {
+            $view = "voyager::$slug.browse";
+        }
+      
+        $dataType->display_name_plural = 'Lista comenzi';
+        $is_order_page = true;
+        return Voyager::view($view, compact(
+            'actions',
+            'dataType',
+            'dataTypeContent',
+            'isModelTranslatable',
+            'search',
+            'orderBy',
+            'orderColumn',
+            'sortableColumns',
+            'sortOrder',
+            'searchNames',
+            'isServerSide',
+            'defaultSearchKey',
+            'usesSoftDeletes',
+            'showSoftDeleted',
+            'showCheckboxColumn',
+            'is_order_page'
+        ));
+    }
   
       /**
      * POST BRE(A)D - Store data.
@@ -57,6 +413,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           $countries = $request->input('country');
           $states = $request->input('state');
           $cities = $request->input('city');
+          // verific daca au fost completate toate adresele
           if($addresses == null || !array_key_exists(0, $addresses)){
             $addrErrs++;
           }
@@ -109,6 +466,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             }
           }
         }
+      // daca am erori in $errMessages, atunci le afisez in pagina
+      
         // Validate fields with ajax
 //         $val = $this->validateBread($request->all(), $dataType->addRows)->validate();
         $val = $this->validateBread($request->all(), $dataType->addRows);
@@ -127,6 +486,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 
         event(new BreadDataAdded($dataType, $data));
       
+        // iau oferta creata cu insertUpdateData si-i modific datele de mai jos
         $offer = Offer::find($data->id);
         $offer->status = '1';
         $offer->serie = $data->id;
@@ -134,6 +494,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $offer->agent_id = Auth::user()->id;
         $offer->save();
       
+        // daca am adaugat un client nou, cu adrese, il creez, verific datele din adresa adaugata si le salvez
         if($data->client_id == -1){
           
           $client = new Client;
@@ -169,7 +530,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           if($cities != null && array_key_exists(0, $cities)){
             $itemCity = $cities[0];
           }
-
+          // creez adresa user-ului adaugat
           $editInsertAddress = new UserAddress;
           $editInsertAddress->address = $address;
           $editInsertAddress->user_id = $user_id;
@@ -193,8 +554,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $entity->save();
           }
         }
+        
+      // salvez log-ul pentru oferta nou creata
+        $message = "a creat o oferta noua";
+        (new self())->createEvent($offer, $message);
       
-
         if (!$request->has('_tagging')) {
             if (auth()->user()->can('browse', $data)) {
 //                 $redirect = redirect()->route("voyager.{$dataType->slug}.index");
@@ -248,6 +612,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       
         $this->insertUpdateData($request, $slug, $dataType->editRows, $data);
 
+        // foloseam inainte sa scot butonul de save, la cererea lor, pentru ca am o functie definita mai jos cu care salvez la fiecare modificare facuta in frontend printr-un ajax call
         if($request->input('delivery_address_user') != null){
           $data->delivery_address_user = $request->input('delivery_address_user') == -2 ? null : $request->input('delivery_address_user');
           $data->total_general = $request->input('totalGeneral') != null ? number_format(floatval($request->input('totalGeneral')), 2, '.', '') : 0;
@@ -255,6 +620,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           $data->total_final = $request->input('totalCalculatedPrice') != null ? number_format(floatval($request->input('totalCalculatedPrice')), 2, '.', '') : 0;
           $data->save();
         }
+      
+        // salvez log-ul cu oferta modificata
+      
+        $message = "a modificat oferta";
+        (new self())->createEvent($offer, $message);
       
         // Delete Images
         $this->deleteBreadImages($original_data, $to_remove);
@@ -305,12 +675,15 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if (view()->exists("voyager::$slug.edit-add")) {
             $view = "voyager::$slug.edit-add";
         }
+      
+        // definesc variabilele cu valoarea null pe care le "verific"(le verific in pagina de edit si trebuie sa le am definite si in create pentru ca e acelasi view)
         $userAddresses = null;
         $priceRules = null;
         $allProducts = null;
         $select_html_grids = null;
         $offerProducts = null;
-        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'userAddresses', 'priceRules', 'allProducts', 'select_html_grids', 'offerProducts'));
+        $adminUsers = null;
+        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'userAddresses', 'priceRules', 'allProducts', 'select_html_grids', 'offerProducts', 'adminUsers'));
     }
   
     public function edit(Request $request, $id)
@@ -358,18 +731,26 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $view = "voyager::$slug.edit-add";
         }
       
+        // cand intru pe pagina de edit, trebuie sa iau toate produsele pe baza tipului de oferta selectat
         $createdAttributes = [];
         $offer = $dataTypeContent;
+        // iar adresele user-ului selectat
         $userAddresses = \App\UserAddress::where('user_id', $offer->client_id)->get();
+        // iau tipul de oferta selectata
         $offerType = OfferType::find($offer->type);
+      
+        // parintii sunt produsele(asa au vrut ei sa definim parintii ca fiind produse)
         $offerType->parents = $offerType->parents();
+        // creez $parentIds pe baza id-urilor produselor din tipul de oferta
         $parentIds = $offerType->parents->pluck('id');
         $offerProducts = null;
-      
+        // iau cursul valutar(daca am in oferta, il iau de acolo, daca nu, il iau din tipul de oferta. Daca nici acolo nu e definit, il iau pe cel live de la BNR)
         $cursValutar = $offer->curs_eur != null ? $offer->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
         $offer->curs_eur = $cursValutar;
+        // iau toate regulile de pret
         $priceRules = \App\RulesPrice::get();
-        $priceGridId = $offer->price_grid_id != null ? $offer->price_grid_id : -1;
+        $priceGridId = $offer->price_grid_id != null ? $offer->price_grid_id : 6;
+        // iau adresele user-ului
         $selectedAddress = \App\UserAddress::find($offer->delivery_address_user);
         if($selectedAddress != null){
           $selectedAddress->city_name = $selectedAddress->city_name();
@@ -386,31 +767,41 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           }
         }
         
-        // get attributs to put them into selectors
+        // Fiecare articol din produse are atribute selectate. Eu trebuie sa le filtrez pentru a nu afisa acelasi atribut de mai multe ori. Spre exemplu produsul X are culoarea Rosu iar Y are culoarea Rosu
+        // Trebuie sa le filtrez si sa afisez o singura data culoarea Rosu
         if($offerType->parents && count($offerType->parents) > 0){
+          // iau id-urile de articole pe baza id-urilor de produse din tipul de oferta selectat
           $prodIds = Product::select('id')->whereIn('parent_id', $parentIds)->get();
           if(count($prodIds) > 0){
             $arrayOfAttrValues = [];
+            // iau atributele din tabelul de legatura(vor modificari si aici pentru ca voi schimba toate json-urile din baza de date in tabele de legatura...) :|
             $prodAttrs = ProductAttribute::with('attrs')->whereIn('product_id', $prodIds)->get();
             $prodAttrs = $prodAttrs->toArray();
+            // trec prin array-ul de atribute si ii scot created_at, updated_at
             foreach($prodAttrs as $key => &$attr){
               $attr['attrs'] = $attr['attrs'][0];
               unset($attr['attrs']['created_at']);
               unset($attr['attrs']['updated_at']);
+              // verific daca am json, adica am culoare cu hex si valoare sau daca am dimensiune/grosime(care se stocheaza doar ca valoare simpla)
               $attr['value'] = json_decode($attr['value'], true) && json_last_error() != 4 ? json_decode($attr['value'], true) : $attr['value'];
               $attr['attrs']['values'] = $attr['value'];
+              // pun valorile in array-ul createdAttributes doar daca nu exista deja, sub forma
+              /*
+                [{"id":10,"title":"Culoare produs","type":1,"values":["#f000b0","roz"]},{"id":11,"title":"Culoare surub tabla","type":1,"values":["#f000b0","roz"]},{"id":12,"title":"Culoare sistem scurgere","type":1,"values":["#f000b0","roz"]},{"id":14,"title":"Culoare surub sipca","type":1,"values":["#f000b0","roz"]},{"id":9,"title":"Grosime produs","type":0,"values":0.5},{"id":9,"title":"Grosime produs","type":0,"values":0.45},{"id":9,"title":"Grosime produs","type":0,"values":0.4},{"id":13,"title":"Dimensiune sistem scurgere","type":0,"values":"150\/100"},{"id":13,"title":"Dimensiune sistem scurgere","type":0,"values":"125\/087 ECO"},{"id":12,"title":"Culoare sistem scurgere","type":1,"values":["#5E2129","3005"]},{"id":12,"title":"Culoare sistem scurgere","type":1,"values":["#0A0A0A","9005"]}]
+              */
               if(!in_array($attr['attrs'], $createdAttributes)){
                 array_push($createdAttributes, $attr['attrs']);
               }
             }
             $mergedAttributes = [];
-            
+            // mi-am format array-ul cretedAttributes care contine datele care ma intereseaza dar care poate avea valori(care sunt array-uri) multiple si din care ma intereseaza sa am un array cu valorile merge-uite. Spre exemplu, poate exista,
+            // ca in array-ul de mai sus, Grosime produs de mai multe ori, cu valori diferite. Eu trebuie sa-mi formez un array care are titlu Grosime produs si values, toate valorile, intr-un array, de la Grosime produs, spre exemplu
             foreach($createdAttributes as $key => &$attr){
               $copyElement = $attr;
               unset($copyElement['values']);
-              $mergedAttributes[$attr['id']] = $copyElement;
+              $mergedAttributes[$attr['id']] = $copyElement; // creez array-ul $mergedAttributes pe care-l initializez cu cheia - id-ul attributului iar la valoare ii pun id, titlu si type
             }
-            
+            // adaug valorile atributelor in fiecare item din array-ul $mergedAttributes, pe baza id-ului 
             foreach($createdAttributes as $key => &$attr){
               if(!array_key_exists('values', $mergedAttributes[$attr['id']])){
                 $mergedAttributes[$attr['id']]['values'] = [];
@@ -419,6 +810,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 array_push($mergedAttributes[$attr['id']]['values'], $attr['values']);
               }
             }
+            // au cerut sa le afisez in functie de tip: 1 - culoare, 0 - grosime/dimensiune
             $createdAttributes = $mergedAttributes;
             function array_sort_by_column(&$arr, $col, $dir = SORT_DESC) {
                 $sort_col = array();
@@ -432,8 +824,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           }
           $offerProducts = OfferProduct::with('prices')->where('offer_id', $offer->id)->get();
           
+          // pentru oferta pe care ma aflu acum, iau produsele din tabelul de legatura pentru a le lasa disponibil campul cantitate si pentru a afisa preturile calculate pe baz grilelor de pret
+          // (pentru celelalte produse pe care nu le gasesc in obiectul asta)
+          // voi avea campul cantitate readonly iar restul campurilor vor avea valoarea 0
           if($offerProducts && count($offerProducts) > 0){
             foreach($offerProducts as $offProd){
+              // filtrez produsele din oferta pe baza parent_id
               $checkedParent = $offerType->parents->filter(function($item) use($offProd){
                   return $item->id == $offProd->parent_id;
               })->first();
@@ -441,8 +837,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             }
           }
         }
-      
-        // transform price_grid_id input into select dropdown with selected value 
+        // transform price_grid_id input in select dropdown cu valorile selectate(pentru ca eu l-am facut input si trebuie sa il am select - au cerut ca sa am preselectata grila de pret pe Lista - id: 6 )
         $select_html_grids = "<select name='price_grid_id' class='form-control'>";
         if($priceRules){
           foreach($priceRules as $price){
@@ -454,6 +849,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           }
         }
         $select_html_grids .= "</select>";
+      
+        $adminUsers = User::get();
+        $offerEvents = OfferEvent::where('offer_id', $offer->id)->orderBy('created_at', 'DESC')->get();
       
         return Voyager::view($view, compact(
           'dataType', 
@@ -467,6 +865,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           'priceRules',
           'select_html_grids',
           'offerProducts',
+          'adminUsers',
+          'offerEvents',
         ));
     }
   
@@ -554,14 +954,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       return ['success' => true, 'products' => $products];
     }
   
-  
+    // la fel si functia asta... sa termin cu JSON-urile mai intai
     public static function getRulesPricesByProductCategory($categoryId, $productPrice = null, $currency = null){
       $tva = floatVal(setting('admin.tva_products'))/100;
       $rulePricesFilteredByCategory = RulePricesFormula::where('categorie', $categoryId)->get();
       foreach($rulePricesFilteredByCategory as &$item){
         $formula = str_replace("PI", $productPrice, $item['full_formula']);
         $price = eval('return '.$formula.';');
-        $formatedPriceFormula = floatVal(number_format($price ,3,'.', ''));
+        $formatedPriceFormula = floatVal(number_format($price ,4,'.', ''));
         if($currency == null){
           $currency = 1;
         }
@@ -569,9 +969,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $priceWithCurrency = $price*$currency;
         $priceWithTva = $priceWithCurrency+($priceWithCurrency*$tva);
         
-        $item['price'] = number_format($formatedPriceFormula, 3, '.', '');
-        $item['eur_fara_tva'] = number_format($price, 3, '.', '');
-        $item['ron_cu_tva'] = number_format($priceWithTva, 3, '.', '');
+        $item['price'] = number_format($formatedPriceFormula, 2, '.', '');
+        $item['eur_fara_tva'] = number_format($price, 2, '.', '');
+        $item['ron_cu_tva'] = number_format($priceWithTva, 2, '.', '');
         
       }
       return $rulePricesFilteredByCategory;
@@ -590,6 +990,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       return $randomString;
     }
   
+  
+    // si functia asta, tot dupa ce termin cu JSON-urile
     public function getPricesByProductAndCategory(Request $request){
       
       $product_id = $request->input("product_id");
@@ -602,26 +1004,18 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       return ['success' => true, 'rulePrices' => $rulePrices];
     }
   
-    public function getPricesByProductAndCategoryOld(Request $request){
-      $product_id = $request->input("product_id");
-      $product = Product::find($product_id);
-      $category_id = $request->input("category_id");
-      $cleanRulePrices = \App\RulesPrice::getFormulaByCategory($category_id);
-      $cleanRulePrices = $cleanRulePrices->toArray();
-      $rulePrices = \App\RulesPrice::getFormulasWithPricesByProduct($cleanRulePrices, $product->price, $request->input('currency'));
-      return ['success' => true, 'rulePrices' => $rulePrices];
-  }
-  
+  // functie care-mi salveaza in baza de date de fiecare data cand fac modificari in campurile de pe pagina Editare Oferta
   public function ajaxSaveUpdateOffer(Request $request){
-//     dd($request->all());
     $offer_id = $request->input('offer_id');
-//     return ['success' => true, 'offer_id' => $offer_id];
+    $offerDb = null;
     if($offer_id != null){
       $offer = Offer::find($offer_id);
+      $offerDb = Offer::find($offer_id); // mai fac un query pentru ca daca echivalez offerDb cu offer, orice modificare aduc lui offer, se propaga si la offerDb
     } else{
       $offer = new Offer;
     }
     
+    // momentan folosesc JSON-ul dar il modific dupa ce termin cu JSON-urile...
     $attributes = $request->input('selectedAttribute') != null ? $request->input('selectedAttribute') : [];
     $parentIds = $request->input('parentIds');
     $offerQty = $request->input('offerQty');
@@ -646,11 +1040,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       }
     }
     
+    // modific toate campurile pe care le-am editat din frotend
     $offer->type = $request->input('type');
     $offer->offer_date = $request->input('offer_date');
     $offer->client_id = $request->input('client_id');
     $offer->distribuitor_id = $request->input('distribuitor_id');
-    $offer->price_grid_id = $request->input('price_grid_id');
+    $offer->price_grid_id = $request->input('price_grid_id') != null ? $request->input('price_grid_id') : 6; // default Lista
     $offer->curs_eur = $request->input('curs_eur');
     $offer->agent_id = Auth::user()->id;
     $offer->delivery_address_user = $request->input('delivery_address_user');
@@ -672,9 +1067,29 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->selected_products = $selectedProducts;
     $offer->save();
     
-    if($request->input('offerProductIds') != null){
+    // verific daca editez o oferta existenta si salvez event-ul
+    $message = "a modificat oferta";
+    $fromValue = 'empty';
+    $toValue = 'empty';
+    $changedField = '';
+    // am facut o functie care verifica ce camp s-a modificat si care sunt valorile modificate, din ce valoare in ce valoare s-a trecut
+    $retrievedFieldWithData = (new self())->getFieldTranslatedName($offerDb, $offer);
+    if($retrievedFieldWithData != null){
+      // iau diferenta intre ce aveam in db si ce am modificat
+      $fromValue = $retrievedFieldWithData['fromValue'] == '' ? 'empty' : $retrievedFieldWithData['fromValue'];
+      $toValue = $retrievedFieldWithData['toValue'] == '' ? 'empty' : $retrievedFieldWithData['toValue'];
+      $resultField = $retrievedFieldWithData['resultField'];
+      $changedField = $retrievedFieldWithData['changedField'];
+      $message = ' a modificat <strong>'.$resultField.'</strong> din <strong>'.$fromValue.'</strong> in <strong>'. $toValue.'</strong>';
+    }
+    // pentru ca am reducere trecut default 0 in baza de date, imi returneaza de fiecare data ca l-am modificat. Verific aici daca l-am modificat cu adevarat sau nu
+    if($changedField != 'reducere' || ($fromValue != 0 && $toValue != '0.00')){
+      (new self())->createEvent($offer, $message);
+    }
+    
+    // pentru fiecare produs pentru care am modificat cantitatea, modific si in baza de date
+    if($request->input('offerProductIds') != null && $offerQty != null){
       $offerProductIds = $request->input('offerProductIds');
-      
       foreach($offerProductIds as $key => $id){
         $offerProduct = OfferProduct::where('id', $id)->first();
         $offerProduct->qty = $offerQty[$key];
@@ -682,19 +1097,23 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       }
     }
     
-    return ['success' => true, 'offer_id' => $offer->id];
+    return ['success' => true, 'offer_id' => $offer->id, 'html_log' => (new self())->getHtmlLog($offer)];
   }
   
+  // generez pdf-ul cu oferta
   public function generatePDF($offer_id){
+    // iau oferta pe baza id-ului de oferta
     $offer = Offer::with(['distribuitor', 'client', 'delivery_address'])->find($offer_id);
     $dimension = 0;
     $boxes = 0;
     $totalQty = 0;
     if($offer != null){
+      // iau produsele pe care le-am salvat in baza de date in offer_product
       $offerProducts = OfferProduct::with(['prices', 'product', 'getParent'])->where('offer_id', $offer->id)->get();
       $offerType = OfferType::find($offer->type);
       $offerType->parents = $offerType->parents();
       
+      // trec prin fiecare produs pentru a calcula dimensiunea, totalul de cantitati si cutii
       if($offerProducts && count($offerProducts) > 0){
         $newPrices = [];
         foreach($offerProducts as &$offProd){
@@ -716,12 +1135,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       }
       $offer->dimension = $dimension;
       $offer->boxes = $boxes;
+      // trimit toate datele in offer_pdf si generez pdf-ul
       $pdf = PDF::loadView('vendor.pdfs.offer_pdf',['offer' => $offer, 'offerProducts' => $offerProducts]);
       return $pdf->download('Oferta_TPS'.$offer->serie.'_'.date('m-d-Y').'.pdf');
     }
     return ['success' => false];
   }
   
+  // acelasi lucru ca mai sus
   public function generatePDFFisa($offer_id){
     $offer = Offer::with(['distribuitor', 'client', 'delivery_address'])->find($offer_id);
     $dimension = 0;
@@ -751,6 +1172,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
     return ['success' => false];
   }
+  // folosesc in dashboard pentru a afisa ofertele in functie de ce s-a selectat din calendar
   public function retrieveOffersPerYearMonth(Request $request){
     $year = $request->input('year');
     $month = $request->input('month');
@@ -766,6 +1188,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     return ['success' => true, 'calendarOrders' => $calendarOrders];
   }
   
+  // schimb statusul comenzii in baza de date
   public function changeStatus(Request $request){
     if($request->input('order_id') == null){
       return ['success' => false, 'msg' => 'Te rugam sa selectezi o comanda pentru a schimba statusul!'];
@@ -784,6 +1207,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
   }
   
+  // s-a apasat butonul de Oferta acceptata - lanseaza comanda
   public function launchOrder(Request $request){
     if($request->input('order_id') == null){
       return ['success' => false, 'msg' => 'Te rugam sa selectezi o comanda pentru a lansa comanda!'];
@@ -792,6 +1216,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offer = Offer::find($request->input('order_id'));
       $status = Status::where('title', 'like' , '%productie%')->first();
       $offer->status = $status != null ? $status->id : 1;
+      // generez un numar de comanda pe baza comenzilor create anterior. Ex: count(comenzi) + 1
       $nextOrderNumber = Offer::where('numar_comanda', '!=', null)->count() + 1;
       $offer->numar_comanda = $nextOrderNumber;
       $offer->save();
@@ -799,6 +1224,243 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     } catch(\Exception $e){
       return ['success' => false, 'msg' => 'Statusul nu a putut fi modificat!'];
     }
+  }
+  
+  // creez evenimentul pe care-l salvez in log-uri
+  public static function createEvent($offer, $message, $is_mention = false){
+    try{
+      $created_at = date("Y-m-d H:i");
+      $is_mention = $is_mention ? 1 : 0;
+      $offerEvent = new OfferEvent();
+      $offerEvent->offer_id = $offer->id;
+      $offerEvent->user_name = $offer->agent->name;
+      $offerEvent->user_id = $offer->agent_id;
+      $offerEvent->message = $message;
+      $offerEvent->is_mention = $is_mention;
+      $offerEvent->created_at = $created_at;
+      $offerEvent->updated_at = $created_at;
+      $offerEvent->save();
+    } catch(\Exception $e){}
+  }
+ 
+    // functia care-mi traduce campul modificat si verifica ce camp s-a modificat in baza de date
+  public static function getFieldTranslatedName($oldObj, $newObj){
+    $resultField = '';
+    $fromValue = 'empty';
+    $toValue = 'empty';
+    $changedField = '';
+    switch($newObj){
+      case $newObj->wasChanged('serie'):
+        $fromValue = $oldObj->serie;
+        $toValue = $newObj->serie;
+        $resultField = 'Numar oferta';
+        $changedField = 'serie';
+        break;
+      case $newObj->wasChanged('client_id'):
+        $fromValue = $oldObj->client->name;
+        $toValue = $newObj->client->name;
+        $resultField = 'Client';
+        $changedField = 'client_id';
+        break;
+      case $newObj->wasChanged('type'):
+        $fromValue = $oldObj->offerType->title;
+        $toValue = $newObj->offerType->title;
+        $resultField = 'Tip oferta';
+        $changedField = 'type';
+        break;
+      case $newObj->wasChanged('offer_date'):
+        $fromValue = $oldObj->offer_date;
+        $toValue = $newObj->offer_date;
+        $resultField = 'Data oferta';
+        $changedField = 'offer_date';
+        break;
+      case $newObj->wasChanged('distribuitor_id'):
+        $fromValue = $oldObj->distribuitor->title;
+        $toValue = $newObj->distribuitor->title;
+        $resultField = 'Sursa';
+        $changedField = 'distribuitor_id';
+        break;
+      case $newObj->wasChanged('curs_eur'):
+        $fromValue = $oldObj->curs_eur;
+        $toValue = $newObj->curs_eur;
+        $resultField = 'Curs valutar';
+        $changedField = 'curs_eur';
+        break;
+      case $newObj->wasChanged('attributes'):
+        //doar de moment pana cand modific json-ul in tabele separate
+        $attribute = json_decode($newObj->attributes, true);
+        $explodedAttributes = explode("_", $attribute[0]);
+        if(count($explodedAttributes) == 3){
+          $value = $explodedAttributes[2];
+        } else{
+          $value = $explodedAttributes[1];
+        }
+        $fromValue = $oldObj->attributes;
+        $toValue = $value;
+        $resultField = 'Culoare/Dimensiune/Grosime';
+        $changedField = 'attributes';
+        break;
+      case $newObj->wasChanged('price_grid_id'):
+        $fromValue = $oldObj->rulePrice->title;
+        $toValue = $newObj->rulePrice->title;
+        $resultField = 'Grila pret';
+        $changedField = 'price_grid_id';
+        break;
+      case $newObj->wasChanged('delivery_date'):
+        $fromValue = $oldObj->delivery_date;
+        $toValue = $newObj->delivery_date;
+        $resultField = 'Data livrare';
+        $changedField = 'delivery_date';
+        break;
+      case $newObj->wasChanged('observations'):
+        $fromValue = $oldObj->observations;
+        $toValue = $newObj->observations;
+        $resultField = 'Observatii';
+        $changedField = 'observations';
+        break;
+      case $newObj->wasChanged('status'):
+        $fromValue = $oldObj->status_name->title;
+        $toValue = $newObj->status_name->title;
+        $resultField = 'Status';
+        $changedField = 'status';
+        break;
+      case $newObj->wasChanged('delivery_type'):
+        $fromValue = $oldObj->delivery_type;
+        $toValue = $newObj->delivery_type;
+        $resultField = 'Mod livrare';
+        $changedField = 'delivery_type';
+        break;
+      case $newObj->wasChanged('delivery_details'):
+        $fromValue = $oldObj->delivery_details;
+        $toValue = $newObj->delivery_details;
+        $resultField = 'Date livrare';
+        $changedField = 'delivery_details';
+        break;
+      case $newObj->wasChanged('packing'):
+        $fromValue = $oldObj->packing;
+        $toValue = $newObj->packing;
+        $resultField = 'Ambalare';
+        $changedField = 'packing';
+        break;
+      case $newObj->wasChanged('transparent_band'):
+        $fromValue = $oldObj->transparent_band == 0 ? 'Nu' : 'Da';
+        $toValue = $newObj->transparent_band == 0 ? 'Nu' : 'Da';
+        $resultField = 'Banda transparenta';
+        $changedField = 'transparent_band';
+        break;
+      case $newObj->wasChanged('reducere'):
+        $fromValue = $oldObj->reducere;
+        $toValue = $newObj->reducere;
+        $resultField = 'Reducere';
+        $changedField = 'reducere';
+        break;
+      case $newObj->wasChanged('delivery_address_user'):
+        $fromValue = $oldObj->delivery_address->address.', '.$oldObj->delivery_address->city_name.', '.$oldObj->delivery_address->state_name.', '.$oldObj->delivery_address->country.', '.$oldObj->delivery_address->delivery_phone.', '.$oldObj->delivery_address->delivery_contact;
+        $toValue = $newObj->delivery_address->address.', '.$newObj->delivery_address->city_name.', '.$newObj->delivery_address->state_name.', '.$newObj->delivery_address->country.', '.$newObj->delivery_address->delivery_phone.', '.$newObj->delivery_address->delivery_contact;
+        $resultField = 'Adresa livrare';
+        $changedField = 'delivery_address_user';
+        break;
+    }
+    if($resultField == '' && $fromValue == 'empty' && $toValue == 'empty'){
+      return null;
+    }
+    return [
+      'changedField' => $changedField,
+      'resultField' => $resultField,
+      'fromValue' => $fromValue,
+      'toValue' => $toValue,
+    ];
+  }
+  
+  // pentru o anumita oferta, iau log-ul
+  public static function getHtmlLog($offer){
+    $offerEvents = OfferEvent::where('offer_id', $offer->id)->orderBy('created_at', 'DESC')->get();
+    return view('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents])->render();
+  }
+  
+  public static function getHtmlLogMentions($offer_id){
+    $orderMentions = OfferEvent::where(['offer_id' => $offer_id, 'is_mention' => 1])->orderBy('created_at', 'DESC')->get();
+    return view('vendor.voyager.partials.log_events', ['offerEvents' => $orderMentions])->render();
+  }
+  
+  // functie care salveaza mentiunile facute pe comanda/oferta si care trimite email catre cei tag-uiti si catre o lista de email-uri din settings
+  public function saveMention(Request $request){
+    if($request->input('order_id') == null){
+      return ['success' => false, 'msg' => 'Te rugam sa selectezi o comanda pentru a lansa comanda!'];
+    }
+    if($request->input('message') == null){
+      return ['success' => false, 'msg' => 'Te rugam sa introduci un mesaj!'];
+    }
+    try{
+      $offer = Offer::find($request->input('order_id'));
+      $message = 'Mesaj intern: '.$request->input('message');
+      (new self())->createEvent($offer, $message, true);
+      
+      $taggedUsers = $request->input('mentionIds');
+      if($taggedUsers != null){
+        $taggedUsers = explode(",", $taggedUsers);
+        $adminUsers = User::whereIn('id', $taggedUsers)->get();
+        foreach($adminUsers as $user){
+          Mail::to($user->email)->send(new Mentions($offer->id, $offer->id, $message, $offer->agent->name, $user->name, false)); // trimite catre userii tag-uiti
+        }
+        $adminEmails = explode(" ", setting('admin.cc_emails'));
+        foreach($adminEmails as $email){
+          Mail::to($email)->send(new Mentions($offer->id, $offer->id, $message, $offer->agent->name, 'Admin', true)); // trimite catre email-urile din admin
+        }
+      }
+      
+      return ['success' => true, 'msg' => 'Mesaj salvat cu succes!', 'html_log' => (new self())->getHtmlLog($offer)];
+    } catch(\Exception $e){
+      return ['success' => false, 'msg' => 'Mesajul nu a putut fi salvat!'];
+    }
+  }
+  
+  // trimis SMS catre numarul de telefon al clientului atasat comenzii cu id-ul order_id
+  public static function sendSms(Request $request){
+    // verific daca s-a facut call-ul cu un id de comanda
+    if($request->input('order_id') == null){
+      return ['success' => false, 'msg' => 'Mesajul nu a putut fi trimis pentru ca nu exista comanda!'];
+    }
+    // iau comanda din baza de date
+    $offer = Offer::find($request->input('order_id'));
+    // iau datele clientului din baza de date
+    $userAddress = UserAddress::find($offer->delivery_address_user);
+    $userData = $userAddress->userData();
+    // iau nr de telefon fie din adresa selectata in comanda, fie din datele clientului
+    $phone = $userAddress->phone ?: $userData->phone;
+    // daca nu re niciun nr de telefon, ii dau o eroare
+    if($phone == null){
+      return ['success' => false, 'msg' => 'Niciun numar de telefon asociat comenzii!'];
+    }
+    // completez numarul de telefon cu +4 pentru ca sa pot trimite sms-ul
+   	if(strpos($phone, "+4") !== 0 && strlen($phone) == 10){
+   		$phone = '+4'.$phone;
+   	}
+    // fac request-ul catre smso si trimit sms-ul
+   	$client = new Client;
+    $request = $client->request('POST', 'https://app.smso.ro/api/v1/send', [
+            'headers' => [
+                'X-Authorization' => env('SMSO_KEY'),
+            ],
+           'form_params' => [
+               'to' => $phone,
+               'body' => (new self())->replaceDataInTemplate($order), // iau template-ul din settings si il modific cu datele din order
+               'sender' => 4,
+           ],
+    ]);
+    $message = 'a trimis SMS catre numarul de telefon <strong>'.$phone.'</strong>';
+    (new self())->createEvent($offer, $message, true);
+  }
+  
+  // returnez mesajul pe baza template-ului din setting
+  public static function replaceDataInTemplate($order){
+    $message = setting('admin.message_template');
+    $message = str_replace(
+      array('find', 'replace'),  
+      $message
+    );
+    // modifici data in template cum vrei tu :)
+    return $message;
   }
   
 }

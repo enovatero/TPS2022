@@ -103,7 +103,7 @@ class VoyagerOfferTypeController extends \TCG\Voyager\Http\Controllers\VoyagerBa
                 }
 
                 $results = [];
-
+                // am modificat functia ca sa afiseaza in dropdown-ul care se populeaza ajax, si campul Adauga client nou
                 if (!$row->required && !$search && $page == 1) {
                     $results[] = [
                         'id'   => '',
@@ -165,6 +165,7 @@ class VoyagerOfferTypeController extends \TCG\Voyager\Http\Controllers\VoyagerBa
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         event(new BreadDataAdded($dataType, $data));
+        // salvez produsele pe care le-a pus in lista din dreapta cu drag&drop
         if($request->input()){
           $inserted_id = $data->id;
           try{
@@ -194,7 +195,7 @@ class VoyagerOfferTypeController extends \TCG\Voyager\Http\Controllers\VoyagerBa
         }
     }
   
-  
+  // returnez subtipurile pe tipul de oferta
   public function getSubtypes(Request $request){
     $selectHtml = '<option selected disabled>Alege subtipul</option>';
     $subtypes = OfferType::where('parent_id', $request->parent_id)->get();
@@ -206,6 +207,7 @@ class VoyagerOfferTypeController extends \TCG\Voyager\Http\Controllers\VoyagerBa
     return ['success' => true, 'html' => $selectHtml];
   }
   
+  // salvez produsul care s-a lasat cu drop in lista din dreapta
   public function saveOfferTypeProducts(Request $request){
     try{
       $ids = [];

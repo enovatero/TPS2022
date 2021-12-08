@@ -199,6 +199,16 @@
                                                     @include('voyager::multilingual.input-hidden-bread-browse')
                                                     @if($row->field == "serie")
                                                       <a href="/admin/offers/{{$data->id}}/edit">{{ mb_strlen( $data->{$row->field} ) > 200 ? mb_substr($data->{$row->field}, 0, 200) . ' ...' : $data->{$row->field} }}</a>
+                                                      @php
+                                                        $ordermessages = $data->numar_comanda != null ? \App\Http\Controllers\VoyagerOfferController::getHtmlLogMentions($data->id) : null;
+                                                      @endphp
+                                                      @if($ordermessages != null)
+                                                        <span class="tooltipMessage icon voyager-chat">
+                                                          <div class="tooltip_description" style="display:none" title="Mesaje comanda">
+                                                            {!! $ordermessages !!}
+                                                          </div>
+                                                        </span>
+                                                      @endif
                                                     @else
                                                       @if($row->field == "numar_comanda")
                                                         <div>{{ $data->numar_comanda != null ? $data->numar_comanda : '-' }}</div>
@@ -316,6 +326,11 @@
                                                     @include('voyager::bread.partials.actions', ['action' => $action])
                                                 @endif
                                             @endforeach
+                                            @if($data->numar_comanda != null)
+                                              <a title="Trimite SMS" class="btn btn-success btn-add-new btnSendSms" order_id="{{$data->id}}">
+                                                  <i class="voyager-telephone"></i> <span class="hidden-xs hidden-sm">Send SMS</span>
+                                              </a>
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach
@@ -373,9 +388,20 @@
 @if(!$dataType->server_side && config('dashboard.data_tables.responsive'))
     <link rel="stylesheet" href="{{ voyager_asset('lib/css/responsive.dataTables.min.css') }}">
 @endif
+@if($is_order_page)
+    <link rel="stylesheet" href="../../../css/jquery.tooltip/jquery.tooltip.css">                              
+@endif
 @stop
 
 @section('javascript')
+    @if($is_order_page)
+      <script src="../../../js/jquery.tooltip.js"></script>   
+      <script>
+        $(document).ready(function(){
+          $(".tooltipMessage").tooltip();
+        });
+      </script>
+    @endif
     <!-- DataTables -->
     @if(!$dataType->server_side && config('dashboard.data_tables.responsive'))
         <script src="{{ voyager_asset('lib/js/dataTables.responsive.min.js') }}"></script>

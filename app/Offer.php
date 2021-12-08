@@ -16,6 +16,9 @@ class Offer extends Model
     public function status_name(){
       return $this->hasOne(Status::class, 'id', 'status');
     }
+    public function agent(){
+      return $this->hasOne(Models\User::class, 'id', 'agent_id');
+    }
     public function client(){
       return $this->belongsTo(Client::class);
     }
@@ -28,6 +31,10 @@ class Offer extends Model
   
     public function offerType(){
       return $this->hasOne(OfferType::class, 'id', 'type');
+    }
+  
+    public function rulePrice(){
+      return $this->hasOne(RulesPrice::class, 'id', 'price_grid_id');
     }
   
     public function fanData(){

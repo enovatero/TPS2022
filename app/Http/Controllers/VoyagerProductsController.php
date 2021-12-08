@@ -245,6 +245,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
         return $redirect;
     }
   
+  // iau atributele articolului pe baza produsului din care face parte
   public static function getAttributesByParent(Request $request, $parent_id = null, $selectedAttr = null){
 //     try{
       if(count($request->all()) > 0){
@@ -259,6 +260,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
       $selectedAttributes = $selectedAttributes != null ? json_decode($selectedAttributes, true) : null;
       $category = Category::with('attributes')->where('id', $category_id)->first();
       $html_attributes = '';
+      // fac o filtrare prin atribute
       if($category && $category->attributes && count($category->attributes) > 0){
         foreach($category->attributes as $attribute){
           $foundedAttribute = null;
@@ -276,6 +278,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
               }
             }
           }
+          // creez selecturile pe baza atributelor selectate/gasite din categorie
           $html_attributes .= '<div class="form-group col-md-12 ">
             <label class="control-label" for="name">'.ucfirst($attribute->title).'</label>';
             if($attribute->type == 1){
@@ -291,6 +294,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
                 $html_attributes .= '<select name="attributeValues[]" class="form-control retrievedAttribute"><option selected disabled>Selecteaza '.$attribute->title.'</option>';
               }
             }
+          // populez select-urile cu valorile din atribute
           $values = $attribute->values != null ? json_decode($attribute->values, true) : [];
           $selected = false;
           if(count($values) > 0){
@@ -334,7 +338,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
 //       return ['success' => false, 'error' => 'S-a produs o eroare pe server iar datele nu au putut fi preluate!'];
 //     }
   }
-  
+  // functie care executa php artisan winmentor:fetch pentru a lua produsele din winmentor prin api
   public function forceFetchProductsWinMentor(){
     $callResp = \Artisan::call('winmentor:fetch');
     if($callResp == 0){
@@ -343,6 +347,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
     return ['success' => true, 'msg' => 'Produsele au fost preluate cu succes!'];
   }
   
+  // filtrez produsele care au completate pretul si parent_id in produse complete
   public function productsComplete(Request $request){
             // GET THE SLUG, ex. 'posts', 'pages', etc.
         $slug = 'products';
@@ -514,6 +519,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
             'showCheckboxColumn'
         ));
   }
+  // filtrez produsele care nu au completate pretul si parent_id in produse incomplete
     public function productsInComplete(Request $request){
 //         \DB::enableQueryLog();
             // GET THE SLUG, ex. 'posts', 'pages', etc.
@@ -689,7 +695,7 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
         ));
   }
   
-  
+  // nu mai folosesc functia momentan, dar o scot definitiv dupa ce termin cu toate JSON-urile din DB
   public static function getPricesByProductOffer($price, $category_id, $offer_type_id, $rule_id, $currency, $qty){
     $priceWithTva = 0;
     $totalPriceWithTva = 0;

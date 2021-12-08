@@ -22,40 +22,21 @@ class NemoExpressController extends Controller
     const CITY_LIST_ENDPOINT = "list_cities";
     const GET_SERVICES_LIST= "list_services?type=";
     const GET_HISTORY = "get_history";
+    const GET_STATUS = "get_status";
 
     const SERVICES_TYPE_MAIN = "main";
     const SERVICES_TYPE_EXTRA = "extra";
-
-    /** @var string */
-    private $apiUrl;
-
-    /** @var string */
-    private $apiKey;
-
-    /** @var string */
-    private $error;
-
-    /**
-     * NemoExpressController constructor.
-     * @param string $apiUrl
-     * @param string $apiKey
-     */
-    public function __construct($apiUrl, $apiKey)
-    {
-        $this->apiUrl = $apiUrl;
-        $this->apiKey = $apiKey;
-    }
 
     /**
      * @param array $data
      * @return mixed
      */
-    public function createAwb($data)
+    public static function createAwb($apiKey, $data)
     {
-        $response = $this->callApi(self::CREATE_AWB_ENDPOINT, $data);
-        return json_decode($response);
+        return (new self())->callApi($apiKey, self::CREATE_AWB_ENDPOINT, $data);
     }
   
+  // creez awb-ul pentru NEMO
       public static function generateAwbNemo(Request $request){
         $form_data = $request->only([
             'order_id',
@@ -86,7 +67,7 @@ class NemoExpressController extends Controller
         ]; 
         $validationMessages = [
             'order_id.required'        => 'Selectati o comanda pentru a genera awb-ul',
-            'deliveryAccount.required' => 'Selectati un cont pentru FanCourier',
+            'deliveryAccount.required' => 'Selectati un cont pentru Nemo',
             'deliveryAddressAWB.required' => 'Selectati o adresa de livrare',
             'numar_colete.required'     => 'Numarul de colete este obligatoriu',
             'greutate_totala.required'  => 'Greutatea totala este obligatorie',
@@ -102,14 +83,15 @@ class NemoExpressController extends Controller
         } else{
           $offer = Offer::with('fanData')->find($form_data['order_id']);
           $agent = User::find($offer->agent_id);
-          $userAddress = UserAddress::find($form_data['deliveryAddressAWB']);
+          $userAddress = UserAddress::with('legal_entities')->find($form_data['deliveryAddressAWB']);
           $userData = $userAddress->userData();
           $totalPlata = $form_data['ramburs_numerar'];
-          $legalEntity = $userAddress->legal_entities();
+          $legalEntity = $userAddress->legal_entities;
+          // creez array-ul cu catele pe care le trimit catre NEMO
           $date_awb = [
               'type' => 'package', 
-              'service_type' => 'regular', 
-              'ramburs' => $totalPlata > 0 ? floatval($totalPlata) : '',
+              'service_type' => 'standard', 
+              'ramburs' => floatval($totalPlata),
               'ramburs_type' => $totalPlata > 0 ? 'cont' : 'cash',
               'payer' => $form_data['plata_expeditie'],
               'weight' => $form_data['greutate_totala'],
@@ -136,15 +118,20 @@ class NemoExpressController extends Controller
           try{
             // creez obiectul nemo cu deliveryAccount
             $apiKey = $form_data['deliveryAccount'] == 1 ? env('NEMO_API_KEY_IASI') : env('NEMO_API_KEY_BERCENI');
-            $awb = \App\Http\Controllers\NemoExpressController::generateAwbNemo($date_awb);
+            $nemo = (new self())->createAwb($apiKey, $date_awb); // iau awb-ul
+            if(!$nemo['success']){
+              return ['success' => false, 'msg' => [0 => $nemo['error']]];
+            }
             $created_at = date("Y-m-d H:i:s");
-
-            if($offer->awb_id != null && $offer->delivery_type == 'fan'){
+            
+            // creez obiectul $nemoOrder cu datele pe care le-am trimis catre Nemo
+            if($offer->awb_id != null && $offer->delivery_type == 'nemo'){
               $nemoOrder = NemoOrder::find($offer->awb_id);
             } else{
               $nemoOrder = new NemoOrder();
             }
-
+            $nemoResponse = json_decode($nemo['response'], true);
+            
             $nemoOrder->order_id = $offer->id;
             $nemoOrder->cont_id = $form_data['deliveryAccount'];
             $nemoOrder->plata_expeditie = $form_data['plata_expeditie'];
@@ -159,16 +146,19 @@ class NemoExpressController extends Controller
             $nemoOrder->fragil = $form_data['fragil'];
             $nemoOrder->created_at = $created_at;
             $nemoOrder->updated_at = $created_at;
-            $nemoOrder->awb = $awb[0]->awb;
+            $nemoOrder->awb = $nemoResponse['data']['no'];
+            $nemoOrder->status = $nemoResponse['data']['status'];
+            $nemoOrder->hash = hash_hmac('ripemd160', $nemoResponse['data']['no'], $apiKey);
             $nemoOrder->save();
-
+  
+            // updatez awb-ul in baza de date la oferta pentru care am generat awb-ul
             $offer->awb_id = $nemoOrder->id;
             $offer->save();
-            return ['success' => true, 'msg' => 'AWB-ul s-a generat cu succes!', 'awb' => $nemoOrder->awb, 'id' => $offer->id, 'client_id' => $nemoOrder->cont_id];
+            return ['success' => true, 'msg' => 'AWB-ul s-a generat cu succes!', 'awb' => $nemoOrder->awb, 'id' => $offer->id, 'client_id' => $nemoOrder->cont_id, 'hash' => $nemoOrder->hash];
           } catch(Exception $e){
             return ['success' => false, 'msg' => 'Eroare: '.$e->getMessage()];
           }
-     }
+      }
     }
 
     /**
@@ -177,17 +167,38 @@ class NemoExpressController extends Controller
      */
     public function priceAwb($data)
     {
-        $response = $this->callApi(self::PRICE_AWB_ENDPOINT, $data);
+        $response = (new self())->callApi(self::PRICE_AWB_ENDPOINT, $data);
         return json_decode($response);
+    }
+  
+  // printez awb-ul pe baza unui numar de awb, a unui id de client nemo si a unui hash generat si salvat in baza de date in nemo_orders
+    public function printAwbNemo($awb_no, $client_id, $hash){
+      if ($client_id != null && $awb_no != null && $hash != null) {
+        $nemoOrder = NemoOrder::where(['awb' => $awb_no, 'cont_id' => $client_id])->first();
+        if($nemoOrder != null){
+          $hash = $nemoOrder->hash;
+          if ($nemoOrder->hash !== $hash) {
+              die("Permission denied.");
+          }
+          $apiKey = $client_id == 1 ? env('NEMO_API_KEY_IASI') : env('NEMO_API_KEY_BERCENI');
+          $awb = (new self())->printAwb($apiKey, $nemoOrder->awb);
+          if(strpos($awb['response'], 'Shipment is canceled') !== false){
+            return ("Expedierea AWB-ului ".$awb_no." a fost anulata");
+          }
+          header("Content-type:application/pdf");
+          header("Content-Disposition:attachment;filename=awb-{$nemoOrder->awb}.pdf");
+          die($awb['response']);
+        }
+      }
     }
 
     /**
      * @param $awbId
      * @return bool|string
      */
-    public function printAwb($awbId)
+    public function printAwb($apiKey, $awbId)
     {
-        return $this->callApi(self::PRINT_AWB_ENDPOINT, array(
+        return (new self())->callApi($apiKey, self::PRINT_AWB_ENDPOINT, array(
             "awbno" => $awbId
         ));
     }
@@ -198,7 +209,7 @@ class NemoExpressController extends Controller
      */
     public function infoAwb($awbId)
     {
-        $response = $this->callApi(self::INFO_AWB_ENDPOINT, array(
+        $response = (new self())->callApi(self::INFO_AWB_ENDPOINT, array(
             "awbno" => $awbId
         ));
         return json_decode($response);
@@ -209,7 +220,7 @@ class NemoExpressController extends Controller
      */
     public function getCityList()
     {
-        $response = $this->callApi(self::CITY_LIST_ENDPOINT);
+        $response = (new self())->callApi(self::CITY_LIST_ENDPOINT);
         return json_decode($response);
     }
 
@@ -219,8 +230,20 @@ class NemoExpressController extends Controller
      */
     public function getServicesList($type = self::SERVICES_TYPE_MAIN)
     {
-        $response = $this->callApi(self::GET_SERVICES_LIST . $type);
+        $response = (new self())->callApi(self::GET_SERVICES_LIST . $type);
         return json_decode($response);
+    }
+  
+      /**
+     * @param string $awbNo
+     * @param string $full
+     * @return mixed
+     */
+    public static function getStatus($apiKey, $awbId)
+    {
+         return (new self())->callApi($apiKey, self::GET_STATUS, array(
+            "awbno" => $awbId
+        ));
     }
 
     /**
@@ -231,7 +254,7 @@ class NemoExpressController extends Controller
     public function getHistory($awbNo, $full = "false")
     {
         $endpoint = self::GET_HISTORY . "&awbno=$awbNo&full=$full";
-        $response = $this->callApi($endpoint);
+        $response = (new self())->callApi($endpoint);
         return json_decode($response);
     }
 
@@ -240,7 +263,7 @@ class NemoExpressController extends Controller
      */
     public function getError()
     {
-        return $this->error;
+        return $error;
     }
 
     /**
@@ -248,16 +271,16 @@ class NemoExpressController extends Controller
      * @param array $params
      * @return bool|mixed|string
      */
-    private function callApi($endpoint, $params = array())
+    private static function callApi($apiKey, $endpoint, $params = array())
     {
+        $error = null;
         $curl = curl_init();
-
-        $apiKeyQuery = "?api_key=" . $this->apiKey;
+        $apiKeyQuery = "?api_key=" . $apiKey;
         if (strpos($endpoint, '?') !== false) {
-            $apiKeyQuery = "&api_key=" . $this->apiKey;
+            $apiKeyQuery = "&api_key=" . $apiKey;
         }
 
-        curl_setopt($curl, CURLOPT_URL, $this->apiUrl . "/API/" . $endpoint . $apiKeyQuery);
+        curl_setopt($curl, CURLOPT_URL, env('NEMO_API_URL') . "/API/" . $endpoint . $apiKeyQuery);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_TIMEOUT, 15);
 
@@ -271,10 +294,9 @@ class NemoExpressController extends Controller
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         curl_close($curl);
-
         // Protocol error
         if ($err) {
-            $this->error = "There was an error connecting to the API. Response Error: " . $err;
+            $error = "There was an error connecting to the API. Response Error: " . $err;
             error_log($err);
             return false;
         }
@@ -283,13 +305,13 @@ class NemoExpressController extends Controller
         if ($httpCode !== 200) {
             switch ($httpCode) {
                 case 404:
-                    $this->error = "The API URL seems to be incorrect.";
+                    $error = "The API URL seems to be incorrect.";
                     break;
                 case 500:
-                    $this->error = "There is a server issue at the API level, please try again later.";
+                    $error = "There is a server issue at the API level, please try again later.";
                     break;
                 default:
-                    $this->error = "There was an error connecting to the API. Error code: " . $httpCode;
+                    $error = "There was an error connecting to the API. Error code: " . $httpCode;
                     break;
             }
 
@@ -299,10 +321,11 @@ class NemoExpressController extends Controller
         // Bad login error
         if (strpos($response, 'BAD_LOGIN') !== false) {
             $response = json_decode($response);
-            $this->error = $response->message;
-            return false;
+            $error = $response->message;
         }
-
-        return $response;
+        if($error != null){
+          return ['success' => false, 'error' => $error];
+        }
+        return ['success' => true, 'response' => $response];
     }
 }

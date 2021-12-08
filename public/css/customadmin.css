@@ -1742,3 +1742,35 @@ textarea {
 .voyager input[type="file"] {
   border-radius: 10px !important;
 }
+.container-two-columns{
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-top: 1px solid #CECECE;
+  border-bottom: 1px solid #CECECE;
+}
+.container-two-columns > .panel-body{
+  width: 50%;
+}
+.container-two-columns > .panel-body:first-of-type{
+  border-right: 1px solid #CECECE;
+}
+.mention-wrapper, .mesaj-intern-container>textarea, .mesaj-intern-container>label{
+  width: 100%;
+}
+.log-evenimente{
+  width: 48%;
+  display: flex;
+  flex-direction: column;
+}
+.log-evenimente-list{
+  background: #f9f9f9;
+  padding: 10px;
+  max-height: 200px;
+  overflow-y: scroll;
+}
+.log-evenimente-list strong{
+  font-weight: 800 !important;
+}

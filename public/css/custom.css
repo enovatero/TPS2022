@@ -544,3 +544,21 @@ table, th, td{
 #mod_livrare_detaliu span.select2{
   border: 1px solid #cecece;
 }
+.jquery-gdakram-tooltip{
+  opacity: 1 !important;
+  z-index: 999999999999 !important;
+}
+.jquery-gdakram-tooltip label{
+  color: #ffffff;
+}
+.tooltipMessage{
+  color: #671329;
+  font-size: 18px;
+}
+.btnSendSms{
+  min-width: 8rem !important;
+  height: 2.6rem !important;
+}
+.btnSendSms>span{
+  font-size: 12px !important;
+}

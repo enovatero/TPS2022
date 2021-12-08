@@ -327,6 +327,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         if (view()->exists("voyager::$slug.edit-add")) {
             $view = "voyager::$slug.edit-add";
         }
+      // dupa ce am adaugat clientul, ii completez datele daca e persoana fizica in Individuals iar daca e juridica in LegalEntity
         $individual = null;
         $legal_entity = null;
         $addresses = null;
@@ -370,7 +371,8 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
 
         // Check permission
         $this->authorize('edit', $data);
-
+      
+      // pot adauga mai multe adrese pentru un client
         $errMessages = [];
         $addressesCounter = $request->input('addressesCounter');
         if($addressesCounter != null){
@@ -380,6 +382,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
           $cities = $request->input('city');
           $ids = $request->input('ids');
           $addrErrs = 0;
+        // verific daca am mai multe adrese adaugate si trec prin fiecare, sa vad ce campuri nu a completat
           for($key = 0; $key < $addressesCounter; $key++){
             if($addresses == null || !array_key_exists($key, $addresses)){
               $addrErrs++;
@@ -398,18 +401,21 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             $errMessages['address'] = [0 => 'Pentru fiecare adresa adaugata, va rugam sa verificati campurile Adresa, Tara, Judet, Oras!'];
           }
         }
+      // verific daca iban-ul este corect
         if($request->iban != null){
           if(!(new self())->checkIBAN($request->iban)){
             $addrErrs++;
             $errMessages['iban'] = [0 => 'Te rugam sa introduci un iban valid!'];  
           }
         }
+      // verific daca CNP-ul este corect
         if($request->cnp != null){
           if(!(new self())->validCNP($request->cnp)){
             $addrErrs++;
             $errMessages['cnp'] = [0 => 'Te rugam sa introduci un CNP valid!'];  
           }
         }
+        // verific daca numarul de telefon respecta formatul 0722222222
         if(!preg_match('/^[0-9]{10}+$/', $request->input('phone'))){
           $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];  
           $addrErrs++;
@@ -535,6 +541,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         // Check permission
         $this->authorize('add', app($dataType->model_name));
         
+      // aceleasi verificari ca la update
         $errMessages = [];
         $addressesCounter = $request->input('addressesCounter');
         if($addressesCounter != null){

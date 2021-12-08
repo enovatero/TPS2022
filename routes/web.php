@@ -9,6 +9,7 @@ use App\Http\Controllers\VoyagerOfferController;
 use App\Http\Controllers\VoyagerController;
 use App\Http\Controllers\FanCourierController;
 use App\Http\Controllers\ColorsController;
+use App\Http\Controllers\NemoExpressController;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,13 +51,17 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('/forceFetchProductsWinMentor', [VoyagerProductsController::class, 'forceFetchProductsWinMentor'])->middleware('admin.user');
     Route::get('/products-complete', [VoyagerProductsController::class, 'productsComplete'])->middleware('admin.user');
     Route::get('/products-incomplete', [VoyagerProductsController::class, 'productsIncomplete'])->middleware('admin.user');
+  
+    Route::get('/lista-oferte', [VoyagerOfferController::class, 'list_offers'])->middleware('admin.user');
+    Route::get('/lista-comenzi', [VoyagerOfferController::class, 'list_orders'])->middleware('admin.user');
     // Fancourier
     Route::post('generateAwb', [FanCourierController::class, 'generateAwb'])->middleware('admin.user');
     Route::get('printAwb/{awb}/{client_id}', [FanCourierController::class, 'printAwb'])->middleware('admin.user');
     Route::post('generateAwbNemo', [NemoExpressController::class, 'generateAwbNemo'])->middleware('admin.user');
-    Route::get('printAwbNemo/{awb}/{client_id}', [NemoExpressController::class, 'printAwbNemo'])->middleware('admin.user');
+    Route::get('printAwbNemo/{awb}/{client_id}/{hash}', [NemoExpressController::class, 'printAwbNemo'])->middleware('admin.user');
     Route::post('changeStatus', [VoyagerOfferController::class, 'changeStatus'])->middleware('admin.user');
     Route::post('launchOrder', [VoyagerOfferController::class, 'launchOrder'])->middleware('admin.user');
+    Route::post('saveMention', [VoyagerOfferController::class, 'saveMention'])->middleware('admin.user');
     Route::get('uploadColors', [ColorsController::class, 'uploadColors'])->middleware('admin.user');
 });
 

@@ -115,6 +115,7 @@ class VoyagerRulesPricesController extends \TCG\Voyager\Http\Controllers\Voyager
         ]);
     }
   
+  // salvez fiecare regula de pret adaugata in rule_prices_formulas
   public function saveRulePrice(Request $request){
     try{
       $formulas = [];
@@ -131,18 +132,20 @@ class VoyagerRulesPricesController extends \TCG\Voyager\Http\Controllers\Voyager
       $formulaForSave->formula = $formulaArray['formula'];
       $formulaForSave->full_formula = $formulaArray['full_formula'];
       $formulaForSave->save();
-      
+      // imi returnez categoria a carei formula am sters-o pentru a nu mai permite user-ului sa adauga inca o formula cu aceeasi categorie
       return ['success' => true, 'msg' => 'Formula a fost adaugata cu succes!', 'categorie' => $formulaForSave->categorie];
     } catch(\Exception $e){
       return ['success' => false, 'error' => 'S-a produs o eroare pe server iar datele nu au putut fi salvate!'];
     }
   }
+  // sterg o formula din rule_prices_formulas
     public function removeFormula(Request $request){
     try{
       $formula_id = $request->input('formula_id');
       $formula = RulePricesFormula::where('id', $formula_id)->first();
       $categoryForAdd = Category::find($formula->categorie);
       $formula->delete();
+      // imi returnez categoria a carei formula am sters-o pentru a-i permite user-ului sa adauga o alta formula pentru aceeasi categorie
       return ['success' => true, 'msg' => 'Formula a fost stearsa cu succes!', 'categoryForAdd' => $categoryForAdd];
     } catch(\Exception $e){
       return ['success' => false, 'error' => 'S-a produs o eroare pe server iar datele nu au putut fi salvate!'];

@@ -4,6 +4,7 @@ use Illuminate\Routing\Controller as BaseController;
 
 class CursBNR extends BaseController
 {
+    // preiau continutul de la http://www.bnro.ro/nbrfxrates.xml
     public static function getExchangeRate($currencyVal)
     {
       try{

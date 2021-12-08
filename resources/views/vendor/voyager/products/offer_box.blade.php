@@ -35,11 +35,11 @@
                 $checkRule = $parent->offerProducts->prices->filter(function($item) use($offer){
                     return $item->rule_id == $offer->price_grid_id;
                 })->first();
-                $eurFaraTVA = $checkRule->eur_fara_tva;
-                $ronCuTVA = $checkRule->ron_cu_tva;
+                $eurFaraTVA = $checkRule != null ? $checkRule->eur_fara_tva : 0;
+                $ronCuTVA = $checkRule != null ? $checkRule->ron_cu_tva : 0;
                 $ronTotal = $ronCuTVA*$parent->offerProducts->qty;
                 $totalCalculat += $ronTotal;
-                $totalCalculatPi += $checkRule->base_price;
+                $totalCalculatPi += $checkRule != null ? $checkRule->base_price : 0;
               } else{
                 $eurFaraTVA = 0;
                 $ronCuTVA = 0;

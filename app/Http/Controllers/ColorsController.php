@@ -8,6 +8,8 @@ use App\Attribute;
 
 class ColorsController extends Controller
 {
+  // am facut asta la cererea lor de a importa dintr-un fisier culorile, pentru a nu fi introduse manual de catre ei. 
+  // Ignor asta pentru ca trebuie, la cererea lor, sa schimb toate json-urile in tabele separate, cu legaturi intre ele
 //   public function generatePDF(Request $request){
   public function uploadColors(){
     
