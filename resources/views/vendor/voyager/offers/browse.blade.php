@@ -106,6 +106,58 @@
                                 </thead>
                                 <tbody>
                                     @foreach($dataTypeContent as $data)
+                                    {{-- @if (request()->ip() == '89.35.129.44') --}}
+                                        {{-- aici afisez ziua in care au fost facute urmatoarele intrari --}}
+                                        @php
+                                            if (!isset($GLOBALS['offerDataUltimiiIntrari'])) {
+                                                $GLOBALS['offerDataUltimiiIntrari'] = null;
+                                            }
+                                            $showDateGroupRow = false;
+                                            $subtotalPriceDay = 0;
+                                            $subtotalMlDay = 0;
+                                            if ($data->offer_date != $GLOBALS['offerDataUltimiiIntrari']) {
+                                                $GLOBALS['offerDataUltimiiIntrari'] = $data->offer_date;
+                                                $showDateGroupRow = true;
+                                            }
+                                            if ($showDateGroupRow) {
+                                                // calc subtotal price
+                                                // asta este cea mai eficienta metoda, nu face query, face suma din comenzile
+                                                // pe ziua selectata care sunt afisate pe pagina curenta.
+                                                // daca sunt alte comenzi pe aceeasi zi pe urmatoare pagina, nu le ia in calcul.
+                                                // $subtotalPriceDay = $dataTypeContent->where('offer_date', $data->offer_date)->sum('total_final');
+                                                
+                                                // asta e metoda mai corecta, dar face query-uri in plus
+                                                $subtotalPriceDay = round(app($dataType->model_name)->where('offer_date', $data->offer_date)->sum('total_final'), 2);
+                                                
+                                                // calc subtotal ml - metru linear
+                                                foreach ($dataTypeContent->where('offer_date', $data->offer_date)->all() as $dayOffer) {
+                                                    foreach ($dayOffer->products()->with('getParent')->get() as $prod) {
+                                                        if ($prod->qty > 0 && $prod->getParent->um == 8) {
+                                                            $subtotalMlDay += $prod->qty;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        @endphp
+                                        @if ($showDateGroupRow)
+                                            <tr class="table-group-header">
+                                                <td colspan="{{ count($dataType->browseRows) + ($showCheckboxColumn ? 2 : 1) }}">
+                                                    <div class="table-group-details">
+                                                        <div class="item">
+                                                            {{ $is_order_page ? 'Comenzi' : 'Oferte' }} din data:
+                                                            <b>{{ $data->offer_date }}</b>
+                                                        </div>
+                                                        <div class="item additional">
+                                                            Subtotal: <span>{{ $subtotalPriceDay }} lei</span>
+                                                        </div>
+                                                        <div class="item additional">
+                                                            Subtotal: <span>{{ $subtotalMlDay }} ml</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    {{-- @endif --}}
                                     <tr>
                                         @if($showCheckboxColumn)
                                             <td>
@@ -322,14 +374,17 @@
                                         @endforeach
                                         <td class="no-sort no-click bread-actions">
                                             @foreach($actions as $action)
+                                                @if (strpos(get_class($action), 'Delete') !== false || strpos(get_class($action), 'View') !== false)
+                                                    @continue
+                                                @endif
                                                 @if (!method_exists($action, 'massAction'))
                                                     @include('voyager::bread.partials.actions', ['action' => $action])
                                                 @endif
                                             @endforeach
                                             @if($data->numar_comanda != null)
-                                              <a title="Trimite SMS" class="btn btn-success btn-add-new btnSendSms" order_id="{{$data->id}}">
-                                                  <i class="voyager-telephone"></i> <span class="hidden-xs hidden-sm">Send SMS</span>
-                                              </a>
+                                                <a title="Trimite SMS" class="btn btn-success btn-add-new btnSendSms" order_id="{{$data->id}}">
+                                                    <i class="voyager-telephone"></i> <span class="hidden-xs hidden-sm">Send SMS</span>
+                                                </a>
                                             @endif
                                         </td>
                                     </tr>
@@ -385,12 +440,45 @@
 @stop
 
 @section('css')
-@if(!$dataType->server_side && config('dashboard.data_tables.responsive'))
-    <link rel="stylesheet" href="{{ voyager_asset('lib/css/responsive.dataTables.min.css') }}">
-@endif
-@if($is_order_page)
-    <link rel="stylesheet" href="../../../css/jquery.tooltip/jquery.tooltip.css">                              
-@endif
+    @if(!$dataType->server_side && config('dashboard.data_tables.responsive'))
+        <link rel="stylesheet" href="{{ voyager_asset('lib/css/responsive.dataTables.min.css') }}">
+    @endif
+    @if($is_order_page)
+        <link rel="stylesheet" href="../../../css/jquery.tooltip/jquery.tooltip.css">                              
+    @endif
+    <style>
+        .table-group-header, .table-group-header:hover {
+            background: #fff !important;
+            cursor: default;
+        }
+        .table-group-header .table-group-details {
+            width: 100%;
+            text-align: left;
+            padding: 10px;
+            padding-bottom: 0px;
+        }
+        .table-group-header .table-group-details b {
+            font-size: 16px;
+            color: #6b76d8;
+            font-weight: 600;
+        }
+        .table-group-header .table-group-details .item {
+            display: inline-block;
+        }
+        .table-group-header .table-group-details .item.additional {
+            margin-left: 14px;
+        }
+        .voyager .table>thead>tr>th {
+            vertical-align: middle;
+        }
+        .voyager .table>thead>tr>th .pull-right {
+            min-width: auto !important;
+        }
+        .dt-not-orderable {
+            display: table-cell !important;
+            text-align: center !important;
+        }
+    </style>
 @stop
 
 @section('javascript')
