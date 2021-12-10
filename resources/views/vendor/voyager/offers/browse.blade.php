@@ -74,9 +74,43 @@
                                 @endif
                             </form>
                         @endif
+                        <div class="table-responsive-start">
+                            {{-- acest div este folosit ca sa activez/dezactivez modul sticky --}}
+                        </div>
+                        <div class="table-responsive-fake" style="display:none">
+                            {{-- acest div este un placeholder pentru tabel, ca sa pastrez inaltimea paginii cand intru in modul sticky --}}
+                        </div>
                         <div class="table-responsive">
                             <table id="dataTable" class="table table-hover">
                                 <thead>
+                                    <tr>
+                                        @if($showCheckboxColumn)
+                                            <th class="dt-not-orderable">
+                                                <input type="checkbox" class="select_all">
+                                            </th>
+                                        @endif
+                                        @foreach($dataType->browseRows as $row)
+                                        <th>
+                                            @if ($isServerSide && in_array($row->field, $sortableColumns))
+                                                <a href="{{ $row->sortByUrl($orderBy, $sortOrder) }}">
+                                            @endif
+                                            {{ $row->getTranslatedAttribute('display_name') }}
+                                            @if ($isServerSide)
+                                                @if ($row->isCurrentSortField($orderBy))
+                                                    @if ($sortOrder == 'asc')
+                                                        <i class="voyager-angle-up pull-right"></i>
+                                                    @else
+                                                        <i class="voyager-angle-down pull-right"></i>
+                                                    @endif
+                                                @endif
+                                                </a>
+                                            @endif
+                                        </th>
+                                        @endforeach
+                                        <th class="actions text-right dt-not-orderable">{{ __('voyager::generic.actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <thead class="thead-sticky">
                                     <tr>
                                         @if($showCheckboxColumn)
                                             <th class="dt-not-orderable">
@@ -135,6 +169,9 @@
                                                         if ($prod->qty > 0 && $prod->getParent->um == 8) {
                                                             $subtotalMlDay += $prod->qty;
                                                         }
+                                                        if ($prod->qty > 0 && $prod->getParent->um == 1 && $prod->getParent->dimension > 0) {
+                                                            $subtotalMlDay += $prod->qty * $prod->getParent->dimension;
+                                                        }
                                                     }
                                                 }
                                             }
@@ -155,6 +192,30 @@
                                                         </div>
                                                     </div>
                                                 </td>
+                                            </tr>
+                                            <tr class="thead">
+                                                @if($showCheckboxColumn)
+                                                    <th class="dt-not-orderable"></th>
+                                                @endif
+                                                @foreach($dataType->browseRows as $row)
+                                                <th>
+                                                    @if ($isServerSide && in_array($row->field, $sortableColumns))
+                                                        <a href="{{ $row->sortByUrl($orderBy, $sortOrder) }}">
+                                                    @endif
+                                                    {{ $row->getTranslatedAttribute('display_name') }}
+                                                    @if ($isServerSide)
+                                                        @if ($row->isCurrentSortField($orderBy))
+                                                            @if ($sortOrder == 'asc')
+                                                                <i class="voyager-angle-up pull-right"></i>
+                                                            @else
+                                                                <i class="voyager-angle-down pull-right"></i>
+                                                            @endif
+                                                        @endif
+                                                        </a>
+                                                    @endif
+                                                </th>
+                                                @endforeach
+                                                <th class="actions text-right dt-not-orderable">{{ __('voyager::generic.actions') }}</th>
                                             </tr>
                                         @endif
                                     {{-- @endif --}}
@@ -447,6 +508,66 @@
         <link rel="stylesheet" href="../../../css/jquery.tooltip/jquery.tooltip.css">                              
     @endif
     <style>
+        /* table scrollabil orizontal */
+        .table-responsive {
+            overflow: auto;
+        }
+        .table-responsive .table {
+            width: auto !important;
+            max-width: none !important;
+            min-width: 100%;
+        }
+        
+        /* header tabel sticky ! :D */
+        .table-responsive-fake {
+            height: 100vh;
+            width: 100%;
+        }
+        .table-fixed-header {
+            background: #f8fafc;
+            position: fixed !important;
+            top: 60px;
+            right: 15px;
+            z-index: 1000;
+            display: block;
+            height: calc(100vh - 60px) !important;
+            overflow: auto;
+            transition: all .5s cubic-bezier(.19,1,.22,1);
+            left: 76px;
+            width: calc(100% - 76px - 30px);
+        }
+        .app-container.expanded .table-fixed-header {
+            left: 266px !important;
+            width: calc(100% - 266px - 30px) !important;
+        }
+        .table-responsive .table {
+            margin: 0 !important;
+        }
+        .table-responsive .thead-sticky {
+            display: none;
+        }
+        .table-fixed-header thead:not(.thead-sticky) {
+            display: block;
+            width: 0;
+        }
+        .table-fixed-header .thead-sticky {
+            display: table-header-group !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+        .table-fixed-header .thead-sticky th {
+            border-bottom: 1px solid #ddd !important;
+        }
+        .table-fixed-header tbody {
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: block;
+            background: #fff;
+        }
+        
         .table-group-header, .table-group-header:hover {
             background: #fff !important;
             cursor: default;
@@ -468,15 +589,24 @@
         .table-group-header .table-group-details .item.additional {
             margin-left: 14px;
         }
-        .voyager .table>thead>tr>th {
+        .voyager .table > thead > tr > th,
+        .voyager .table tr.thead > th {
             vertical-align: middle;
         }
-        .voyager .table>thead>tr>th .pull-right {
+        .voyager .table > thead > tr > th .pull-right,
+        .voyager .table tr.thead > th .pull-right {
             min-width: auto !important;
         }
         .dt-not-orderable {
             display: table-cell !important;
             text-align: center !important;
+        }
+        .voyager .table tr.thead > th:not(:first-child) {
+            color: #6b76d8;
+            text-align: center;
+        }
+        .voyager .table tr.thead > th {
+            background: #f8fafc;
         }
     </style>
 @stop
@@ -496,6 +626,24 @@
     @endif
     <script>
         $(document).ready(function () {
+            
+            // table header sticky
+            $(document).on('scroll', function () {
+                var isFixed = $('.table-responsive').hasClass('table-fixed-header');
+                var boundingClient = $('.table-responsive-start').get(0).getBoundingClientRect();
+                var shouldBeFixed = (boundingClient.top - 60) <= 0;
+                if (shouldBeFixed && !isFixed) {
+                    $('.table-responsive').addClass('table-fixed-header');
+                    $('.table-responsive-fake').show(); // placeholder ca sa pastrez inaltimea paginii
+                    var theadHeight = $('.table-fixed-header thead').height();
+                    $('.table-fixed-header tbody').css('height', 'calc(100vh - 77px - '+ theadHeight +'px)');
+                }
+                if (!shouldBeFixed && isFixed) {
+                    $('.table-responsive').removeClass('table-fixed-header');
+                    $('.table-responsive-fake').hide(); // placeholder ca sa pastrez inaltimea paginii
+                }
+            });
+            
             @if (!$dataType->server_side)
                 var table = $('#dataTable').DataTable({!! json_encode(
                     array_merge([

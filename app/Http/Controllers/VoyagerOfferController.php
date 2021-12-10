@@ -300,6 +300,10 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 }
 
                 $dataTypeContent = call_user_func([
+                    $query->orderBy($dataType->order_column, $dataType->order_direction),
+                    $getter,
+                ]);
+                $dataTypeContent = call_user_func([
                     $query->orderBy($orderBy, $querySortOrder),
                     $getter,
                 ]);
