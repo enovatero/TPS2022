@@ -43,7 +43,7 @@ class AddOffersPermissions extends Migration
             'valoare',              // Valoare
         ];
         foreach ($columnsToEdit as $column) {
-            Permission::firstOrCreate(['key' => 'column_'.$column, 'table_name' => $this->permissions_group]);
+            Permission::firstOrCreate(['key' => 'offer_column_'.$column, 'table_name' => $this->permissions_group]);
         }
     }
 

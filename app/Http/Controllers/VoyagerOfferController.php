@@ -215,10 +215,227 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'is_order_page'
         ));
     }
-  
+    
     // listez comenzile (au numar_comanda != null)
-      public function list_orders(Request $request)
+    // controller/view custom refacut complet
+    public function list_orders_custom(Request $request)
     {
+        $user = Auth::user();
+        $title = 'Lista comenzi';
+        $model = Offer::class;
+        $slug = 'offers';
+        $this->authorize('browse', app($model));
+        
+        $query = Offer::query();
+        $query->where('numar_comanda', '!=', null);
+        $query->with([
+            'client',
+            'products.getParent',
+            'offerType',
+            'status_name',
+            'distribuitor',
+        ]);
+        
+        // order by date, and user selectable column
+        $orderColumn = ['offer_date', 'desc'];
+        $query->orderBy($orderColumn[0], $orderColumn[1]);
+        if ($request->order_by) {
+            $query->orderBy($request->order_by, $request->sort_order);
+            $orderColumn = [$request->order_by, $request->sort_order];
+        }
+        
+        // paginate and make query
+        $orders = $query->paginate($request->get('per_page', 10));
+        if (count($orders) == 0 && $orders->total() > 0) {
+            return redirect(url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                'page' => $orders->lastPage(),
+            ])));
+        }
+        
+        // group by date, and calculate day stats
+        $orderGroups = [];
+        foreach ($orders->groupBy('offer_date') as $day => $dayOrders) {
+            $subtotalPrice = 0;
+            $subtotalMl = 0;
+            $subtotalPrice = round(Offer::where('offer_date', $day)->sum('total_final'), 2);
+            foreach ($dayOrders->all() as $order) {
+                $order->prod_ml = 0;
+                foreach ($order->products as $prod) {
+                    if ($prod->qty > 0 && $prod->getParent->um == 8) {
+                        $order->prod_ml += $prod->qty;
+                    }
+                    if ($prod->qty > 0 && $prod->getParent->um == 1 && $prod->getParent->dimension > 0) {
+                        $order->prod_ml += $prod->qty * $prod->getParent->dimension;
+                    }
+                }
+                $subtotalMl += $order->prod_ml;
+            }
+            
+            $orderGroups[] = [
+                'date'           => $day,
+                'orders'         => $dayOrders,
+                'subtotal_price' => $subtotalPrice,
+                'subtotal_ml'    => $subtotalMl,
+            ];
+        }
+        
+        // get allowed columns
+        $columns = [
+            // [
+            //     'perm' => // definita in migratia care adauga permisiuni
+            //     'order_by' => // pe ce coloana din db se face order by (daca e null nu se face orderby)
+            //     'label' => // textul afisat in capul tabelului
+            // ],
+            [
+                'perm' => 'nr_com',
+                'order_by' => 'serie',
+                'label' => 'Nr Comanda',
+            ],
+            [
+                'perm' => 'agent',
+                'order_by' => null,
+                'label' => 'Agent',
+            ],
+            [
+                'perm' => 'tip_comanda',
+                'order_by' => 'type',
+                'label' => 'Tip Comanda',
+            ],
+            [
+                'perm' => 'client',
+                'order_by' => 'client_id',
+                'label' => 'Client',
+            ],
+            [
+                'perm' => 'print_awb',
+                'order_by' => null,
+                'label' => 'Print AWB',
+            ],
+            [
+                'perm' => 'ml',
+                'order_by' => null,
+                'label' => 'Metri liniari',
+            ],
+            [
+                'perm' => 'accesorii',
+                'order_by' => null,
+                'label' => 'Accesorii',
+            ],
+            [
+                'perm' => 'livrare',
+                'order_by' => 'delivery_type',
+                'label' => 'Mod Livrare',
+            ],
+            [
+                'perm' => 'judet',
+                'order_by' => null,
+                'label' => 'Judet',
+            ],
+            [
+                'perm' => 'data_expediere',
+                'order_by' => null,
+                'label' => 'Data Expediere',
+            ],
+            [
+                'perm' => 'status',
+                'order_by' => 'status',
+                'label' => 'Stare',
+            ],
+            [
+                'perm' => 'p',
+                'order_by' => null,
+                'label' => 'P.',
+            ],
+            [
+                'perm' => 'pjal',
+                'order_by' => null,
+                'label' => 'P. JAL.',
+            ],
+            [
+                'perm' => 'pu',
+                'order_by' => null,
+                'label' => 'P. U.',
+            ],
+            [
+                'perm' => 'intarziere',
+                'order_by' => null,
+                'label' => 'Intarziere',
+            ],
+            [
+                'perm' => 'culoare',
+                'order_by' => null,
+                'label' => 'Culoare',
+            ],
+            [
+                'perm' => 'plata',
+                'order_by' => null,
+                'label' => 'Plata',
+            ],
+            [
+                'perm' => 'contabilitate',
+                'order_by' => null,
+                'label' => 'Contabilitate',
+            ],
+            [
+                'perm' => 'comanda_distribuitor',
+                'order_by' => null,
+                'label' => 'Comanda Distribuitor',
+            ],
+            [
+                'perm' => 'fisiere',
+                'order_by' => null,
+                'label' => 'Fisiere',
+            ],
+            [
+                'perm' => 'print_comanda',
+                'order_by' => null,
+                'label' => 'Print Comanda',
+            ],
+            [
+                'perm' => 'awb',
+                'order_by' => 'awb_id',
+                'label' => 'AWB',
+            ],
+            [
+                'perm' => 'telefon',
+                'order_by' => null,
+                'label' => 'Telefon',
+            ],
+            [
+                'perm' => 'sursa',
+                'order_by' => 'distribuitor_id',
+                'label' => 'Sursa',
+            ],
+            [
+                'perm' => 'valoare',
+                'order_by' => 'total_final',
+                'label' => 'Valoare (RON)',
+            ],
+        ];
+        foreach ($columns as $index => $column) {
+            if (!$user->hasPermission("offer_column_{$column['perm']}")) {
+                unset($columns[$index]);
+            }
+        }
+        $columns = array_values($columns);
+        
+        return view('voyager::offers.lista', [
+            'title'       => $title,
+            'model'       => $model,
+            'slug'        => $slug,
+            'orderColumn' => $orderColumn,
+            'columns'     => $columns,
+            'orders'      => $orders,
+            'orderGroups' => $orderGroups,
+        ]);
+    }
+    
+    // listez comenzile (au numar_comanda != null)
+    public function list_orders(Request $request)
+    {
+        if (in_array($request->ip(), ['89.35.129.44', '86.127.76.203'])) {
+            return $this->list_orders_custom($request);
+        }
         // GET THE SLUG, ex. 'posts', 'pages', etc.
         $slug = 'offers';
 
@@ -372,7 +589,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if (view()->exists("voyager::$slug.browse")) {
             $view = "voyager::$slug.browse";
         }
-      
+        
         $dataType->display_name_plural = 'Lista comenzi';
         $is_order_page = true;
         return Voyager::view($view, compact(
@@ -394,8 +611,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'is_order_page'
         ));
     }
-  
-      /**
+    
+    /**
      * POST BRE(A)D - Store data.
      *
      * @param \Illuminate\Http\Request $request
