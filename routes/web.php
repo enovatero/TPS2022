@@ -54,6 +54,7 @@ Route::group(['prefix' => 'admin'], function () {
   
     Route::get('/lista-oferte', [VoyagerOfferController::class, 'list_offers'])->middleware('admin.user');
     Route::get('/lista-comenzi', [VoyagerOfferController::class, 'list_orders'])->middleware('admin.user');
+    Route::post('/comenzi-edit-field', [VoyagerOfferController::class, 'orderEditField'])->middleware('admin.user');
     // Fancourier
     Route::post('generateAwb', [FanCourierController::class, 'generateAwb'])->middleware('admin.user');
     Route::get('printAwb/{awb}/{client_id}', [FanCourierController::class, 'printAwb'])->middleware('admin.user');

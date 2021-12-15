@@ -230,10 +230,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $query->where('numar_comanda', '!=', null);
         $query->with([
             'client',
+            'agent',
             'products.getParent',
             'offerType',
             'status_name',
             'distribuitor',
+            'delivery_address',
         ]);
         
         // order by date, and user selectable column
@@ -268,6 +270,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                         $order->prod_ml += $prod->qty * $prod->getParent->dimension;
                     }
                 }
+                $order->save();
                 $subtotalMl += $order->prod_ml;
             }
             
@@ -282,138 +285,138 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         // get allowed columns
         $columns = [
             // [
-            //     'perm' => // definita in migratia care adauga permisiuni
+            //     'key' => // folosit in view, si in migratia care adauga permisiuni
             //     'order_by' => // pe ce coloana din db se face order by (daca e null nu se face orderby)
             //     'label' => // textul afisat in capul tabelului
             // ],
             [
-                'perm' => 'nr_com',
+                'key' => 'nr_com',
                 'order_by' => 'serie',
                 'label' => 'Nr Comanda',
             ],
             [
-                'perm' => 'agent',
+                'key' => 'agent',
                 'order_by' => null,
                 'label' => 'Agent',
             ],
             [
-                'perm' => 'tip_comanda',
+                'key' => 'tip_comanda',
                 'order_by' => 'type',
                 'label' => 'Tip Comanda',
             ],
             [
-                'perm' => 'client',
+                'key' => 'client',
                 'order_by' => 'client_id',
                 'label' => 'Client',
             ],
             [
-                'perm' => 'print_awb',
-                'order_by' => null,
+                'key' => 'print_awb',
+                'order_by' => 'print_awb',
                 'label' => 'Print AWB',
             ],
             [
-                'perm' => 'ml',
-                'order_by' => null,
+                'key' => 'ml',
+                'order_by' => 'prod_ml',
                 'label' => 'Metri liniari',
             ],
             [
-                'perm' => 'accesorii',
-                'order_by' => null,
+                'key' => 'accesorii',
+                'order_by' => 'accesories',
                 'label' => 'Accesorii',
             ],
             [
-                'perm' => 'livrare',
+                'key' => 'livrare',
                 'order_by' => 'delivery_type',
                 'label' => 'Mod Livrare',
             ],
             [
-                'perm' => 'judet',
+                'key' => 'judet',
                 'order_by' => null,
                 'label' => 'Judet',
             ],
             [
-                'perm' => 'data_expediere',
-                'order_by' => null,
+                'key' => 'data_expediere',
+                'order_by' => 'delivery_date',
                 'label' => 'Data Expediere',
             ],
             [
-                'perm' => 'status',
+                'key' => 'status',
                 'order_by' => 'status',
                 'label' => 'Stare',
             ],
             [
-                'perm' => 'p',
-                'order_by' => null,
+                'key' => 'p',
+                'order_by' => 'attr_p',
                 'label' => 'P.',
             ],
             [
-                'perm' => 'pjal',
-                'order_by' => null,
+                'key' => 'pjal',
+                'order_by' => 'attr_pjal',
                 'label' => 'P. JAL.',
             ],
             [
-                'perm' => 'pu',
-                'order_by' => null,
+                'key' => 'pu',
+                'order_by' => 'attr_pu',
                 'label' => 'P. U.',
             ],
             [
-                'perm' => 'intarziere',
+                'key' => 'intarziere',
                 'order_by' => null,
                 'label' => 'Intarziere',
             ],
             [
-                'perm' => 'culoare',
+                'key' => 'culoare',
                 'order_by' => null,
                 'label' => 'Culoare',
             ],
             [
-                'perm' => 'plata',
-                'order_by' => null,
+                'key' => 'plata',
+                'order_by' => 'payment_type',
                 'label' => 'Plata',
             ],
             [
-                'perm' => 'contabilitate',
-                'order_by' => null,
+                'key' => 'contabilitate',
+                'order_by' => 'billing_status',
                 'label' => 'Contabilitate',
             ],
             [
-                'perm' => 'comanda_distribuitor',
-                'order_by' => null,
+                'key' => 'comanda_distribuitor',
+                'order_by' => 'distribuitor_order',
                 'label' => 'Comanda Distribuitor',
             ],
             [
-                'perm' => 'fisiere',
+                'key' => 'fisiere',
                 'order_by' => null,
                 'label' => 'Fisiere',
             ],
             [
-                'perm' => 'print_comanda',
-                'order_by' => null,
-                'label' => 'Print Comanda',
+                'key' => 'print_comanda',
+                'order_by' => 'listed',
+                'label' => 'Listat',
             ],
             [
-                'perm' => 'awb',
+                'key' => 'awb',
                 'order_by' => 'awb_id',
                 'label' => 'AWB',
             ],
             [
-                'perm' => 'telefon',
+                'key' => 'telefon',
                 'order_by' => null,
                 'label' => 'Telefon',
             ],
             [
-                'perm' => 'sursa',
+                'key' => 'sursa',
                 'order_by' => 'distribuitor_id',
                 'label' => 'Sursa',
             ],
             [
-                'perm' => 'valoare',
+                'key' => 'valoare',
                 'order_by' => 'total_final',
                 'label' => 'Valoare (RON)',
             ],
         ];
         foreach ($columns as $index => $column) {
-            if (!$user->hasPermission("offer_column_{$column['perm']}")) {
+            if (!$user->hasPermission("offer_column_{$column['key']}")) {
                 unset($columns[$index]);
             }
         }
@@ -430,12 +433,36 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         ]);
     }
     
+    public function orderEditField(Request $request)
+    {
+      $offer = Offer::find($request->id);
+      if (!$offer) {
+        return ['success' => false, 'error' => 'Comanda nu exista'];
+      }
+      $allowedFields = [
+        'listed',
+        'print_awb',
+        'accesories',
+        'billing_status',
+        'payment_type',
+        'attr_p',
+        'attr_pjal',
+        'attr_pu',
+      ];
+      if (in_array($request->field, $allowedFields)) {
+        $offer->{$request->field} = $request->value;
+        $offer->save();
+      }
+      return ['success' => true, 'newValue' => $offer->{$request->field}];
+    }
+    
     // listez comenzile (au numar_comanda != null)
     public function list_orders(Request $request)
     {
-        if (in_array($request->ip(), ['89.35.129.44', '86.127.76.203'])) {
-            return $this->list_orders_custom($request);
-        }
+        // noul controller cu view complet custom
+        return $this->list_orders_custom($request);
+        
+        
         // GET THE SLUG, ex. 'posts', 'pages', etc.
         $slug = 'offers';
 

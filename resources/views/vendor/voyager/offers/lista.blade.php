@@ -54,7 +54,7 @@
                                     <thead>
                                         <tr>
                                             @foreach ($columns as $column)
-                                                <th class="column_{{ $column['perm'] }}">
+                                                <th class="column_{{ $column['key'] }}">
                                                     @if ($column['order_by'])
                                                     <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
                                                         'order_by' => $column['order_by'],
@@ -83,9 +83,9 @@
                                         @foreach ($day['orders'] as $data)
                                         <tr>
                                             @foreach ($columns as $column)
-                                                <td class="column_{{ $column['perm'] }}">
+                                                <td class="column_{{ $column['key'] }}">
                                                     
-                                                    @if ($column['perm'] == 'nr_com')
+                                                    @if ($column['key'] == 'nr_com')
                                                         <a href="/admin/offers/{{ $data->id }}/edit">
                                                             {{ $data->serie }}
                                                         </a>
@@ -100,7 +100,7 @@
                                                             </span>
                                                         @endif
                                                         
-                                                    @elseif ($column['perm'] == 'culoare')
+                                                    @elseif ($column['key'] == 'culoare')
                                                         @php
                                                             $attributes = json_decode($data->attributes, true);
                                                             $colors = [];
@@ -133,16 +133,16 @@
                                                             <div>-</div>
                                                         @endif
                                                         
-                                                    @elseif ($column['perm'] == 'valoare')
+                                                    @elseif ($column['key'] == 'valoare')
                                                         {{ $data->total_final }}
                                                         
-                                                    @elseif ($column['perm'] == 'sursa')
+                                                    @elseif ($column['key'] == 'sursa')
                                                         {{ $data->distribuitor ? $data->distribuitor->title : '-' }}
                                                         
-                                                    @elseif ($column['perm'] == 'ml')
+                                                    @elseif ($column['key'] == 'ml')
                                                         {{ $data->prod_ml }}
                                                         
-                                                    @elseif ($column['perm'] == 'status')
+                                                    @elseif ($column['key'] == 'status')
                                                         @php
                                                             $statusClass = '';
                                                             if ($data->status_name) {
@@ -163,28 +163,117 @@
                                                             </span>
                                                         </span>
                                                         
-                                                    @elseif ($column['perm'] == 'livrare')
-                                                        @if ($data->delivery_type == 'fan')
-                                                            Fan Courier
-                                                        @elseif ($data->delivery_type == 'nemo')
-                                                            Nemo Express
-                                                        @elseif ($data->delivery_type == 'tps')
-                                                            Livrare TPS
-                                                        @elseif ($data->delivery_type == 'ridicare')
-                                                            Ridicare personala
+                                                    @elseif ($column['key'] == 'livrare')
+                                                        @if (isset(App\Offer::$delivery_types[$data->delivery_type]))
+                                                            {{ App\Offer::$delivery_types[$data->delivery_type] }}
+                                                        @else
+                                                            -
                                                         @endif
                                                         
-                                                    @elseif ($column['perm'] == 'tip_comanda')
+                                                    @elseif ($column['key'] == 'tip_comanda')
                                                         {{ $data->offerType ? $data->offerType->title : '-' }}
                                                         
-                                                    @elseif ($column['perm'] == 'client')
+                                                    @elseif ($column['key'] == 'client')
                                                         {{ $data->client ? $data->client->name : '-' }}
                                                         
-                                                    @elseif ($column['perm'] == '')
-                                                    @elseif ($column['perm'] == '')
-                                                    @elseif ($column['perm'] == '')
-                                                    @elseif ($column['perm'] == '')
-                                                    @elseif ($column['perm'] == '')
+                                                    @elseif ($column['key'] == 'print_awb')
+                                                        <input
+                                                            type="checkbox"
+                                                            class="custom-table-checkbox"
+                                                            onchange="window.tableChangeCheckboxField(this, {{ $data->id }}, 'print_awb')"
+                                                            {{ $data->print_awb ? 'checked' : '' }}
+                                                        />
+                                                    
+                                                    @elseif ($column['key'] == 'accesorii')
+                                                        <input
+                                                            type="checkbox"
+                                                            class="custom-table-checkbox"
+                                                            onchange="window.tableChangeCheckboxField(this, {{ $data->id }}, 'accesories')"
+                                                            {{ $data->accesories ? 'checked' : '' }}
+                                                        />
+                                                    
+                                                    @elseif ($column['key'] == 'print_comanda')
+                                                        <input
+                                                            type="checkbox"
+                                                            class="custom-table-checkbox"
+                                                            onchange="window.tableChangeCheckboxField(this, {{ $data->id }}, 'listed')"
+                                                            {{ $data->listed ? 'checked' : '' }}
+                                                        />
+                                                    
+                                                    @elseif ($column['key'] == 'plata')
+                                                        <select
+                                                            class="custom-table-select"
+                                                            onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'payment_type')"
+                                                        >
+                                                            <option value=""> - </option>
+                                                            @foreach (App\Offer::$payment_types as $pkey => $payment_type)
+                                                                <option
+                                                                    value="{{ $pkey }}"
+                                                                    {{ $data->payment_type == $pkey ? 'selected' : '' }}
+                                                                >
+                                                                    {{ $payment_type }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    
+                                                    @elseif ($column['key'] == 'contabilitate')
+                                                        <select
+                                                            class="custom-table-select"
+                                                            onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'billing_status')"
+                                                        >
+                                                            <option value=""> - </option>
+                                                            @foreach (App\Offer::$billing_statuses as $bkey => $billing_status)
+                                                                <option
+                                                                    value="{{ $bkey }}"
+                                                                    {{ $data->billing_status == $bkey ? 'selected' : '' }}
+                                                                >
+                                                                    {{ $billing_status }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    
+                                                    @elseif ($column['key'] == 'p' || $column['key'] == 'pjal' || $column['key'] == 'pu')
+                                                        <select
+                                                            class="custom-table-select"
+                                                            onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'attr_{{ $column['key'] }}')"
+                                                        >
+                                                            <option value=""> - </option>
+                                                            @foreach (App\Offer::$attr_p_values as $pkey => $pvalue)
+                                                                <option
+                                                                    value="{{ $pkey }}"
+                                                                    {{ $data->{'attr_'.$column['key']} == $pkey ? 'selected' : '' }}
+                                                                >
+                                                                    {{ $pvalue }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    
+                                                    @elseif ($column['key'] == 'awb')
+                                                        {{ $data->awb_id }}
+                                                    
+                                                    @elseif ($column['key'] == 'data_expediere')
+                                                        {{ $data->delivery_date }}
+                                                    
+                                                    @elseif ($column['key'] == 'agent')
+                                                        {{ $data->agent ? $data->agent->name : '-' }}
+                                                    
+                                                    @elseif ($column['key'] == 'comanda_distribuitor')
+                                                        {{ $data->distribuitor_order }}
+                                                    
+                                                    @elseif ($column['key'] == 'intarziere')
+                                                        -
+                                                    
+                                                    @elseif ($column['key'] == 'judet')
+                                                        {{ $data->delivery_address ? $data->delivery_address->city_name() : '-' }}
+                                                    
+                                                    @elseif ($column['key'] == 'telefon')
+                                                        {{ $data->delivery_address ? $data->delivery_address->delivery_phone : '-' }}
+                                                    
+                                                    @elseif ($column['key'] == '')
+                                                    @elseif ($column['key'] == '')
+                                                    @elseif ($column['key'] == '')
+                                                    @elseif ($column['key'] == '')
+                                                    @elseif ($column['key'] == '')
                                                     
                                                     @endif
                                                 </td>
@@ -333,6 +422,9 @@
         .table-group-details .item.additional {
             margin-left: 14px;
         }
+        .custom-table-checkbox {
+            transform: scale(1.2);
+        }
         
         .voyager .table {
             border-top: 1px solid #ddd !important;
@@ -369,6 +461,12 @@
         }
         .voyager tbody > tr > td:not(:last-child) {
             border-right: 1px solid #cecece !important;
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+        }
+        .voyager tbody .offers__status {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
         }
         .voyager .table tbody > tr > td.bread-actions {
             border-right: none !important;
@@ -385,6 +483,44 @@
     </script>
     
     <script>
+        window.tableChangeCheckboxField = function (el, id, field) {
+            $.ajax({
+                method: 'POST',
+                url: '/admin/comenzi-edit-field',
+                data: {
+                    _token: $("meta[name=csrf-token]").attr("content"),
+                    id: id,
+                    field: field,
+                    value: el.checked ? 1 : 0,
+                },
+                dataType: 'json'
+            }).done(function(res) {
+                if (res.success == false) {
+                    toastr.error(res.error, 'Eroare');
+                } else {
+                    $(el).prop('checked', res.newValue == '1' ? true : false);
+                }
+            });
+        };
+        window.tableChangeSelectField = function (el, id, field) {
+            $.ajax({
+                method: 'POST',
+                url: '/admin/comenzi-edit-field',
+                data: {
+                    _token: $("meta[name=csrf-token]").attr("content"),
+                    id: id,
+                    field: field,
+                    value: el.value,
+                },
+                dataType: 'json'
+            }).done(function(res) {
+                if (res.success == false) {
+                    toastr.error(res.error, 'Eroare');
+                } else {
+                    $(el).val(res.newValue);
+                }
+            });
+        };
         $(document).ready(function () {
             
             // table header sticky
