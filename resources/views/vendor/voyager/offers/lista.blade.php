@@ -269,7 +269,22 @@
                                                     @elseif ($column['key'] == 'telefon')
                                                         {{ $data->delivery_address ? $data->delivery_address->delivery_phone : '-' }}
                                                     
-                                                    @elseif ($column['key'] == '')
+                                                    @elseif ($column['key'] == 'fisiere')
+                                                        <button class="btn btn-xs" type="button" data-toggle="popover" data-placement="top" data-content="
+                                                            <div class='table-files-container'>
+                                                                <a href='/admin/generatePDF/{{$data->id}}' class='table-files-link' target='_blank'>
+                                                                    <i class='voyager-download' style='margin-right: 10px;'></i>
+                                                                    <span class='table-files-name'>Descarca oferta PDF</span>
+                                                                </a>
+                                                                <a href='/admin/generatePDFFisa/{{$data->id}}' class='table-files-link' target='_blank'>
+                                                                    <i class='voyager-download' style='margin-right: 10px;'></i>
+                                                                    <span class='table-files-name'>Fisa de comanda</span>
+                                                                </a>
+                                                            </div>
+                                                        ">
+                                                            Fisiere
+                                                        </button>
+                                                    
                                                     @elseif ($column['key'] == '')
                                                     @elseif ($column['key'] == '')
                                                     @elseif ($column['key'] == '')
@@ -425,6 +440,12 @@
         .custom-table-checkbox {
             transform: scale(1.2);
         }
+        .table-files-container {
+            padding: 0;
+        }
+        .table-files-container .table-files-link {
+            display: block;
+        }
         
         .voyager .table {
             border-top: 1px solid #ddd !important;
@@ -479,6 +500,10 @@
     <script>
         $(document).ready(function() {
             $(".tooltipMessage").tooltip();
+            $('[data-toggle="popover"]').popover({
+                container: 'body',
+                html: true,
+            });
         });
     </script>
     
