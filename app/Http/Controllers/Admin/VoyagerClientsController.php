@@ -20,6 +20,7 @@ use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
 use App\UserAddress;
 use App\LegalEntity;
 use App\Individual;
+use App\Client;
 
 class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
 {
@@ -811,4 +812,102 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
       }
       return ($year > 1800 && $year < 2099 && $cnp[12] == $hashResult);
   }
+  
+  public function syncClientToMentor(Request $request){
+    if($request->input('client_id') == null){
+      return ['success' => false, 'msg' => 'Trebuie sa selectezi un client pentru a-l sincroniza cu Mentor!'];
+    }
+    $url = "http://78.96.1.252:51892/datasnap/rest/TServerMethods/InfoPartener//";
+    $client = Client::find($request->input('client_id'));
+    $userAddresses = $client->userAddress;
+    $cui = '';
+    $regCom = '';
+    $codPartener = '';
+    $persoanaFizica = 'DA';
+    $usrAddress = UserAddress::where('user_id', $client->id)->first();
+    $usrAddressList = [
+      'Denumire' => $usrAddress->address, 
+      'Localitate' => $usrAddress->city_name(), 
+      'TipSediu' => 'S', 
+      'Strada' => '', 
+      'Numar' => '', 
+      'Bloc' => '', 
+      'Etaj' => '', 
+      'Apartament' => '', 
+      'Judet' => $usrAddress->state_name(), 
+      'Tara' => $usrAddress->country, 
+      'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone, 
+      'eMail' => $client->email
+    ];
+    
+    if($client->type == 'fizica'){
+      $individual = Individual::where('user_id', $client->id)->first();
+      $cui = '';
+      $codPartener = "PF-".$client->id;
+    } else{
+      $legalEntity = LeganEntity::where('user_id', $client->id)->first();
+      $cui = $legalEntity ? $legalEntity->cui : '';
+      $regCom = $legalEntity ? $legalEntity->reg_com : '';
+      $persoanaFizica = 'NU';
+      if($usrAddress->country == 'RO'){
+        
+        $anaf = new \Itrack\Anaf\Client(); 
+        $dataVerificare = date("Y-m-d");
+        $anaf->addCif($cui, $dataVerificare);
+        $company = $anaf->first();
+        if($company->getName() != null && $company->getName() != ""){
+          $company = [
+            'nume_firma' => $company->getName(),
+            'cod_fiscal' => $company->getCIF(),
+            'reg_com' => $company->getRegCom(),
+            'judet' => $company->getAddress()->getCounty(),
+            'localitate' => $company->getAddress()->getCity(),
+            'adresa' => $company->getFullAddress(),
+            'iban' => $company->getTVA()->getTVASplitIBAN(),
+          ];
+        }
+        $codPartener = "PJ-RO-".$company['cod_fiscal'];
+      } else{
+        $codPartener = 'PJ-'.$usrAddress->country.'-'.$cui;
+      }
+    }
+    $postData = [
+        'TipOperatie' => 'A',
+        'CUI' => $cui,
+        'CodExtern' => $codPartener, // il generez ca pe TPS vechi
+        'CodIntern' => '',
+        'RegCom' => $regCom == null ? '' : $regCom,
+        'Nume' => $client->name,
+        'PersoanaFizica' => $persoanaFizica,
+        'Observatii' => 'Client sincronizat din TPS, manual',
+        'PersoaneContact' => [
+            'Nume' => $client->name,
+            'Prenume' => '',
+            'Telefon' => $client->phone,
+            'Email' => $client->email,
+            'Functie' => '',
+          ],
+        'Sedii' => $usrAddressList,
+    ];
+//     dd($postData);
+    try{
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($ch, CURLOPT_URL, $url);
+      curl_setopt($ch, CURLOPT_POST, 1);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+
+      $result = curl_exec($ch);
+      curl_close ($ch);
+
+      if ($result['Error'] == "ok"){
+        return ['success' => true, 'msg' => 'Clientul a fost sincronizat cu succes!'];
+      } else{
+        return ['success' => false, 'msg' => $server_output['Error']];
+      }
+    } catch(\Exception $e){
+      return ['success' => false, 'msg' => 'Nu s-a putut conecta la serverul WinMentor!'];
+    }
+  }
+  
 }

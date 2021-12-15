@@ -273,6 +273,12 @@ $isNewClient = false;
                                     @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents]) 
                                   </div>
                               </div>
+                              <div class="form-group col-md-12 mesaj-intern-container log-evenimente">
+                                <label class="control-label">Log mesaje</label>
+                                  <div class="log-evenimente-list log-mesaje">
+                                    @include('vendor.voyager.partials.log_messages', ['offerMessages' => $offerMessages]) 
+                                  </div>
+                              </div>
                             @endif
 
                         </div><!-- panel-body -->
@@ -1141,6 +1147,7 @@ $isNewClient = false;
                 console.log(res);
                if(res.success){
                 $("input[name=offer_id]").val(res.offer_id);
+                $(".log-evenimente-list").html(res.html_log);
                }
             })
             .fail(function(xhr, status, error) {
@@ -1183,6 +1190,7 @@ $isNewClient = false;
                     '_blank' 
                   );
                   toastr.success(resp.msg);
+                  $(".log-evenimente-list").html(resp.html_log);
                 } else{
                   for(var key in resp.msg) {
                     toastr.error(resp.msg[key]);
@@ -1218,6 +1226,7 @@ $isNewClient = false;
                       '_blank' 
                     );
                     toastr.success(resp.msg);
+                    $(".log-evenimente-list").html(resp.html_log);
                   } else{
                     for(var key in resp.msg) {
                       toastr.error(resp.msg[key]);
@@ -1284,6 +1293,7 @@ $isNewClient = false;
                     $(".page-title").text($(".page-title").text() + ' - RETUR');
                   }
                   $(".butoane-oferta").append(html_append);
+                  $(".log-evenimente-list").html(resp.html_log);
                   toastr.success(resp.msg);
                 } else{
                   toastr.error(resp.msg);
@@ -1354,6 +1364,7 @@ $isNewClient = false;
                         `;
                     }
                     $(".butoane-oferta").append(html_append);
+                    $(".log-evenimente-list").html(resp.html_log);
                     toastr.success(resp.msg);
                   } else{
                     toastr.error(resp.msg);
@@ -1410,6 +1421,7 @@ $isNewClient = false;
               }).done(function(resp) {
                   if(resp.success){
                     $(".log-evenimente-list").html(resp.html_log);
+                    $(".log-mesaje").html(resp.html_messages);
                     $("textarea#mentions").val("");
                     $("input[name=mentions]").val("");
                     toastr.success(resp.msg);

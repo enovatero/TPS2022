@@ -18,6 +18,7 @@
                     </li>
                     @foreach ($segments as $segment)
                         @php
+                        $segment = $segment == 'offers' ? 'lista-oferte' : $segment;
                         $url .= '/'.$segment;
                         @endphp
                         @if ($loop->last)

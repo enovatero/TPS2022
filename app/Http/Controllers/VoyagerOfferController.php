@@ -34,12 +34,13 @@ use App\ProductAttribute;
 use App\OfferType;
 use App\OfferEvent;
 use PDF;
+use GuzzleHttp\Client as GuzzleClient;
 
 class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
 {
    use BreadRelationshipParser;
   
-    // listez ofertele (au numar_comanda null)
+    // listez ofertele (atat comenzi cat si oferte)
     public function list_offers(Request $request)
     {
         // GET THE SLUG, ex. 'posts', 'pages', etc.
@@ -72,7 +73,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $model = app($dataType->model_name);
 
             // preiau toate produsele care au inclusiv campurile pret si parinte selectate, deci sunt produse complete
-            $query = $model::select($dataType->name.'.*')->where('numar_comanda', null);
+            $query = $model::select($dataType->name.'.*');
 
             if ($dataType->scope && $dataType->scope != '' && method_exists($model, 'scope'.ucfirst($dataType->scope))) {
                 $query->{$dataType->scope}();
@@ -1099,7 +1100,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $select_html_grids .= "</select>";
       
         $adminUsers = User::get();
-        $offerEvents = OfferEvent::where('offer_id', $offer->id)->orderBy('created_at', 'DESC')->get();
+        $offerEvents = OfferEvent::where('offer_id', $offer->id)->where('is_mention', 0)->orderBy('created_at', 'DESC')->get();
+        $offerMessages = OfferEvent::where('offer_id', $offer->id)->where('is_mention', 1)->orderBy('created_at', 'DESC')->get();
       
         return Voyager::view($view, compact(
           'dataType', 
@@ -1115,6 +1117,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           'offerProducts',
           'adminUsers',
           'offerEvents',
+          'offerMessages',
         ));
     }
   
@@ -1385,6 +1388,10 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offer->boxes = $boxes;
       // trimit toate datele in offer_pdf si generez pdf-ul
       $pdf = PDF::loadView('vendor.pdfs.offer_pdf',['offer' => $offer, 'offerProducts' => $offerProducts]);
+      
+      $message = "a generat PDF oferta";
+      (new self())->createEvent($offer, $message);
+      
       return $pdf->download('Oferta_TPS'.$offer->serie.'_'.date('m-d-Y').'.pdf');
     }
     return ['success' => false];
@@ -1416,6 +1423,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offer->dimension = $dimension;
       $offer->boxes = $boxes;
       $pdf = PDF::loadView('vendor.pdfs.offer_pdf_order',['offer' => $offer, 'offerProducts' => $offerProducts]);
+      $message = "a generat Fisa PDF oferta";
+      (new self())->createEvent($offer, $message);
       return $pdf->download('Fisa Comanda_TPS'.$offer->numar_comanda.'_'.date('m-d-Y').'.pdf');
     }
     return ['success' => false];
@@ -1447,9 +1456,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     try{
       $offer = Offer::find($request->input('order_id'));
       $status = Status::where('title', 'like', '%'.$request->input('status').'%')->first();
+      $oldStatus = Status::find($offer->status);
       $offer->status = $status != null ? $status->id : 1;
       $offer->save();
-      return ['success' => true, 'msg' => 'Statusul a fost modificat cu succes!'];
+      $message = "a schimbat statusul din ".$oldStatus->title.' in '.$status->title;
+      (new self())->createEvent($offer, $message);
+      return ['success' => true, 'msg' => 'Statusul a fost modificat cu succes!', 'html_log' => (new self())->getHtmlLog($offer)];
     } catch(\Exception $e){
       return ['success' => false, 'msg' => 'Statusul nu a putut fi modificat!'];
     }
@@ -1468,7 +1480,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $nextOrderNumber = Offer::where('numar_comanda', '!=', null)->count() + 1;
       $offer->numar_comanda = $nextOrderNumber;
       $offer->save();
-      return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => $status->title];
+      $message = "a lansat comanda";
+      (new self())->createEvent($offer, $message);
+      return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => $status->title, 'html_log' => (new self())->getHtmlLog($offer)];
     } catch(\Exception $e){
       return ['success' => false, 'msg' => 'Statusul nu a putut fi modificat!'];
     }
@@ -1622,7 +1636,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
   
   // pentru o anumita oferta, iau log-ul
   public static function getHtmlLog($offer){
-    $offerEvents = OfferEvent::where('offer_id', $offer->id)->orderBy('created_at', 'DESC')->get();
+    $offerEvents = OfferEvent::where(['offer_id' => $offer->id, 'is_mention' => 0])->orderBy('created_at', 'DESC')->get();
     return view('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents])->render();
   }
   
@@ -1657,7 +1671,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
       }
       
-      return ['success' => true, 'msg' => 'Mesaj salvat cu succes!', 'html_log' => (new self())->getHtmlLog($offer)];
+      return ['success' => true, 'msg' => 'Mesaj salvat cu succes!', 'html_log' => (new self())->getHtmlLog($offer), 'html_messages' => (new self())->getHtmlLogMentions($offer->id)];
     } catch(\Exception $e){
       return ['success' => false, 'msg' => 'Mesajul nu a putut fi salvat!'];
     }
@@ -1672,6 +1686,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     // iau comanda din baza de date
     $offer = Offer::find($request->input('order_id'));
     // iau datele clientului din baza de date
+    if($offer->delivery_address_user == null){
+      return ['success' => false, 'msg' => 'Nicio adresa de livrare selectata pentru aceasta comanda!'];
+    }
     $userAddress = UserAddress::find($offer->delivery_address_user);
     $userData = $userAddress->userData();
     // iau nr de telefon fie din adresa selectata in comanda, fie din datele clientului
@@ -1685,30 +1702,50 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
    		$phone = '+4'.$phone;
    	}
     // fac request-ul catre smso si trimit sms-ul
-   	$client = new Client;
-    $request = $client->request('POST', 'https://app.smso.ro/api/v1/send', [
-            'headers' => [
-                'X-Authorization' => env('SMSO_KEY'),
-            ],
-           'form_params' => [
-               'to' => $phone,
-               'body' => (new self())->replaceDataInTemplate($order), // iau template-ul din settings si il modific cu datele din order
-               'sender' => 4,
-           ],
-    ]);
-    $message = 'a trimis SMS catre numarul de telefon <strong>'.$phone.'</strong>';
-    (new self())->createEvent($offer, $message, true);
+   	$client = new GuzzleClient;
+    try{
+      $message = (new self())->replaceDataInTemplate($offer);
+      if($message['success']){
+        $body = $message['data'];
+      } else{
+        return ['success' => false, 'msg' => $message['msg']];
+      }
+      $request = $client->request('POST', 'https://app.smso.ro/api/v1/send', [
+              'headers' => [
+                  'X-Authorization' => env('SMSO_KEY'),
+              ],
+             'form_params' => [
+                 'to' => $phone,
+                 'body' => $body, // iau template-ul din settings si il modific cu datele din order
+                 'sender' => 4,
+             ],
+      ]);
+      $message = 'a trimis SMS catre numarul de telefon <strong>'.$phone.'</strong>';
+      (new self())->createEvent($offer, $message, true);
+      return ['success' => true, 'msg' => 'Mesajul a fost trimis cu succes!'];
+    } catch(\Exception $e){
+      return ['success' => false, 'msg' => 'Mesajul nu a putut fi trimis!'];
+    }
   }
   
   // returnez mesajul pe baza template-ului din setting
-  public static function replaceDataInTemplate($order){
+  public static function replaceDataInTemplate($offer){
     $message = setting('admin.message_template');
+    $courierObj = $offer->delivery_type == 'fan' ? $offer->fanData : $offer->nemoData;
+    if($courierObj == null){
+      return ['success' => false, 'msg' => 'Nu se poate trimite SMS pentru ca nu s-a generat un AWB pentru aceasta comanda!'];
+    }
+    $courier = $offer->delivery_type == 'fan' ? 'FanCourier' : 'NemoExpress';
     $message = str_replace(
-      array('find', 'replace'),  
+      array('{nr_comanda}', '{valoare_comanda}', '{courier}', '{awb}', '{ramburs}'),  
+      array($offer->numar_comanda, $offer->total_final, $courier, $courierObj->awb, $courierObj->ramburs_numerar),  
       $message
     );
-    // modifici data in template cum vrei tu :)
-    return $message;
+    return ['success' => true, 'data' => $message];
+  }
+  
+  public function uploadDocuments(Request $request){
+    
   }
   
 }

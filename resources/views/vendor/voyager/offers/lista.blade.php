@@ -87,7 +87,7 @@
                                                     
                                                     @if ($column['key'] == 'nr_com')
                                                         <a href="/admin/offers/{{ $data->id }}/edit">
-                                                            {{ $data->serie }}
+                                                            {{ $data->numar_comanda }}
                                                         </a>
                                                         @php
                                                             $ordermessages = $data->numar_comanda != null ? \App\Http\Controllers\VoyagerOfferController::getHtmlLogMentions($data->id) : null;
@@ -270,16 +270,31 @@
                                                         {{ $data->delivery_address ? $data->delivery_address->delivery_phone : '-' }}
                                                     
                                                     @elseif ($column['key'] == 'fisiere')
+                                                        @php
+                                                          $htmlButtonFiles = "
+                                                              <a href='/admin/generatePDF/".$data->id."' class='table-files-link' target='_blank'>
+                                                                  <i class='voyager-download' style='margin-right: 10px;'></i>
+                                                                  <span class='table-files-name'>Descarca oferta PDF</span>
+                                                              </a>
+                                                              <a href='/admin/generatePDFFisa/".$data->id."' class='table-files-link' target='_blank'>
+                                                                  <i class='voyager-download' style='margin-right: 10px;'></i>
+                                                                  <span class='table-files-name'>Fisa de comanda</span>
+                                                              </a>
+                                                          ";
+                                                          if($data->delivery_type == 'fan' && $data->fanData && $data->fanData->cont_id != null && $data->fanData->awb != null){
+                                                            $htmlButtonFiles .= "<a target='_blank' class='table-files-link' href='/admin/printAwb/".$data->fanData->awb."/".$data->fanData->cont_id."'>
+                                                                <i class='voyager-download' style='margin-right: 10px;'></i> <span> Descarca AWB PDF</span>
+                                                            </a>";
+                                                          }
+                                                          if($data->delivery_type == 'nemo' && $data->nemoData && $data->nemoData->cont_id != null && $data->nemoData->awb != null){
+                                                            $htmlButtonFiles .= "<a target='_blank' class='table-files-link' href='/admin/printAwbNemo/".$data->nemoData->awb."/".$data->nemoData->cont_id."/".$data->nemoData->hash."'>
+                                                                <i class='voyager-download' style='margin-right: 10px;'></i> <span> Descarca AWB PDF</span>
+                                                            </a>";
+                                                          }
+                                                        @endphp
                                                         <button class="btn btn-xs" type="button" data-toggle="popover" data-placement="top" data-content="
                                                             <div class='table-files-container'>
-                                                                <a href='/admin/generatePDF/{{$data->id}}' class='table-files-link' target='_blank'>
-                                                                    <i class='voyager-download' style='margin-right: 10px;'></i>
-                                                                    <span class='table-files-name'>Descarca oferta PDF</span>
-                                                                </a>
-                                                                <a href='/admin/generatePDFFisa/{{$data->id}}' class='table-files-link' target='_blank'>
-                                                                    <i class='voyager-download' style='margin-right: 10px;'></i>
-                                                                    <span class='table-files-name'>Fisa de comanda</span>
-                                                                </a>
+                                                               {{$htmlButtonFiles}}
                                                             </div>
                                                         ">
                                                             Fisiere

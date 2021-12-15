@@ -256,6 +256,9 @@
                                                     @include('voyager::bread.partials.actions', ['action' => $action])
                                                 @endif
                                             @endforeach
+                                            <a title="Sincronizeaza in WinMentor" class="btn btn-add-new btnSincronizeazaClient" client_id="{{$data->id}}">
+                                                <i class="voyager-check"></i> <span class="hidden-xs hidden-sm">Sincronizeaza WinMentor</span>
+                                            </a>
                                         </td>
                                     </tr>
                                     @endforeach
@@ -351,6 +354,35 @@
                 $('input[name="row_id"]').prop('checked', $(this).prop('checked')).trigger('change');
                
             });
+          
+          $(".btnSincronizeazaClient").click(function(){
+             if(confirm("Sunteti sigur ca sincronizati acest client?")){
+               var vthis = this;
+               var client_id = $(this).attr('client_id');
+               $.ajax({
+                    method: 'POST',
+                    url: '/admin/syncClientToMentor',//remove this address on POST message after i get all the address data
+                    data: {_token: '{{csrf_token()}}', client_id: client_id},
+                    context: this,
+                    async: true,
+                    cache: false,
+                    dataType: 'json'
+                }).done(function(res) {
+                    if (res.success) {
+                      toastr.success(res.msg, 'Succes');
+                    } else{
+                      toastr.error(res.msg, 'Eroare');
+                    }
+                })
+                .fail(function(xhr, status, error) {
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                        .indexOf("CSRF token mismatch") >= 0) {
+                        window.location.reload();
+                    }
+                });
+              return false;
+            }
+          });
         });
 
 

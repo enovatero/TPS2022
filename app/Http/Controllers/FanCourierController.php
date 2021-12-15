@@ -275,7 +275,7 @@ class FanCourierController extends Controller
           $fanOrder->plata_expeditie = $form_data['plata_expeditie'];
           $fanOrder->numar_colete = $form_data['numar_colete'];
           $fanOrder->greutate_totala = $form_data['greutate_totala'];
-          $fanOrder->ramburs_numberar = floatval($totalPlata);
+          $fanOrder->ramburs_numerar = floatval($totalPlata);
           $fanOrder->inaltime_pachet = $form_data['inaltime_pachet'];
           $fanOrder->latime_pachet = $form_data['latime_pachet'];
           $fanOrder->lungime_pachet = $form_data['lungime_pachet'];
@@ -288,7 +288,11 @@ class FanCourierController extends Controller
           // updatez oferta cu numarul awb pe care l-am generat
           $offer->awb_id = $fanOrder->id;
           $offer->save();
-          return ['success' => true, 'msg' => 'AWB-ul s-a generat cu succes!', 'awb' => $fanOrder->awb, 'id' => $offer->id, 'client_id' => $fanOrder->cont_id];
+          
+          $message = "a generat awb-ul FanCourier";
+          \App\Http\Controllers\VoyagerOfferController::createEvent($offer, $message);
+          
+          return ['success' => true, 'msg' => 'AWB-ul s-a generat cu succes!', 'awb' => $fanOrder->awb, 'id' => $offer->id, 'client_id' => $fanOrder->cont_id, 'html_log' => \App\Http\Controllers\VoyagerOfferController::getHtmlLog($offer)];
         } catch(Exception $e){
           return ['success' => false, 'msg' => 'Eroare: '.$e->getMessage()];
         }

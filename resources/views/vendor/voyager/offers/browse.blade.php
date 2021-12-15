@@ -628,21 +628,21 @@
         $(document).ready(function () {
             
             // table header sticky
-            $(document).on('scroll', function () {
-                var isFixed = $('.table-responsive').hasClass('table-fixed-header');
-                var boundingClient = $('.table-responsive-start').get(0).getBoundingClientRect();
-                var shouldBeFixed = (boundingClient.top - 60) <= 0;
-                if (shouldBeFixed && !isFixed) {
-                    $('.table-responsive').addClass('table-fixed-header');
-                    $('.table-responsive-fake').show(); // placeholder ca sa pastrez inaltimea paginii
-                    var theadHeight = $('.table-fixed-header thead').height();
-                    $('.table-fixed-header tbody').css('height', 'calc(100vh - 77px - '+ theadHeight +'px)');
-                }
-                if (!shouldBeFixed && isFixed) {
-                    $('.table-responsive').removeClass('table-fixed-header');
-                    $('.table-responsive-fake').hide(); // placeholder ca sa pastrez inaltimea paginii
-                }
-            });
+//             $(document).on('scroll', function () {
+//                 var isFixed = $('.table-responsive').hasClass('table-fixed-header');
+//                 var boundingClient = $('.table-responsive-start').get(0).getBoundingClientRect();
+//                 var shouldBeFixed = (boundingClient.top - 60) <= 0;
+//                 if (shouldBeFixed && !isFixed) {
+//                     $('.table-responsive').addClass('table-fixed-header');
+//                     $('.table-responsive-fake').show(); // placeholder ca sa pastrez inaltimea paginii
+//                     var theadHeight = $('.table-fixed-header thead').height();
+//                     $('.table-fixed-header tbody').css('height', 'calc(100vh - 77px - '+ theadHeight +'px)');
+//                 }
+//                 if (!shouldBeFixed && isFixed) {
+//                     $('.table-responsive').removeClass('table-fixed-header');
+//                     $('.table-responsive-fake').hide(); // placeholder ca sa pastrez inaltimea paginii
+//                 }
+//             });
             
             @if (!$dataType->server_side)
                 var table = $('#dataTable').DataTable({!! json_encode(

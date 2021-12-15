@@ -562,3 +562,17 @@ table, th, td{
 .btnSendSms>span{
   font-size: 12px !important;
 }
+.btnSincronizeazaClient{
+  color: #4ea71b !important;
+  background-color: #fff;
+  border-left: 6px solid #4ea71b;
+  box-shadow: rgb(100 100 111 / 20%) 0px 7px 29px 0px;
+  border-top-right-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  margin-right: 0.7rem !important;
+  min-width: 8rem !important;
+  height: 2.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}

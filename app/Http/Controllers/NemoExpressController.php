@@ -137,7 +137,7 @@ class NemoExpressController extends Controller
             $nemoOrder->plata_expeditie = $form_data['plata_expeditie'];
             $nemoOrder->numar_colete = $form_data['numar_colete'];
             $nemoOrder->greutate_totala = $form_data['greutate_totala'];
-            $nemoOrder->ramburs_numberar = floatval($totalPlata);
+            $nemoOrder->ramburs_numerar = floatval($totalPlata);
             $nemoOrder->inaltime_pachet = $form_data['inaltime_pachet'];
             $nemoOrder->latime_pachet = $form_data['latime_pachet'];
             $nemoOrder->lungime_pachet = $form_data['lungime_pachet'];
@@ -154,7 +154,7 @@ class NemoExpressController extends Controller
             // updatez awb-ul in baza de date la oferta pentru care am generat awb-ul
             $offer->awb_id = $nemoOrder->id;
             $offer->save();
-            return ['success' => true, 'msg' => 'AWB-ul s-a generat cu succes!', 'awb' => $nemoOrder->awb, 'id' => $offer->id, 'client_id' => $nemoOrder->cont_id, 'hash' => $nemoOrder->hash];
+            return ['success' => true, 'msg' => 'AWB-ul s-a generat cu succes!', 'awb' => $nemoOrder->awb, 'id' => $offer->id, 'client_id' => $nemoOrder->cont_id, 'hash' => $nemoOrder->hash, 'html_log' => \App\Http\Controllers\VoyagerOfferController::getHtmlLog($offer)];
           } catch(Exception $e){
             return ['success' => false, 'msg' => 'Eroare: '.$e->getMessage()];
           }

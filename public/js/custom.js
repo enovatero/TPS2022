@@ -132,4 +132,34 @@ $(document).ready(function(){
   $(document).on('select2:open', () => {
     document.querySelector('.select2-search__field').focus();
   });
+  
+  $(".btnSendSms").click(function(){
+    if(confirm("Doresti sa trimiti SMS catre client?")){
+      var order_id = $(this).attr("order_id");
+      var vthis = this;
+      $.ajax({
+          method: 'POST',
+          url: '/admin/sendSms',//remove this address on POST message after i get all the address data
+          data: {order_id: order_id, _token: $("meta[name=csrf-token]").attr('content')},
+          context: this,
+          async: true,
+          cache: false,
+          dataType: 'json'
+      }).done(function(resp) {
+          if(resp.success){
+            toastr.success(resp.msg);
+          } else{
+            toastr.error(resp.msg);
+          }
+      })
+      .fail(function(xhr, status, error) {
+          if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+              .indexOf("CSRF token mismatch") >= 0) {
+              window.location.reload();
+          }
+      });
+      return true;
+    }
+});
+  
 });
