@@ -21,6 +21,7 @@ use App\UserAddress;
 use App\LegalEntity;
 use App\Individual;
 use App\Client;
+use Carbon\Carbon;
 
 class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
 {
@@ -815,10 +816,29 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
   
   public function syncClientToMentor(Request $request){
     if($request->input('client_id') == null){
-      return ['success' => false, 'msg' => 'Trebuie sa selectezi un client pentru a-l sincroniza cu Mentor!'];
+      return ['success' => false, 'msg' => 'Trebuie sa selectezi un client pentru a-l sincroniza cu Mentor!', 'warning' => false];
     }
+    return (new self())->syncClient($request->input('client_id'));
+  }
+  
+  public static function syncClient($client_id){
+    
+    $host = '78.96.1.252'; 
+    $port = 51892; 
+    $waitTimeoutInSeconds = 3;
+    $winMentorServer = false;
+    try{
+      if($fp = fsockopen($host,$port,$errCode,$errStr,$waitTimeoutInSeconds)){   
+         $winMentorServer = true;
+      }
+      fclose($fp);
+    } catch(\Exception $e){}
+    
     $url = "http://78.96.1.252:51892/datasnap/rest/TServerMethods/InfoPartener//";
-    $client = Client::find($request->input('client_id'));
+    $client = Client::find($client_id);
+    if($client->sync_done == 1){
+      return ['success' => false, 'msg' => 'Clientul a fost deja sincronizat cu WinMentor!', 'warning' => true];
+    }
     $userAddresses = $client->userAddress;
     $cui = '';
     $regCom = '';
@@ -839,34 +859,37 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
       'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone, 
       'eMail' => $client->email
     ];
-    
     if($client->type == 'fizica'){
       $individual = Individual::where('user_id', $client->id)->first();
       $cui = '';
       $codPartener = "PF-".$client->id;
     } else{
-      $legalEntity = LeganEntity::where('user_id', $client->id)->first();
+      $legalEntity = LegalEntity::where('user_id', $client->id)->first();
       $cui = $legalEntity ? $legalEntity->cui : '';
       $regCom = $legalEntity ? $legalEntity->reg_com : '';
       $persoanaFizica = 'NU';
       if($usrAddress->country == 'RO'){
-        
-        $anaf = new \Itrack\Anaf\Client(); 
-        $dataVerificare = date("Y-m-d");
-        $anaf->addCif($cui, $dataVerificare);
-        $company = $anaf->first();
-        if($company->getName() != null && $company->getName() != ""){
-          $company = [
-            'nume_firma' => $company->getName(),
-            'cod_fiscal' => $company->getCIF(),
-            'reg_com' => $company->getRegCom(),
-            'judet' => $company->getAddress()->getCounty(),
-            'localitate' => $company->getAddress()->getCity(),
-            'adresa' => $company->getFullAddress(),
-            'iban' => $company->getTVA()->getTVASplitIBAN(),
-          ];
+        $diff = -1;
+        if($legalEntity){
+          $updatedDate = Carbon::parse($legalEntity->updated_at);
+          $now = Carbon::now();
+          $diff = $updatedDate->diffInDays($now);
         }
-        $codPartener = "PJ-RO-".$company['cod_fiscal'];
+        // am diferenta de la ultimul update mai mare de 30 de zile, iau datele de la anaf si le modific in baza de date pentru firma selectata
+        if($diff >= 30){
+          $anaf = new \Itrack\Anaf\Client(); 
+          $dataVerificare = date("Y-m-d");
+          $anaf->addCif($cui, $dataVerificare);
+          $company = $anaf->first();
+          if($company->getName() != null && $company->getName() != ""){
+            $legalEntity->cui = $company->getCIF();
+            $legalEntity->reg_com = $company->getRegCom();
+            $legalEntity->iban = $company->getTVA()->getTVASplitIBAN();
+            $legalEntity->save();
+            $cui = $legalEntity->cui;
+          }
+        }
+        $codPartener = "PJ-RO-".$cui;
       } else{
         $codPartener = 'PJ-'.$usrAddress->country.'-'.$cui;
       }
@@ -880,33 +903,29 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         'Nume' => $client->name,
         'PersoanaFizica' => $persoanaFizica,
         'Observatii' => 'Client sincronizat din TPS, manual',
-        'PersoaneContact' => [
-            'Nume' => $client->name,
-            'Prenume' => '',
-            'Telefon' => $client->phone,
-            'Email' => $client->email,
-            'Functie' => '',
-          ],
-        'Sedii' => $usrAddressList,
+        'Sedii' => [$usrAddressList],
     ];
-//     dd($postData);
-    try{
-      $ch = curl_init();
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-      curl_setopt($ch, CURLOPT_URL, $url);
-      curl_setopt($ch, CURLOPT_POST, 1);
-      curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
-
-      $result = curl_exec($ch);
-      curl_close ($ch);
-
-      if ($result['Error'] == "ok"){
-        return ['success' => true, 'msg' => 'Clientul a fost sincronizat cu succes!'];
-      } else{
-        return ['success' => false, 'msg' => $server_output['Error']];
-      }
-    } catch(\Exception $e){
-      return ['success' => false, 'msg' => 'Nu s-a putut conecta la serverul WinMentor!'];
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain')); 
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+    if($winMentorServer){
+       $result = curl_exec($ch);
+       $result = json_decode($result, true);
+    } else{
+       curl_close ($ch);
+       return ['success' => false, 'msg' => 'Nu s-a putut conecta la serverul WinMentor!', 'warning' => false];
+    }
+    curl_close ($ch);
+    if (array_key_exists('Error', $result) && $result['Error'] == "ok" && $winMentorServer){
+      $client->sync_done = 1;
+      $client->mentor_partener_code = $codPartener;
+      $client->save();
+      return ['success' => true, 'msg' => 'Clientul a fost sincronizat cu succes!'];
+    } else{
+      return ['success' => false, 'msg' => array_key_exists('error', $result) ? $result['error'] : $result['Error'], 'warning' => false];
     }
   }
   

@@ -74,6 +74,15 @@ class Offer extends Model
     public function nemoData(){
       return $this->hasOne(NemoOrder::class, 'order_id', 'id');
     }
+    public function offerDocs(){
+      return $this->hasMany(OfferDoc::class, 'offer_id', 'id');
+    }
+    public function orderProducts(){
+      return $this->hasMany(OfferProduct::class, 'offer_id', 'id');
+    }
+    public function offerWme(){
+      return $this->hasOne(OfferWme::class, 'order_id', 'id');
+    }
   
     public function attrs(){
       $attributes = $this->attributes;

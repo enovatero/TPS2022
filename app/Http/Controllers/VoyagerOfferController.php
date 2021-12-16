@@ -17,6 +17,7 @@ use TCG\Voyager\Facades\Voyager;
 use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Mentions;
+use Carbon\Carbon;
 
 use App\Offer;
 use App\Client;
@@ -33,6 +34,7 @@ use App\OfferPrice;
 use App\ProductAttribute;
 use App\OfferType;
 use App\OfferEvent;
+use App\OrderWme;
 use PDF;
 use GuzzleHttp\Client as GuzzleClient;
 
@@ -227,6 +229,171 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $slug = 'offers';
         $this->authorize('browse', app($model));
         
+        // get allowed columns
+        $columns = [
+            // [
+            //     'key' => // folosit in view, si in migratia care adauga permisiuni
+            //     'order_by' => // pe ce coloana din db se face order by (daca e null nu se face orderby)
+            //     'label' => // textul afisat in capul tabelului
+            // ],
+            [
+                'key' => 'nr_com',
+                'order_by' => 'serie',
+                'label' => 'Nr Comanda',
+                'width' => '113px',
+            ],
+            [
+                'key' => 'agent',
+                'order_by' => null,
+                'label' => 'Agent',
+                'width' => '110px',
+            ],
+            [
+                'key' => 'tip_comanda',
+                'order_by' => 'type',
+                'label' => 'Tip Comanda',
+                'width' => '110px',
+            ],
+            [
+                'key' => 'client',
+                'order_by' => 'client_id',
+                'label' => 'Client',
+                'width' => '110px',
+            ],
+            [
+                'key' => 'print_awb',
+                'order_by' => 'print_awb',
+                'label' => 'Print AWB',
+                'width' => '47px',
+            ],
+            [
+                'key' => 'ml',
+                'order_by' => 'prod_ml',
+                'label' => 'Metri liniari',
+                'width' => '52px',
+            ],
+            [
+                'key' => 'accesorii',
+                'order_by' => 'accesories',
+                'label' => 'Accesorii',
+                'width' => '70px',
+            ],
+            [
+                'key' => 'livrare',
+                'order_by' => 'delivery_type',
+                'label' => 'Mod Livrare',
+                'width' => '110px',
+            ],
+            [
+                'key' => 'judet',
+                'order_by' => null,
+                'label' => 'Judet',
+                'width' => '90px',
+            ],
+            [
+                'key' => 'data_expediere',
+                'order_by' => 'delivery_date',
+                'label' => 'Data Expediere',
+                'width' => '95px',
+            ],
+            [
+                'key' => 'status',
+                'order_by' => 'status',
+                'label' => 'Stare',
+                'width' => '80px',
+            ],
+            [
+                'key' => 'p',
+                'order_by' => 'attr_p',
+                'label' => 'P.',
+                'width' => '100px',
+            ],
+            [
+                'key' => 'pjal',
+                'order_by' => 'attr_pjal',
+                'label' => 'P. JAL.',
+                'width' => '100px',
+            ],
+            [
+                'key' => 'pu',
+                'order_by' => 'attr_pu',
+                'label' => 'P. U.',
+                'width' => '100px',
+            ],
+            [
+                'key' => 'intarziere',
+                'order_by' => null,
+                'label' => 'Intarziere',
+                'width' => '80px',
+            ],
+            [
+                'key' => 'culoare',
+                'order_by' => null,
+                'label' => 'Culoare',
+                'width' => '120px',
+            ],
+            [
+                'key' => 'plata',
+                'order_by' => 'payment_type',
+                'label' => 'Plata',
+                'width' => '128px',
+            ],
+            [
+                'key' => 'contabilitate',
+                'order_by' => 'billing_status',
+                'label' => 'Contabilitate',
+                'width' => '155px',
+            ],
+            [
+                'key' => 'comanda_distribuitor',
+                'order_by' => 'distribuitor_order',
+                'label' => 'Comanda Distribuitor',
+                'width' => '100px',
+            ],
+            [
+                'key' => 'fisiere',
+                'order_by' => null,
+                'label' => 'Fisiere',
+                'width' => '94px',
+            ],
+            [
+                'key' => 'print_comanda',
+                'order_by' => 'listed',
+                'label' => 'Listat',
+                'width' => '50px',
+            ],
+            [
+                'key' => 'awb',
+                'order_by' => 'awb_id',
+                'label' => 'AWB',
+                'width' => '160px',
+            ],
+            [
+                'key' => 'telefon',
+                'order_by' => null,
+                'label' => 'Telefon',
+                'width' => '110px',
+            ],
+            [
+                'key' => 'sursa',
+                'order_by' => 'distribuitor_id',
+                'label' => 'Sursa',
+                'width' => '126px',
+            ],
+            [
+                'key' => 'valoare',
+                'order_by' => 'total_final',
+                'label' => 'Valoare (RON)',
+                'width' => '80px',
+            ],
+        ];
+        foreach ($columns as $index => $column) {
+            if (!$user->hasPermission("offer_column_{$column['key']}")) {
+                unset($columns[$index]);
+            }
+        }
+        $columns = array_values($columns);
+        
         $query = Offer::query();
         $query->where('numar_comanda', '!=', null);
         $query->with([
@@ -238,6 +405,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'distribuitor',
             'delivery_address',
         ]);
+        
+        // dynamic filters based on columns
+        foreach ($columns as $column) {
+            if ($column['order_by'] && $request->get($column['order_by'], false)) {
+                $query->where($column['order_by'], $request->get($column['order_by'], false));
+            }
+        }
         
         // order by date, and user selectable column
         $orderColumn = ['offer_date', 'desc'];
@@ -253,6 +427,28 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             return redirect(url()->current().'?'.http_build_query(array_merge(request()->all(), [
                 'page' => $orders->lastPage(),
             ])));
+        }
+        
+        // calculate delayed orders
+        foreach ($orders as $order) {
+          $not_delivered_statuses = [
+            1, // noua
+            2, // finalizata
+            // 3, // anulata
+            4, // retur
+            5, // modificata
+            6, // productie
+            // 7, // livrata
+            // 8, // expediata
+          ];
+          if (in_array($order->status, $not_delivered_statuses)) {
+            $delivery_date = Carbon::parse($order->delivery_date);
+            $today = Carbon::now()->startOfDay();
+            if ($delivery_date->lt($today)) {
+              $order->intarziere = $delivery_date->diffInDays($today).'Z';
+              $order->offer_date = $today->format('Y-m-d');
+            }
+          }
         }
         
         // group by date, and calculate day stats
@@ -271,7 +467,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                         $order->prod_ml += $prod->qty * $prod->getParent->dimension;
                     }
                 }
-                $order->save();
+                $updateOrder = $order->fresh();
+                $updateOrder->prod_ml = $order->prod_ml;
+                $updateOrder->save();
                 $subtotalMl += $order->prod_ml;
             }
             
@@ -282,146 +480,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'subtotal_ml'    => $subtotalMl,
             ];
         }
-        
-        // get allowed columns
-        $columns = [
-            // [
-            //     'key' => // folosit in view, si in migratia care adauga permisiuni
-            //     'order_by' => // pe ce coloana din db se face order by (daca e null nu se face orderby)
-            //     'label' => // textul afisat in capul tabelului
-            // ],
-            [
-                'key' => 'nr_com',
-                'order_by' => 'serie',
-                'label' => 'Nr Comanda',
-            ],
-            [
-                'key' => 'agent',
-                'order_by' => null,
-                'label' => 'Agent',
-            ],
-            [
-                'key' => 'tip_comanda',
-                'order_by' => 'type',
-                'label' => 'Tip Comanda',
-            ],
-            [
-                'key' => 'client',
-                'order_by' => 'client_id',
-                'label' => 'Client',
-            ],
-            [
-                'key' => 'print_awb',
-                'order_by' => 'print_awb',
-                'label' => 'Print AWB',
-            ],
-            [
-                'key' => 'ml',
-                'order_by' => 'prod_ml',
-                'label' => 'Metri liniari',
-            ],
-            [
-                'key' => 'accesorii',
-                'order_by' => 'accesories',
-                'label' => 'Accesorii',
-            ],
-            [
-                'key' => 'livrare',
-                'order_by' => 'delivery_type',
-                'label' => 'Mod Livrare',
-            ],
-            [
-                'key' => 'judet',
-                'order_by' => null,
-                'label' => 'Judet',
-            ],
-            [
-                'key' => 'data_expediere',
-                'order_by' => 'delivery_date',
-                'label' => 'Data Expediere',
-            ],
-            [
-                'key' => 'status',
-                'order_by' => 'status',
-                'label' => 'Stare',
-            ],
-            [
-                'key' => 'p',
-                'order_by' => 'attr_p',
-                'label' => 'P.',
-            ],
-            [
-                'key' => 'pjal',
-                'order_by' => 'attr_pjal',
-                'label' => 'P. JAL.',
-            ],
-            [
-                'key' => 'pu',
-                'order_by' => 'attr_pu',
-                'label' => 'P. U.',
-            ],
-            [
-                'key' => 'intarziere',
-                'order_by' => null,
-                'label' => 'Intarziere',
-            ],
-            [
-                'key' => 'culoare',
-                'order_by' => null,
-                'label' => 'Culoare',
-            ],
-            [
-                'key' => 'plata',
-                'order_by' => 'payment_type',
-                'label' => 'Plata',
-            ],
-            [
-                'key' => 'contabilitate',
-                'order_by' => 'billing_status',
-                'label' => 'Contabilitate',
-            ],
-            [
-                'key' => 'comanda_distribuitor',
-                'order_by' => 'distribuitor_order',
-                'label' => 'Comanda Distribuitor',
-            ],
-            [
-                'key' => 'fisiere',
-                'order_by' => null,
-                'label' => 'Fisiere',
-            ],
-            [
-                'key' => 'print_comanda',
-                'order_by' => 'listed',
-                'label' => 'Listat',
-            ],
-            [
-                'key' => 'awb',
-                'order_by' => 'awb_id',
-                'label' => 'AWB',
-            ],
-            [
-                'key' => 'telefon',
-                'order_by' => null,
-                'label' => 'Telefon',
-            ],
-            [
-                'key' => 'sursa',
-                'order_by' => 'distribuitor_id',
-                'label' => 'Sursa',
-            ],
-            [
-                'key' => 'valoare',
-                'order_by' => 'total_final',
-                'label' => 'Valoare (RON)',
-            ],
-        ];
-        foreach ($columns as $index => $column) {
-            if (!$user->hasPermission("offer_column_{$column['key']}")) {
-                unset($columns[$index]);
-            }
-        }
-        $columns = array_values($columns);
+        $orderGroups = collect($orderGroups)->sortByDesc('date');
         
         return view('voyager::offers.lista', [
             'title'       => $title,
@@ -430,7 +489,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'orderColumn' => $orderColumn,
             'columns'     => $columns,
             'orders'      => $orders,
-            'orderGroups' => $orderGroups,
+            'orderGroups' => $orderGroups->values()->all(),
         ]);
     }
     
@@ -649,7 +708,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
      */
     public function store(Request $request)
     {
-//       dd("da");
         $slug = $this->getSlug($request);            
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
         // Check permission
@@ -787,6 +845,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           $editInsertAddress->state = $itemState;
           $editInsertAddress->city = $itemCity;
           $editInsertAddress->save();
+          $offer->delivery_address_user = $editInsertAddress->id;
+          $offer->save();
+          
   //         // insert/update data into individuals/legal_entities (fizica/juridica)
           if($request->input('type') == 'fizica'){
             $individual = new Individual;
@@ -802,6 +863,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $entity->iban = $request->input('iban');
             $entity->save();
           }
+          try{
+            \App\Http\Controllers\Admin\VoyagerClientsController::syncClient($client->id);
+          } catch(\Exception $e){}
         }
         
       // salvez log-ul pentru oferta nou creata
@@ -991,7 +1055,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         // parintii sunt produsele(asa au vrut ei sa definim parintii ca fiind produse)
         $offerType->parents = $offerType->parents();
         // creez $parentIds pe baza id-urilor produselor din tipul de oferta
-        $parentIds = $offerType->parents->pluck('id');
+        $parentIds = $offerType->parents && $offerType->parents->pluck('id') ? $offerType->parents->pluck('id') : null;
         $offerProducts = null;
         // iau cursul valutar(daca am in oferta, il iau de acolo, daca nu, il iau din tipul de oferta. Daca nici acolo nu e definit, il iau pe cel live de la BNR)
         $cursValutar = $offer->curs_eur != null ? $offer->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
@@ -1744,8 +1808,91 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     return ['success' => true, 'data' => $message];
   }
   
-  public function uploadDocuments(Request $request){
+  
+  public static function syncOrderToWinMentor($order_id){
+    $host = '78.96.1.252'; 
+    $port = 51892; 
+    $waitTimeoutInSeconds = 3;
+    $winMentorServer = false;
+    try{
+      if($fp = fsockopen($host,$port,$errCode,$errStr,$waitTimeoutInSeconds)){   
+         $winMentorServer = true;
+      }
+      fclose($fp);
+    } catch(\Exception $e){}
     
+    $url = "http://78.96.1.252:51892/datasnap/rest/TServerMethods/ComandaClient//";
+    $order = offer::find($order_id);
+    $client = Client::find($order->client_id);
+    $items = [];
+    $products = $order->orderProducts;
+    
+    foreach($products as $product){
+      $prodPrice = $product->pricesByRule(6)->first();
+      array_push($items, [
+        "ID" => $product->mentor_cod_obiect,
+        "Pret" => $prodPrice->ron_cu_tva,
+        "Observatii" => "",
+        "Cant" => $product->qty,
+        "ZilePlata" => "3",
+        "CAMPEXTENSIELINIECOMANDA" => "", 
+        "Rezervari" => 
+            [
+                /*
+                "Gestiune" => "DC",
+                "Serie" => "ABCDE",
+                "LocatieGest" => "",
+                "Cant" => "3"
+                */
+            ],
+        "Discount" => "",
+        "AdDim" => "",
+        "D1" => "",
+        "D2" => "",
+        "D3" => "",
+        "CantUM1" => ""
+      ]);
+    }
+    $postData = [
+        'NrDoc' => $order->numar_comanda,
+        'SerieDoc' => 'TPS21',
+        'DataDoc' => Carbon::parse($order->delivery_date)->format('d.m.Y'),
+        'IDClient' => $client->mentor_partener_code,
+        'Observatii' => '',
+        'CAMPEXTENSIECOMANDA' => '',
+        'Moneda' => 'RON',
+        'PretCuAmanuntul'=> 'DA',
+        'CodSubunitate' => '2',
+        'Agent' => $order->agent_id,
+        'Items' => $items,
+    ];
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain')); 
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+    if($winMentorServer){
+       $result = curl_exec($ch);
+       $result = json_decode($result, true);
+    } else{
+       curl_close ($ch);
+       return ['success' => false, 'msg' => 'Nu s-a putut conecta la serverul WinMentor!', 'warning' => false];
+    }
+    curl_close ($ch);
+    if (array_key_exists('Error', $result) && $result['Error'] == "ok" && $winMentorServer){
+      $createdAt = date('Y-m-d H:i:s');
+      $orderWme = new OrderWme();
+      $orderWme->order_id = $order->id;
+      $orderWme->cod_comanda = $result['CodComanda'];
+      $orderWme->numar_comanda = $result['NumarComanda'];
+      $orderWme->created_at = $createdAt;
+      $orderWme->updated_at = $createdAt;
+      $orderWme->save();
+      return ['success' => true, 'msg' => 'Comanda a fost trimisa cu succes la WinMentor!'];
+    } else{
+      return ['success' => false, 'msg' => array_key_exists('error', $result) ? $result['error'] : $result['Error'], 'warning' => false];
+    }
   }
   
 }

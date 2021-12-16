@@ -256,9 +256,15 @@
                                                     @include('voyager::bread.partials.actions', ['action' => $action])
                                                 @endif
                                             @endforeach
-                                            <a title="Sincronizeaza in WinMentor" class="btn btn-add-new btnSincronizeazaClient" client_id="{{$data->id}}">
-                                                <i class="voyager-check"></i> <span class="hidden-xs hidden-sm">Sincronizeaza WinMentor</span>
-                                            </a>
+                                            @if($data->sync_done == 1)
+                                              <a title="Sincronizeaza in WinMentor" class="btn btn-add-new btnSincronizeazaClient" client_id="{{$data->id}}">
+                                                  <i class="voyager-check"></i> <span class="hidden-xs hidden-sm">Sincronizat WinMentor</span>
+                                              </a>
+                                            @else
+                                              <a title="Sincronizeaza in WinMentor" class="btn btn-add-new btnSincronizeazaClient" client_id="{{$data->id}}">
+                                                  <i class="voyager-check"></i> <span class="hidden-xs hidden-sm">Sincronizeaza WinMentor</span>
+                                              </a>
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach
@@ -369,9 +375,14 @@
                     dataType: 'json'
                 }).done(function(res) {
                     if (res.success) {
+                      $(vthis).find("span").text('Sincronizat');
                       toastr.success(res.msg, 'Succes');
                     } else{
-                      toastr.error(res.msg, 'Eroare');
+                      if(res.warning){
+                        toastr.warning(res.msg, 'Warning');
+                      } else{
+                        toastr.error(res.msg, 'Eroare');
+                      }
                     }
                 })
                 .fail(function(xhr, status, error) {

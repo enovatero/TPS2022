@@ -11,6 +11,7 @@ use App\Http\Controllers\FanCourierController;
 use App\Http\Controllers\ColorsController;
 use App\Http\Controllers\NemoExpressController;
 use App\Http\Controllers\Admin\VoyagerClientsController;
+use App\Http\Controllers\VoyagerUploadFilesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,6 +67,10 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('launchOrder', [VoyagerOfferController::class, 'launchOrder'])->middleware('admin.user');
     Route::post('saveMention', [VoyagerOfferController::class, 'saveMention'])->middleware('admin.user');
     Route::get('uploadColors', [ColorsController::class, 'uploadColors'])->middleware('admin.user');
+    Route::post('uploadDocuments', [VoyagerUploadFilesController::class, 'uploadDocuments'])->middleware('admin.user');
+    Route::post('deleteOfferDoc', [VoyagerUploadFilesController::class, 'deleteOfferDoc'])->middleware('admin.user');
+    Route::get('retrieveTempUrl/{file_id}', [VoyagerUploadFilesController::class, 'retrieveTempUrl'])->middleware('admin.user');
+    Route::get('test/{off_id}', [VoyagerOfferController::class, 'syncOrderToWinMentor'])->middleware('admin.user');
   
     // Clients Winmentor
     Route::post('syncClientToMentor', [VoyagerClientsController::class, 'syncClientToMentor'])->middleware('admin.user');

@@ -24,6 +24,158 @@
                 <div class="panel panel-bordered">
                     <div class="panel-body">
                         
+                        <div class="custom-table-filters">
+                            @foreach ($columns as $column)
+                                @if ($column['key'] == 'plata')
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru {{ $column['label'] }}</div>
+                                            <select
+                                                class="custom-table-select form-control"
+                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                    'payment_type' => 'value'
+                                                ])) }}').replace('value', this.value)"
+                                            >
+                                                <option value=""> - </option>
+                                                @foreach (App\Offer::$payment_types as $pkey => $payment_type)
+                                                    <option
+                                                        value="{{ $pkey }}"
+                                                        {{ request()->payment_type == $pkey ? 'selected' : '' }}
+                                                    >
+                                                        {{ $payment_type }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+                                
+                                @elseif ($column['key'] == 'p' || $column['key'] == 'pjal' || $column['key'] == 'pu')
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru {{ $column['label'] }}</div>
+                                            <select
+                                                class="custom-table-select form-control"
+                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                    'attr_'.$column['key'] => 'value'
+                                                ])) }}').replace('value', this.value)"
+                                            >
+                                                <option value=""> - </option>
+                                                @foreach (App\Offer::$attr_p_values as $pkey => $pvalue)
+                                                    <option
+                                                        value="{{ $pkey }}"
+                                                        {{ request()->get('attr_'.$column['key']) == $pkey ? 'selected' : '' }}
+                                                    >
+                                                        {{ $pvalue }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+                                
+                                @elseif ($column['key'] == 'status')
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru {{ $column['label'] }}</div>
+                                            <select
+                                                class="custom-table-select form-control"
+                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                    'status' => 'value'
+                                                ])) }}').replace('value', this.value)"
+                                            >
+                                                <option value=""> - </option>
+                                                @foreach (App\Status::pluck('title', 'id') as $status_id => $status_title)
+                                                    <option
+                                                        value="{{ $status_id }}"
+                                                        {{ request()->get('status') == $status_id ? 'selected' : '' }}
+                                                    >
+                                                        {{ ucfirst($status_title) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+                                
+                                @elseif ($column['key'] == 'contabilitate')
+                                    
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru {{ $column['label'] }}</div>
+                                            <select
+                                                class="custom-table-select form-control"
+                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                    'billing_status' => 'value'
+                                                ])) }}').replace('value', this.value)"
+                                            >
+                                                <option value=""> - </option>
+                                                @foreach (App\Offer::$billing_statuses as $bkey => $billing_status)
+                                                    <option
+                                                        value="{{ $bkey }}"
+                                                        {{ request()->billing_status == $bkey ? 'selected' : '' }}
+                                                    >
+                                                        {{ $billing_status }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+                                
+                                @elseif ($column['key'] == 'livrare')
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru Livrare</div>
+                                            <select
+                                                class="custom-table-select form-control"
+                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                    'delivery_type' => 'value'
+                                                ])) }}').replace('value', this.value)"
+                                            >
+                                                <option value=""> - </option>
+                                                @foreach (App\Offer::$delivery_types as $dkey => $delivery)
+                                                    <option
+                                                        value="{{ $dkey }}"
+                                                        {{ request()->delivery_type == $dkey ? 'selected' : '' }}
+                                                    >
+                                                        {{ $delivery }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+                                
+                                @elseif ($column['key'] == 'sursa')
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru {{ $column['label'] }}</div>
+                                            <select
+                                                class="custom-table-select form-control"
+                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                    'distribuitor_id' => 'value'
+                                                ])) }}').replace('value', this.value)"
+                                            >
+                                                <option value=""> - </option>
+                                                @foreach (App\Distribuitor::pluck('title', 'id') as $did => $distribuitor_title)
+                                                    <option
+                                                        value="{{ $did }}"
+                                                        {{ request()->distribuitor_id == $did ? 'selected' : '' }}
+                                                    >
+                                                        {{ $distribuitor_title }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+                                
+                                @elseif ($column['key'] == '')
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru {{ $column['label'] }}</div>
+                                        </label>
+                                    </div>
+                                
+                                @endif
+                            @endforeach
+                        </div>
+                        
                         <div class="table-responsive-start">
                             {{-- acest div este folosit ca sa activez/dezactivez modul sticky --}}
                         </div>
@@ -54,7 +206,7 @@
                                     <thead>
                                         <tr>
                                             @foreach ($columns as $column)
-                                                <th class="column_{{ $column['key'] }}">
+                                                <th class="column_{{ $column['key'] }}" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
                                                     @if ($column['order_by'])
                                                     <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
                                                         'order_by' => $column['order_by'],
@@ -202,7 +354,7 @@
                                                     
                                                     @elseif ($column['key'] == 'plata')
                                                         <select
-                                                            class="custom-table-select"
+                                                            class="custom-table-select form-control"
                                                             onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'payment_type')"
                                                         >
                                                             <option value=""> - </option>
@@ -218,7 +370,7 @@
                                                     
                                                     @elseif ($column['key'] == 'contabilitate')
                                                         <select
-                                                            class="custom-table-select"
+                                                            class="custom-table-select form-control"
                                                             onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'billing_status')"
                                                         >
                                                             <option value=""> - </option>
@@ -234,7 +386,7 @@
                                                     
                                                     @elseif ($column['key'] == 'p' || $column['key'] == 'pjal' || $column['key'] == 'pu')
                                                         <select
-                                                            class="custom-table-select"
+                                                            class="custom-table-select form-control"
                                                             onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'attr_{{ $column['key'] }}')"
                                                         >
                                                             <option value=""> - </option>
@@ -261,7 +413,7 @@
                                                         {{ $data->distribuitor_order }}
                                                     
                                                     @elseif ($column['key'] == 'intarziere')
-                                                        -
+                                                        {{ $data->intarziere ?: '-' }}
                                                     
                                                     @elseif ($column['key'] == 'judet')
                                                         {{ $data->delivery_address ? $data->delivery_address->city_name() : '-' }}
@@ -271,38 +423,56 @@
                                                     
                                                     @elseif ($column['key'] == 'fisiere')
                                                         @php
-                                                          $htmlButtonFiles = "
-                                                              <a href='/admin/generatePDF/".$data->id."' class='table-files-link' target='_blank'>
-                                                                  <i class='voyager-download' style='margin-right: 10px;'></i>
-                                                                  <span class='table-files-name'>Descarca oferta PDF</span>
-                                                              </a>
-                                                              <a href='/admin/generatePDFFisa/".$data->id."' class='table-files-link' target='_blank'>
-                                                                  <i class='voyager-download' style='margin-right: 10px;'></i>
-                                                                  <span class='table-files-name'>Fisa de comanda</span>
-                                                              </a>
-                                                          ";
-                                                          if($data->delivery_type == 'fan' && $data->fanData && $data->fanData->cont_id != null && $data->fanData->awb != null){
-                                                            $htmlButtonFiles .= "<a target='_blank' class='table-files-link' href='/admin/printAwb/".$data->fanData->awb."/".$data->fanData->cont_id."'>
-                                                                <i class='voyager-download' style='margin-right: 10px;'></i> <span> Descarca AWB PDF</span>
-                                                            </a>";
-                                                          }
-                                                          if($data->delivery_type == 'nemo' && $data->nemoData && $data->nemoData->cont_id != null && $data->nemoData->awb != null){
-                                                            $htmlButtonFiles .= "<a target='_blank' class='table-files-link' href='/admin/printAwbNemo/".$data->nemoData->awb."/".$data->nemoData->cont_id."/".$data->nemoData->hash."'>
-                                                                <i class='voyager-download' style='margin-right: 10px;'></i> <span> Descarca AWB PDF</span>
-                                                            </a>";
-                                                          }
+                                                            $htmlButtonFiles = "
+                                                                <a href='/admin/generatePDF/".$data->id."' class='table-files-link' target='_blank'>
+                                                                    <i class='voyager-download'></i>
+                                                                    <span class='table-files-name'>Descarca oferta PDF</span>
+                                                                </a>
+                                                                <a href='/admin/generatePDFFisa/".$data->id."' class='table-files-link' target='_blank'>
+                                                                    <i class='voyager-download'></i>
+                                                                    <span class='table-files-name'>Fisa de comanda</span>
+                                                                </a>
+                                                            ";
+                                                            if($data->delivery_type == 'fan' && $data->fanData && $data->fanData->cont_id != null && $data->fanData->awb != null){
+                                                                $htmlButtonFiles .= "<a target='_blank' class='table-files-link' href='/admin/printAwb/".$data->fanData->awb."/".$data->fanData->cont_id."'>
+                                                                    <i class='voyager-download'></i> <span> Descarca AWB PDF</span>
+                                                                </a>";
+                                                            }
+                                                            if($data->delivery_type == 'nemo' && $data->nemoData && $data->nemoData->cont_id != null && $data->nemoData->awb != null){
+                                                                $htmlButtonFiles .= "<a target='_blank' class='table-files-link' href='/admin/printAwbNemo/".$data->nemoData->awb."/".$data->nemoData->cont_id."/".$data->nemoData->hash."'>
+                                                                    <i class='voyager-download'></i> <span> Descarca AWB PDF</span>
+                                                                </a>";
+                                                            }
+                                                            $offerDocs = '';
+                                                            if($data->offerDocs){
+                                                              foreach($data->offerDocs as $doc){
+                                                                $offerDocs .= "
+                                                                  <div class='box-uploaded-file'>
+                                                                    <a href='/admin/retrieveTempUrl/".$doc->id."' class='table-files-link' target='_blank'>
+                                                                        <i class='voyager-download'></i>
+                                                                        <span class='table-files-name'>".$doc->file_name."</span>
+                                                                    </a>
+                                                                    <span class='voyager-trash btnDeleteFile'><div class='trick-offer-doc-id'>".$doc->id."</div></span>
+                                                                  </div>
+                                                                ";
+                                                              }
+                                                            }
+                                                            $htmlButtonFiles .= "<div class='container-uploaded-files'>".$offerDocs."</div>";
                                                         @endphp
                                                         <button class="btn btn-xs" type="button" data-toggle="popover" data-placement="top" data-content="
                                                             <div class='table-files-container'>
-                                                               {{$htmlButtonFiles}}
+                                                                {{$htmlButtonFiles}}
+                                                                <a class='table-files-link btnUploadFiles' target='_blank'>
+                                                                    <div class='trick-offer-id'>{{$data->id}}</div>
+                                                                    <i class='voyager-plus' style='margin-right: 10px;'></i>
+                                                                    <span class='table-files-name'>Incarca fisiere</span>
+                                                                </a>
+                                                                
                                                             </div>
                                                         ">
                                                             Fisiere
                                                         </button>
                                                     
-                                                    @elseif ($column['key'] == '')
-                                                    @elseif ($column['key'] == '')
-                                                    @elseif ($column['key'] == '')
                                                     @elseif ($column['key'] == '')
                                                     
                                                     @endif
@@ -367,6 +537,11 @@
             </div>
         </div>
     </div>
+    <form class="upload-order-files" method="POST" action="uploadDocuments" enctype="multipart/form-data">
+      {{csrf_field()}}
+      <input type="file" style="display: none !important" name="files[]" class="input-upload-files" multiple>
+      <input type="hidden" style="display: none !important" name="offer_id">
+    </form>
 @stop
 
 @section('css')
@@ -380,6 +555,15 @@
             width: auto !important;
             max-width: none !important;
             min-width: 100%;
+        }
+        
+        .custom-table-filters {
+            display: flex;
+            flex-direction: row;
+            padding: 2px 10px;
+        }
+        .custom-table-filters .filter-item {
+            margin-right: 10px;
         }
         
         /* header tabel sticky ! :D */
@@ -519,6 +703,100 @@
                 container: 'body',
                 html: true,
             });
+          
+          $(document).on("click", ".btnUploadFiles", function(){
+            var offer_id = $(this).find(".trick-offer-id").text();
+            $(".upload-order-files").find("input[name=offer_id]").val(offer_id);
+            $(".input-upload-files").trigger("click");
+          });
+          $(document).on("change", ".input-upload-files", function() {
+              var names = [];
+              for (var i = 0; i < $(this).get(0).files.length; ++i) {
+                if($(this).get(0).files[i] && $(this).get(0).files[i].name != ''){
+                  names.push($(this).get(0).files[i].name);
+                }
+              }
+              if(names.length > 0){
+                $(".upload-order-files").trigger("submit");
+              } else{
+                $(".upload-order-files").trigger("reset");
+              }
+          });
+          $(document).on('submit', '.upload-order-files', function () {
+            var textBefore = $(".btnUploadFiles").find(".table-files-name").text();
+            $(".btnUploadFiles").find(".table-files-name").text("Se incarca...");
+            var formData = new FormData($('.upload-order-files')[0]);
+            $(".popover").css("cursor", "wait");
+            $(".btnUploadFiles").css("cursor", "wait");
+            event.preventDefault();
+            $.ajax({
+              method: 'POST',
+              url: $(this).attr('action'),
+              data: formData,
+              context: this,
+              async: true,
+              cache: false,
+              dataType: 'json',
+              processData: false,
+              contentType: false,
+            }).done(function (res) {
+              if (res.success == true) {
+                toastr.success(res.msg, 'Success');
+                if(res.uploaded_files.length > 0){
+                  var html_append = '';
+                  for(var index in res.uploaded_files){
+                    html_append += `<div class='box-uploaded-file'>
+                      <a href='/admin/retrieveTempUrl/${res.uploaded_files[index].doc_id}' class='table-files-link' target='_blank'>
+                          <i class='voyager-download'></i>
+                          <span class='table-files-name'>${res.uploaded_files[index].file_name}</span>
+                      </a>
+                      <span class='voyager-trash btnDeleteFile'><div class='trick-offer-doc-id'>${res.uploaded_files[index].doc_id}</div></span>
+                    </div>`;
+                  }
+                  $(".container-uploaded-files").append(html_append);
+                }
+              } else {
+                toastr.error(res.msg, 'Error');
+              }
+            $(".popover").css("cursor", "pointer");
+            $(".btnUploadFiles").css("cursor", "pointer");
+            $(".btnUploadFiles").find(".table-files-name").text(textBefore);
+            })
+            return false;
+          });
+          $(document).on("click", ".btnDeleteFile", function(){
+              var offer_doc_id = $(this).find(".trick-offer-doc-id").text();
+              var vthis = this;
+              $(".popover").css("cursor", "wait");
+              $(".btnUploadFiles").css("cursor", "wait");
+              $.ajax({
+                  method: 'POST',
+                  url: '/admin/deleteOfferDoc',//remove this address on POST message after i get all the address data
+                  data: {
+                    offer_doc_id: offer_doc_id,
+                  },
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(resp) {
+                  if(resp.success){
+                    $(vthis).parent().remove();
+                    toastr.success(resp.msg);
+                  } else{
+                    toastr.error(resp.msg);
+                  }
+                  $(".popover").css("cursor", "pointer");
+                  $(".btnUploadFiles").css("cursor", "pointer");
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
+          });
         });
     </script>
     
