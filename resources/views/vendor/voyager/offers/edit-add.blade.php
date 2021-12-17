@@ -98,8 +98,9 @@ $isNewClient = false;
                         <!-- CSRF TOKEN -->
                         {{ csrf_field() }}
 
-                        <div class="container-doua-coloane" style="display: flex;flex-direction: row;justify-content: space-between; flex-wrap: wrap;">
-                          <div class="panel-body container-doua-col-left" @if($add) style="width: 50%" @else style="width: 100%" @endif>
+                        <div class="container-doua-coloane " style="display: flex;flex-direction: row;justify-content: space-between; flex-wrap: wrap;">
+                          <div>
+                          <div class="panel-body container-doua-col-left fck" >
 
                             @if (count($errors) > 0)
                                 <div class="alert alert-danger">
@@ -119,8 +120,11 @@ $isNewClient = false;
                                 $dataTypeRows = $dataType->{($edit ? 'editRows' : 'addRows' )};
                             @endphp
 
-                            @foreach($dataTypeRows as $row)
-                                <!-- GET THE DISPLAY OPTIONS -->
+                           <div class="first__box">
+                           @foreach($dataTypeRows as $row)
+                                @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta' || $row->display_name == 'Client' || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' )
+
+
                                 @php
                                     $display_options = $row->details->display ?? NULL;
                                     if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
@@ -129,9 +133,9 @@ $isNewClient = false;
                                 @endphp
                                 @if (isset($row->details->legend) && isset($row->details->legend->text))
                                     <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
-                                @endif
+                                @endif 
 
-                                <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif @if($add) style="width: 100%;" @else style="width: 48%;" @endif>
+                               <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
                                     {{ $row->slugify }}
                                     @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
                                       <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
@@ -166,9 +170,91 @@ $isNewClient = false;
                                         @endforeach
                                     @endif
                                 </div>
-                                @if($edit)
+                                @endif
+
+                              @endforeach
+                            </div>
+
+
+
+
+                            <div class="second__box">
+                           @foreach($dataTypeRows as $row)
+                                @if($row->display_name !== 'Serie' || $row->display_name !== 'Tip oferta' || $row->display_name !== 'Client' || $row->display_name !== 'Data oferta' || $row->display_name !== 'Sursa' || $row->display_name !== 'Curs EURO' || $row->display_name !== 'Agent' )
+
+
+                                @php
+                                    $display_options = $row->details->display ?? NULL;
+                                    if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
+                                        $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
+                                    }
+                                @endphp
+                                @if (isset($row->details->legend) && isset($row->details->legend->text))
+                                    <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
+                                @endif 
+
+                               <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
+                                    {{ $row->slugify }}
+                                    @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
+                                      <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+                                    @endif
+                                    @if($row->field != "offer_belongsto_status_relationship")
+                                      <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+                                    @endif
+                                    @include('voyager::multilingual.input-hidden-bread-edit-add')
+                                    @if (isset($row->details->view))
+                                        @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add'), 'view' => ($edit ? 'edit' : 'add'), 'options' => $row->details])
+                                    @elseif ($row->type == 'relationship')
+                                        @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
+                                         @include('voyager::formfields.relationship', ['options' => $row->details])
+                                        @endif
+                                        @if($row->field != "offer_belongsto_status_relationship")
+                                          @include('voyager::formfields.relationship', ['options' => $row->details])
+                                        @endif
+                                    @else
+                                        @if($row->field == 'price_grid_id')
+                                          {!! $select_html_grids !!}
+                                        @else
+                                          {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
+                                        @endif
+                                    @endif
+
+                                    @foreach (app('voyager')->afterFormFields($row, $dataType, $dataTypeContent) as $after)
+                                        {!! $after->handle($row, $dataType, $dataTypeContent) !!}
+                                    @endforeach
+                                    @if ($errors->has($row->field))
+                                        @foreach ($errors->get($row->field) as $error)
+                                            <span class="help-block">{{ $error }}</span>
+                                        @endforeach
+                                    @endif
+                                </div>
+                                @endif
+
+                              @endforeach
+
+
+
+
+                            </div>
+
+
+
+
+
+
+                              @foreach($dataTypeRows as $row)
+                                @php
+                                    $display_options = $row->details->display ?? NULL;
+                                    if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
+                                        $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
+                                    }
+                                @endphp
+                                @if (isset($row->details->legend) && isset($row->details->legend->text))
+                                    <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
+                                @endif 
+                                  @if($edit)
                                   @if($row->field == 'curs_eur' && count($createdAttributes) > 0)
-                                    <div class="form-group col-md-12" style="width: 48%;">
+                                    <div class="form-group  col-md-12" >
                                           @foreach($createdAttributes as $attr)
                                             <div class="form-group">
                                               <label class="control-label" for="name">{{ucfirst($attr['title'])}}</label>
@@ -206,10 +292,13 @@ $isNewClient = false;
                                     </div>
                                   @endif
                                 @endif
+
                             @endforeach
+
+
                             @if($edit)
-                              <div class="form-group  col-md-12" style="width: 48%;">
-                                  <div class="form-group  col-md-12" style="width: 100%;">
+                              <div class="form-group  col-md-12" >
+                                  <div class="form-group  col-md-12" >
                                     <label class="control-label">Adresa livrare</label>
                                     <select name="delivery_address_user" class="form-control">
                                       <option value="-1" selected disabled>Alege adresa de livrare</option>
@@ -280,8 +369,7 @@ $isNewClient = false;
                                   </div>
                               </div>
                             @endif
-
-                        </div><!-- panel-body -->
+                        </div>
                           @if($add)
                             <div class="panel-body container-doua-col-right" @if (count($errors) > 0 && array_key_exists('address', $errors->toArray())) style="display: block !important;" @endif>
                               <div class="form-group  col-md-12 ">     

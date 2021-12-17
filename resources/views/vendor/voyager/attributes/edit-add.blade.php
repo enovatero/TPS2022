@@ -1,9 +1,6 @@
 @php
     $edit = !is_null($dataTypeContent->getKey());
     $add  = is_null($dataTypeContent->getKey());
-    if($edit){
-      $attrValues = json_decode($dataTypeContent->values, true);
-    }
 @endphp
 
 @extends('voyager::master')
@@ -77,7 +74,11 @@
                                     @if (isset($row->details->view))
                                         @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add'), 'view' => ($edit ? 'edit' : 'add'), 'options' => $row->details])
                                     @elseif ($row->type == 'relationship')
-                                        @include('voyager::formfields.relationship', ['options' => $row->details])
+                                        @if($row->field == 'attribute_belongstomany_color_relationship')
+                                          @include('vendor.voyager.attributes.relationship', ['options' => $row->details])
+                                        @else
+                                          @include('voyager::formfields.relationship', ['options' => $row->details])
+                                        @endif
                                     @else
                                         {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
                                     @endif
@@ -92,34 +93,6 @@
                                     @endif
                                 </div>
                             @endforeach
-                            <div class="container-attributes">
-                              <div class="form-group  col-md-12" style="margin-bottom: 10px;">
-                                <label class="control-label" for="name">Valori atribut</label>
-                                <button class="roundedBtn btnAddNewAttribute" type="button">+</button>
-                              </div>
-                              @if($edit)
-                                @if($attrValues != null && count($attrValues) > 0)
-                                  @foreach($attrValues as $val)
-                                    @if($dataTypeContent->type == 1)
-                                       @php 
-                                         $foundedColor = array_key_first($val);
-                                         $val = $val[$foundedColor];
-                                       @endphp
-                                       <div class="form-group  col-md-12 box-attribute-color">
-                                          <input name="attribute[]" type="color" style="padding: 0.2rem 0.5rem;" placeholder="Selecteaza culoarea" value="{{$foundedColor}}"/>
-                                          <input name="attributeColorText[]" type="text" style="padding: 0.2rem 0.5rem;" placeholder="Introdu numele culorii" value="{{$val}}"/>
-                                          <button class="roundedBtn btnRemoveAttribute" type="button">-</button>
-                                        </div>
-                                    @else
-                                      <div class="form-group  col-md-12 box-attribute-normal">
-                                        <input name="attribute[]" type="text" style="padding: 0.2rem 0.5rem;" placeholder="Introdu valoare" value="{{$val}}" class="added-input-attribute"/>
-                                        <button class="roundedBtn btnRemoveAttribute" type="button">-</button>
-                                      </div>
-                                    @endif
-                                  @endforeach
-                                @endif
-                              @endif
-                            </div>
                         </div><!-- panel-body -->
 
                         <div class="panel-footer">
@@ -239,45 +212,33 @@
                 $('#confirm_delete_modal').modal('hide');
             });
             $('[data-toggle="tooltip"]').tooltip();
-          var html_atribut_normal = `
-            <div class="form-group  col-md-12 box-attribute-normal">
-              <input name="attribute[]" type="text" style="padding: 0.2rem 0.5rem;" placeholder="Introdu valoare" class="added-input-attribute"/>
-              <button class="roundedBtn btnRemoveAttribute" type="button">-</button>
-            </div>
-          `;
-          var html_atribut_culoare = `
-            <div class="form-group  col-md-12 box-attribute-color">
-              <input name="attribute[]" type="color" style="padding: 0.2rem 0.5rem;" placeholder="Selecteaza culoarea"/>
-              <input name="attributeColorText[]" type="text" required style="padding: 0.2rem 0.5rem;" placeholder="Introdu numele culorii"/>
-              <button class="roundedBtn btnRemoveAttribute" type="button">-</button>
-            </div>
-          `;
-          $(document).on("click", ".btnAddNewAttribute", function(){
-            if($("input[name=type]").is(":checked")){
-              $(".box-attribute-normal").remove();
-              $(".container-attributes").append(html_atribut_culoare);
-            } else{
-              $(".box-attribute-color").remove();
-              $(".container-attributes").append(html_atribut_normal);
-            }
-          });
           $('input[name=type]').change(function() {
             if(this.checked) {
-              $(".box-attribute-normal").remove();
+              $("#attribute_colors").show();
+              $("#attribute_dimensions").hide();
             }else{
-              $(".box-attribute-color").remove();
+              $("#attribute_colors").hide();
+              $("#attribute_dimensions").show();
             }
           });
-          $(document).on("click", ".btnRemoveAttribute", function(){
-            $(this).parent().remove();
-          });
-          $(document).on("input", ".added-input-attribute", function(){
-            var currentVal = $(this).val();
-            $(this).val(currentVal.replace(",", "."));
-            currentVal = currentVal.split('.');
-            currentVal = currentVal.shift() + '.' + currentVal.join('');
-            $(this).val(currentVal.replace(",", ""));
-          });
+          function formatState (state) {
+            if (!state.id) {
+              return state.text;
+            }
+            var colorRal = $(state.element).attr("ral");
+            var colorCode = $(state.element).attr("code");
+            var $state = $(
+              '<div style="margin-bottom:3px; text-align: left; display: flex;">'+
+                  '<span class="color__square" style="background-color: '+colorCode+'"></span>'+
+                  '<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorRal+'</span>'+
+              '</div>'
+            );
+            $state.find(".select2-selection__rendered").html('<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorRal+'</span>');
+            return $state;
+          };
+          if($("#attribute_colors select")[0]){
+             $("#attribute_colors select").select2({templateSelection: formatState, templateResult: formatState});
+          }
         });
     </script>
 @stop

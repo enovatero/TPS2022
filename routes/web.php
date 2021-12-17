@@ -44,7 +44,6 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('/saveRulePrice', [VoyagerRulesPricesController::class, 'saveRulePrice'])->middleware('admin.user');
     Route::post('/removeFormula', [VoyagerRulesPricesController::class, 'removeFormula'])->middleware('admin.user');
     Route::post('/getAttributesByParent', [VoyagerProductsController::class, 'getAttributesByParent'])->middleware('admin.user');
-    Route::post('/getPricesByProductAndCategory', [VoyagerOfferController::class, 'getPricesByProductAndCategory'])->middleware('admin.user');
     Route::put('/ajaxSaveUpdateOffer', [VoyagerOfferController::class, 'ajaxSaveUpdateOffer'])->middleware('admin.user');
     Route::get('/generatePDF/{offer_id}', [VoyagerOfferController::class, 'generatePDF'])->middleware('admin.user');
     Route::get('/generatePDFFisa/{offer_id}', [VoyagerOfferController::class, 'generatePDFFisa'])->middleware('admin.user');

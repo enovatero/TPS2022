@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Validator;
 use App\Attribute;
+use App\Color;
+use App\AttributeColor;
+use App\AttributeDimension;
+use App\Dimension;
 
 class ColorsController extends Controller
 {
@@ -1459,6 +1463,67 @@ class ColorsController extends Controller
  }
 ]';
     $colors = json_decode($colors, true);
+    
+    $counter = 0;
+    $attributes = Attribute::get();
+    foreach($attributes as $attribute){
+      $values = json_decode($attribute->values, true);
+      if($attribute->type == 0){
+        foreach($values as $val){
+          $createdAt = date("Y-m-d H:i:s");
+          $dimension = new Dimension();
+          $dimension->value = $val;
+          $dimension->created_at = $createdAt;
+          $dimension->updated_at = $createdAt;
+          $dimension->save();
+          
+          $attrVal = new AttributeDimension();
+          $attrVal->attribute_id = $attribute->id;
+          $attrVal->dimension_id = $dimension->id;
+          $attrVal->created_at = $createdAt;
+          $attrVal->updated_at = $createdAt;
+          $attrVal->save();
+          $counter++;
+        }
+      } else{
+        foreach($values as $val){
+          $createdAt = date("Y-m-d H:i:s");
+          // daca am culoare, iau id-ul de culoare
+          $col = strtoupper(array_values($val)[0]);
+          $color = Color::where('ral', $col)->first();
+          if($color == null){
+            // daca nu am culoarea, o salvez
+            $color = new Color;
+            $color->value = "#000000";
+            $color->ral = $col;
+            $color->created_at = $createdAt;
+            $color->updated_at = $createdAt;
+            $color->save();
+          }
+          $attrVal = new AttributeColor();
+          $attrVal->attribute_id = $attribute->id;
+          $attrVal->color_id = $color->id;
+          $attrVal->created_at = $createdAt;
+          $attrVal->updated_at = $createdAt;
+          $attrVal->save();
+          $counter++;
+        }
+      }
+    }
+    dd('Inserted '.$counter.' elements.');
+    // inserare culori
+    $counter = 0;
+    foreach($colors as $color){
+      $createdAt = date("Y-m-d H:i:s");
+      $col = new Color;
+      $col->value = $color['HEX'];
+      $col->ral = $color['RAL'];
+      $col->created_at = $createdAt;
+      $col->updated_at = $createdAt;
+      $col->save();
+      $counter++;
+    }
+    dd('Inserted '.$counter.' elements.');
 //     dd($colors);
     $attrs = json_decode($attrs, true);
     $newAttrs = [];

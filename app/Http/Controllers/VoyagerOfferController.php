@@ -1306,20 +1306,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       return $randomString;
     }
   
-  
-    // si functia asta, tot dupa ce termin cu JSON-urile
-    public function getPricesByProductAndCategory(Request $request){
-      
-      $product_id = $request->input("product_id");
-      $product = Product::find($product_id);
-      $category_id = $request->input("category_id");
-      $cleanRulePrices = \App\RulesPrice::getFormulaByCategory($category_id);
-      $cleanRulePrices = $cleanRulePrices->toArray();
-      $rulePrices = \App\RulesPrice::getFormulasWithPricesByProduct($cleanRulePrices, $product->price, $request->input('currency'));
-      
-      return ['success' => true, 'rulePrices' => $rulePrices];
-    }
-  
   // functie care-mi salveaza in baza de date de fiecare data cand fac modificari in campurile de pe pagina Editare Oferta
   public function ajaxSaveUpdateOffer(Request $request){
     $offer_id = $request->input('offer_id');
@@ -1329,31 +1315,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offerDb = Offer::find($offer_id); // mai fac un query pentru ca daca echivalez offerDb cu offer, orice modificare aduc lui offer, se propaga si la offerDb
     } else{
       $offer = new Offer;
-    }
-    
-    // momentan folosesc JSON-ul dar il modific dupa ce termin cu JSON-urile...
-    $attributes = $request->input('selectedAttribute') != null ? $request->input('selectedAttribute') : [];
-    $parentIds = $request->input('parentIds');
-    $offerQty = $request->input('offerQty');
-    $selectedProducts = $request->input('selectedProducts');
-    if($selectedProducts != null){
-      $selectedProducts = array_map('intval', explode(',', $selectedProducts));
-    }
-    
-    $attributesArray = [];
-    if($offerQty && count($offerQty) > 0){
-      foreach($offerQty as $key => $qty){
-        $par = null;
-        if(array_key_exists($key, $parentIds)){
-          $par = $parentIds[$key];
-        }
-        if($qty != null){
-          $attributesArray[] = [
-            'parent' => $par,
-            'qty' => $qty,
-          ];
-        }
-      }
     }
     
     // modific toate campurile pe care le-am editat din frotend
@@ -1371,8 +1332,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->updated_at = $request->input('updated_at');
     $offer->status = $request->input('status');
     $offer->serie = $request->input('serie');
-    $offer->attributes = count($attributes) > 0 ? json_encode($attributes) : null;
-    $offer->prices = json_encode($attributesArray);
     $offer->total_general = $request->input('totalGeneral') != null ? number_format(floatval($request->input('totalGeneral')), 2, '.', '') : 0;
     $offer->reducere = $request->input('reducere') != null ? number_format(floatval(abs($request->input('reducere'))), 2, '.', '') : 0;
     $offer->total_final = $request->input('totalCalculatedPrice') != null ? number_format(floatval($request->input('totalCalculatedPrice')), 2, '.', '') : 0;

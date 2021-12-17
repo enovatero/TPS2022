@@ -594,3 +594,26 @@ table, th, td{
 .btnDeleteFile{
   cursor: pointer;
 }
+#attribute_colors{
+  display: block;
+}
+#attribute_dimensions{
+  display: none;
+}
+#attribute_colors .select2-selection__choice__remove{
+  width: 15px;
+  height: 15px;
+  z-index: 3;
+  margin-right: -21px;
+  color: #ffffff;
+}
+#attribute_colors .select2-selection__choice{
+    display: flex;
+    position: relative;
+    padding-left: 10px;
+    padding-top: 5px;
+}
+.container-colors-list{
+  max-height: 250px;
+  overflow-y: scroll;
+}

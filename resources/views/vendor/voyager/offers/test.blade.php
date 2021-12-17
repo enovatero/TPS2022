@@ -2,93 +2,13 @@
 $edit = !is_null($dataTypeContent->getKey());
 $add  = is_null($dataTypeContent->getKey());
 $isNewClient = false;
-$priceRules = null;
-$priceGridId = null;
-$userAddresses = null;
-if($edit){
-  $userAddresses = \App\UserAddress::where('user_id', $dataTypeContent->client_id)->get();
-  $offerType = \App\OfferType::find($dataTypeContent->type);
-  $offerType->parents = $offerType->parents();
-  $cursValutar = $dataTypeContent->curs_eur != null ? $dataTypeContent->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
-  $dataTypeContent->curs_eur = $cursValutar;
-  $priceRules = \App\RulesPrice::get();
-  $priceGridId = $dataTypeContent->price_grid_id != null ? $dataTypeContent->price_grid_id : -1;
-  $selectedAddress = \App\UserAddress::find($dataTypeContent->delivery_address_user);
-  if($selectedAddress != null){
-    $selectedAddress->city_name = $selectedAddress->city_name();
-    $selectedAddress->state_name = $selectedAddress->state_name();
-    $selectedAddress->phone = $selectedAddress->delivery_phone != null ? $selectedAddress->delivery_phone : $selectedAddress->userData()->phone;
-    $selectedAddress->name = $selectedAddress->delivery_contact != null ? $selectedAddress->delivery_contact : $selectedAddress->userData()->name;
-  }
-  if($userAddresses != null && count($userAddresses) > 0){
-    foreach($userAddresses as &$addr){
-      $addr->city_name = $addr->city_name();
-      $addr->state_name = $addr->state_name();
-      $addr->phone = $addr->delivery_phone != null ? $addr->delivery_phone : $addr->userData()->phone;
-      $addr->name = $addr->delivery_contact != null ? $addr->delivery_contact : $addr->userData()->name;
-    }
-  }
-  $attributesProds = [];
-  $createdAttributes = [];
-  if($offerType->parents && count($offerType->parents) > 0){
-    $prodIds = [];
-    foreach($offerType->parents as $parent){
-      if($parent->products && count($parent->products) > 0){
-        foreach($parent->products as &$product){
-          array_push($prodIds, $product->id);
-        }
-      }
-    }
-    if(count($prodIds) > 0){
-      $arrayOfAttrValues = [];
-      $prodAttrs = \App\ProductAttribute::with('attrs')->whereIn('product_id', $prodIds)->get();
-      $prodAttrs = $prodAttrs->toArray();
-      foreach($prodAttrs as $key => &$attr){
-        $attr['attrs'] = $attr['attrs'][0];
-        unset($attr['attrs']['created_at']);
-        unset($attr['attrs']['updated_at']);
-        $attr['value'] = json_decode($attr['value'], true) && json_last_error() != 4 ? json_decode($attr['value'], true) : $attr['value'];
-        $attr['attrs']['values'] = $attr['value'];
-        if(!in_array($attr['attrs'], $createdAttributes)){
-          array_push($createdAttributes, $attr['attrs']);
-        }
-      }
-      $mergedAttributes = [];
-      foreach($createdAttributes as $key => &$attr){
-        $copyElement = $attr;
-        unset($copyElement['values']);
-        $mergedAttributes[$attr['id']] = $copyElement;
-      }
-      foreach($createdAttributes as $key => &$attr){
-        if(!array_key_exists('values', $mergedAttributes[$attr['id']])){
-          $mergedAttributes[$attr['id']]['values'] = [];
-        }
-        if(!in_array($attr['values'], $mergedAttributes[$attr['id']]['values'])){
-          array_push($mergedAttributes[$attr['id']]['values'], $attr['values']);
-        }
-      }
-      $createdAttributes = $mergedAttributes;
-      function array_sort_by_column(&$arr, $col, $dir = SORT_DESC) {
-          $sort_col = array();
-          foreach ($arr as $key => $row) {
-              $sort_col[$key] = $row[$col];
-          }
-
-          array_multisort($sort_col, $dir, $arr);
-      }
-
-      array_sort_by_column($createdAttributes, 'type');
-
-      $attributesProds = $prodAttrs;
-    }
-  }
-}
 @endphp
 
 @extends('voyager::master')
 
 @section('css')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="../../../css/mention.css">
 @stop
 
 @section('page_title', __('voyager::generic.'.($edit ? 'edit' : 'add')).' '.$dataType->getTranslatedAttribute('display_name_singular'))
@@ -96,13 +16,17 @@ if($edit){
 @section('page_header')
     <h1 class="page-title">
         <i class="{{ $dataType->icon }}"></i>
-        Oferta {{$edit ? '#'.$dataTypeContent->serie : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
+        @if($edit && $dataTypeContent->numar_comanda != null)
+          Comanda #{{$dataTypeContent->numar_comanda}}
+        @else
+          Oferta {{$edit ? '#'.$dataTypeContent->serie : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
+        @endif
     </h1>
     @include('voyager::multilingual.language-selector')
 @stop
 
 @section('content')
-    <div class="page-content edit-add container-fluid {{$edit && $dataTypeContent->status_name->title == 'productie' ? 'comanda-productie' : ''}}">
+    <div class="page-content edit-add container-fluid {{$edit && $dataTypeContent->status != 1 ? 'comanda-productie' : ''}}">
         <div class="row">
             @if($edit)
               <div class="col-md-12">
@@ -117,19 +41,29 @@ if($edit){
               </div>
               @if($edit)
                 <div class="col-md-12 butoane-oferta" test="{{$dataTypeContent->status_name->title}}">
-                  <a class="btn btn-success btn-add-new" href="/admin/generatePDF/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                  <a target="_blank" class="btn btn-success btn-add-new" href="/admin/generatePDF/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                       <i class="voyager-download" style="margin-right: 10px;"></i> <span> Descarca oferta PDF</span>
-                  </a>  
+                  </a> 
+                  @if($dataTypeContent->delivery_type == 'fan' && $dataTypeContent->fanData && $dataTypeContent->fanData->cont_id != null && $dataTypeContent->fanData->awb != null)
+                    <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbFan" href="/admin/printAwb/{{$dataTypeContent->fanData->awb}}/{{$dataTypeContent->fanData->cont_id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                        <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
+                    </a> 
+                  @endif
+                   @if($dataTypeContent->delivery_type == 'nemo' && $dataTypeContent->nemoData && $dataTypeContent->nemoData->cont_id != null && $dataTypeContent->nemoData->awb != null)
+                    <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbNemo" href="/admin/printAwbNemo/{{$dataTypeContent->nemoData->awb}}/{{$dataTypeContent->nemoData->cont_id}}/{{$dataTypeContent->nemoData->hash}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                        <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
+                    </a> 
+                  @endif
                   @if($dataTypeContent->numar_comanda == null)
                     <a class="btn btn-success btn-add-new btnAcceptOffer" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;" order_id="{{$dataTypeContent->id}}">
                         <i class="voyager-pen" style="margin-right: 10px;"></i> <span>Oferta acceptata - lanseaza comanda</span>
                     </a>  
                   @endif
                   @if($dataTypeContent->numar_comanda != null)
-                    <a class="btn btn-success btn-add-new btnFisaComanda" href="/admin/generatePDFFisa/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                    <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank" href="/admin/generatePDFFisa/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                         <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
                     </a> 
-                    @if($dataTypeContent->status_name->title == 'noua' || $dataTypeContent->status_name->title == 'anulata' || $dataTypeContent->status_name->title == 'modificata')
+                    @if($dataTypeContent->status_name->title == 'noua' || $dataTypeContent->status_name->title == 'anulata' || $dataTypeContent->status_name->title == 'modificata' || $dataTypeContent->status_name->title == 'productie')
                       <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                           <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
                       </a> 
@@ -164,8 +98,10 @@ if($edit){
                         <!-- CSRF TOKEN -->
                         {{ csrf_field() }}
 
-                        <div class="container-doua-coloane" style="display: flex;flex-direction: row;justify-content: space-between; flex-wrap: wrap;">
-                          <div class="panel-body container-doua-col-left" @if($add) style="width: 50%" @else style="width: 100%" @endif>
+                        <!-- <div class="container-doua-coloane" style="display: flex;flex-direction: row;justify-content: space-between; flex-wrap: wrap;"> -->
+                          <div>
+                          <!-- <div class="panel-body container-doua-col-left" @if($add) style="width: 50%" @else style="width: 100%" @endif> -->
+                            <div>
 
                             @if (count($errors) > 0)
                                 <div class="alert alert-danger">
@@ -186,7 +122,6 @@ if($edit){
                             @endphp
 
                             @foreach($dataTypeRows as $row)
-                                <!-- GET THE DISPLAY OPTIONS -->
                                 @php
                                     $display_options = $row->details->display ?? NULL;
                                     if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
@@ -195,9 +130,9 @@ if($edit){
                                 @endphp
                                 @if (isset($row->details->legend) && isset($row->details->legend->text))
                                     <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
-                                @endif
+                                @endif 
 
-                                <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif @if($add) style="width: 100%;" @else style="width: 48%;" @endif>
+                               <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
                                     {{ $row->slugify }}
                                     @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
                                       <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
@@ -216,7 +151,11 @@ if($edit){
                                           @include('voyager::formfields.relationship', ['options' => $row->details])
                                         @endif
                                     @else
-                                        {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
+                                        @if($row->field == 'price_grid_id')
+                                          {!! $select_html_grids !!}
+                                        @else
+                                          {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
+                                        @endif
                                     @endif
 
                                     @foreach (app('voyager')->afterFormFields($row, $dataType, $dataTypeContent) as $after)
@@ -228,9 +167,10 @@ if($edit){
                                         @endforeach
                                     @endif
                                 </div>
+
                                 @if($edit)
                                   @if($row->field == 'curs_eur' && count($createdAttributes) > 0)
-                                    <div class="form-group col-md-12" style="width: 48%;">
+                                    <div class="form-group " >
                                           @foreach($createdAttributes as $attr)
                                             <div class="form-group">
                                               <label class="control-label" for="name">{{ucfirst($attr['title'])}}</label>
@@ -268,64 +208,85 @@ if($edit){
                                     </div>
                                   @endif
                                 @endif
+
+
+
                             @endforeach
                             @if($edit)
-                            <div class="form-group  col-md-12" style="width: 48%;">
-                                <div class="form-group  col-md-12" style="width: 100%;">
-                                  <label class="control-label">Adresa livrare</label>
-                                  <select name="delivery_address_user" class="form-control">
-                                    <option value="-1" selected disabled>Alege adresa de livrare</option>
-                                    <option value="-2">Adauga adresa noua</option>
-                                    @if(count($userAddresses) > 0)
-                                      @foreach($userAddresses as $address)
-                                        @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
-                                          @php
-                                            $address = $selectedAddress;
-                                          @endphp
-                                          <option selected value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name}}" city_id="{{$address->city}}" city_name="{{$address->city_name}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name}}, {{$address->state_name}}</option>
-                                        @else
-                                          <option value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name()}}" city_id="{{$address->city}}" city_name="{{$address->city_name()}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name()}}, {{$address->state_name()}}</option>
-                                        @endif
-                                      @endforeach
-                                    @endif
-                                  </select>
-                                </div>
-                                <div class="form-group  col-md-12 container-elements-addresses" style="width: 100%; display: none;">
-                                    <div class="panel-body container-box-adresa">
-                                      <input class="trick-addr-id" value="" type="hidden"/>
-                                      <div class="form-group col-md-12 column-element-address" style="width: 100%">
-                                         <label class="control-label">Tara</label>
-                                         @include('vendor.voyager.formfields.countries', ['selected' => null])                       
+                              <div class="form-group  col-md-12" style="width: 48%;">
+                                  <div class="form-group  col-md-12" style="width: 100%;">
+                                    <label class="control-label">Adresa livrare</label>
+                                    <select name="delivery_address_user" class="form-control">
+                                      <option value="-1" selected disabled>Alege adresa de livrare</option>
+                                      <option value="-2">Adauga adresa noua</option>
+                                      @if(count($userAddresses) > 0)
+                                        @foreach($userAddresses as $address)
+                                          @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
+                                            @php
+                                              $address = $selectedAddress;
+                                            @endphp
+                                            <option selected value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name}}" city_id="{{$address->city}}" city_name="{{$address->city_name}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name}}, {{$address->state_name}}</option>
+                                          @else
+                                            <option value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name()}}" city_id="{{$address->city}}" city_name="{{$address->city_name()}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name()}}, {{$address->state_name()}}</option>
+                                          @endif
+                                        @endforeach
+                                      @endif
+                                    </select>
+                                  </div>
+                                  <div class="form-group  col-md-12 container-elements-addresses" style="width: 100%; display: none;">
+                                      <div class="panel-body container-box-adresa">
+                                        <input class="trick-addr-id" value="" type="hidden"/>
+                                        <div class="form-group col-md-12 column-element-address" style="width: 100%">
+                                           <label class="control-label">Tara</label>
+                                           @include('vendor.voyager.formfields.countries', ['selected' => null])                       
+                                        </div>
+                                        <div class="form-group col-md-12 column-element-address">
+                                           <label class="control-label" for="state">Judet/Regiune</label>
+                                           <select name="state" class="form-control select-state"></select>
+                                        </div>
+                                        <div class="form-group col-md-12 column-element-address">
+                                           <label class="control-label">Oras/Localitate/Sector</label>
+                                           <select name="city" class="form-control select-city"></select>        
+                                        </div>
+                                        <div class="form-group col-md-12 column-element-address" style="width: 100%;">
+                                           <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
+                                           <input class="control-label" type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>                          
+                                        </div>
+                                        <div class="form-group col-md-12 column-element-address">
+                                           <label class="control-label" for="state">Telefon</label>
+                                           <input name="delivery_phone" type="text" style="padding: 5px;"/>
+                                        </div>
+                                        <div class="form-group col-md-12 column-element-address">
+                                           <label class="control-label">Persoana de contact</label>
+                                           <input name="delivery_contact" type="text" style="padding: 5px;"/>        
+                                        </div>
                                       </div>
-                                      <div class="form-group col-md-12 column-element-address">
-                                         <label class="control-label" for="state">Judet/Regiune</label>
-                                         <select name="state" class="form-control select-state"></select>
+                                      <div class="col-md-12 panel-footer" style="    justify-content: flex-end;display: flex;width: 100%;">
+                                        <button type="button" class="btn btn-primary btnGreenNew btnSalveazaAdresa">Salveaza adresa noua</button>
                                       </div>
-                                      <div class="form-group col-md-12 column-element-address">
-                                         <label class="control-label">Oras/Localitate/Sector</label>
-                                         <select name="city" class="form-control select-city"></select>        
-                                      </div>
-                                      <div class="form-group col-md-12 column-element-address" style="width: 100%;">
-                                         <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
-                                         <input class="control-label" type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>                          
-                                      </div>
-                                      <div class="form-group col-md-12 column-element-address">
-                                         <label class="control-label" for="state">Telefon</label>
-                                         <input name="delivery_phone" type="text" style="padding: 5px;"/>
-                                      </div>
-                                      <div class="form-group col-md-12 column-element-address">
-                                         <label class="control-label">Persoana de contact</label>
-                                         <input name="delivery_contact" type="text" style="padding: 5px;"/>        
-                                      </div>
-                                    </div>
-                                    <div class="col-md-12 panel-footer" style="    justify-content: flex-end;display: flex;width: 100%;">
-                                      <button type="button" class="btn btn-primary btnGreenNew btnSalveazaAdresa">Salveaza adresa noua</button>
-                                    </div>
-                                </div>
-                            </div>
-                            @endif
-
-                        </div><!-- panel-body -->
+                                  </div>
+                                  <div class="form-group col-md-12 mesaj-intern-container">
+                                    <label class="control-label">Mesaj intern</label>
+                                    <input name="mentions" type="hidden"/>
+                                    <textarea class="form-control" id="mentions" name="mentions_textarea" placeholder="Mentioneaza pe cineva cu @" rows="5"></textarea>
+                                    <button style="float: right;" type="button" class="btn btn-primary save btnSaveMention" order_id="{{$dataTypeContent->id}}">Salveaza mesaj</button>
+                                  </div>
+                              </div>
+                              <div class="form-group col-md-12 mesaj-intern-container log-evenimente">
+                                <label class="control-label">Log evenimente</label>
+                                  <div class="log-evenimente-list">
+                                    @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents]) 
+                                  </div>
+                              </div>
+                              <div class="form-group col-md-12 mesaj-intern-container log-evenimente">
+                                <label class="control-label">Log mesaje</label>
+                                  <div class="log-evenimente-list log-mesaje">
+                                    @include('vendor.voyager.partials.log_messages', ['offerMessages' => $offerMessages]) 
+                                  </div>
+                              </div>
+                            @endif -->
+<!-- panel-body
+                        </div>
                           @if($add)
                             <div class="panel-body container-doua-col-right" @if (count($errors) > 0 && array_key_exists('address', $errors->toArray())) style="display: block !important;" @endif>
                               <div class="form-group  col-md-12 ">     
@@ -403,23 +364,33 @@ if($edit){
                         <input name="offer_id" type="hidden" value="{{$dataTypeContent->getKey()}}"/>
                           <div class="col-md-12">
                             <div class="box">
-                              @include('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $dataTypeContent->reducere])
+                              @include('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $dataTypeContent->reducere, 'offer' => $offer])
                             </div>
                           </div>
-                          <div class="col-md-12 butoane-oferta">
-                            <a class="btn btn-success btn-add-new" href="/admin/generatePDF/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                          <div class="col-md-12 butoane-oferta" test="{{$dataTypeContent->status_name->title}}">
+                            <a target="_blank" class="btn btn-success btn-add-new" href="/admin/generatePDF/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                 <i class="voyager-download" style="margin-right: 10px;"></i> <span> Descarca oferta PDF</span>
-                            </a>  
+                            </a> 
+                            @if($dataTypeContent->delivery_type == 'fan' && $dataTypeContent->fanData && $dataTypeContent->fanData->cont_id != null && $dataTypeContent->fanData->awb != null)
+                              <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbFan" href="/admin/printAwb/{{$dataTypeContent->fanData->awb}}/{{$dataTypeContent->fanData->cont_id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                  <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
+                              </a> 
+                            @endif
+                            @if($dataTypeContent->delivery_type == 'nemo' && $dataTypeContent->nemoData && $dataTypeContent->nemoData->cont_id != null && $dataTypeContent->nemoData->awb != null)
+                              <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbNemo" href="/admin/printAwbNemo/{{$dataTypeContent->nemoData->awb}}/{{$dataTypeContent->nemoData->cont_id}}/{{$dataTypeContent->nemoData->hash}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                  <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
+                              </a> 
+                            @endif
                             @if($dataTypeContent->numar_comanda == null)
                               <a class="btn btn-success btn-add-new btnAcceptOffer" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;" order_id="{{$dataTypeContent->id}}">
                                   <i class="voyager-pen" style="margin-right: 10px;"></i> <span>Oferta acceptata - lanseaza comanda</span>
-                              </a>
+                              </a>  
                             @endif
                             @if($dataTypeContent->numar_comanda != null)
-                              <a class="btn btn-success btn-add-new btnFisaComanda" href="/admin/generatePDFFisa/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                              <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank" href="/admin/generatePDFFisa/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                   <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
                               </a> 
-                              @if($dataTypeContent->status_name->title != 'livrata' && $dataTypeContent->status_name->title != 'retur' && $dataTypeContent->status_name->title != 'expediata')
+                              @if($dataTypeContent->status_name->title == 'noua' || $dataTypeContent->status_name->title == 'anulata' || $dataTypeContent->status_name->title == 'modificata' || $dataTypeContent->status_name->title == 'productie')
                                 <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                     <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
                                 </a> 
@@ -437,13 +408,14 @@ if($edit){
                             @endif
                           </div>
                         @endif
-                        <div class="panel-footer">
-                            @section('submit-buttons')
-                                <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>
-                            @stop
-                            @yield('submit-buttons')
-                        </div>
-                      <input name="delivery_type" id="mod_livrare_trick" type="hidden" style="display: none !important;" @if($dataTypeContent && $dataTypeContent->delivery_type != null) value="{{$dataTypeContent->delivery_type}}" @else value="fan" @endif/>
+                        @if(!$edit)
+                          <div class="panel-footer">
+                              @section('submit-buttons')
+                                  <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>
+                              @stop
+                              @yield('submit-buttons')
+                          </div>
+                        @endif
                     </form>
 
                     <iframe id="form_target" name="form_target" style="display:none"></iframe>
@@ -459,7 +431,7 @@ if($edit){
             </div>
           <div class="col-md-12" id="awb" style="display: none;">
             <div class="panel panel-delivery-method">
-              <form class="panel-body form-fan-courier delivery-method delivery-fan" method="POST" @if($edit && $dataTypeContent->delivery_type == 'fan' || $dataTypeContent->delivery_type == null) style="display: block;" @endif>
+              <form class="panel-body form-fan-courier delivery-method delivery-fan" method="POST" @if($edit && $dataTypeContent->delivery_type == 'fan' || $dataTypeContent->delivery_type == null) style="display: block;" @else style="display: none;" @endif>
                 {{csrf_field()}}
                 <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
                 <div class="col-md-12">
@@ -467,30 +439,51 @@ if($edit){
                     <label for="deliveryAccount">Cont FAN</label>
                     <select name="deliveryAccount" id="deliveryAccount" class="form-control">
                         <option disabled="" selected="">Alege...</option>
-                        <option value="7155019">BERCENI</option>
-                        <option value="7165267">MPOS</option>
-                        <option value="7177309">IASI</option>
-                        <option value="7038192">STANDARD</option>
+                        <option @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7155019') selected @endif value="7155019">BERCENI</option>
+                        <option @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7165267') selected @endif value="7165267">MPOS</option>
+                        <option @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7177309') selected @endif value="7177309">IASI</option>
+                        <option @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7038192') selected @endif value="7038192">STANDARD</option>
                     </select>
+                  </div>
+<!--                   <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="on">Ridicare sediu FAN</label>
+                      <select name="ridicare_sediu_fan" class="form-control">
+                        <option value="off" selected>Nu</option>
+                        <option value="on">Da</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <div class="sediu"></div>
+                    </div>
+                  </div> -->
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label>Plata expeditie</label>
+                      <select name="plata_expeditie" class="form-control">
+                        <option value="expeditor" @if($edit && (($dataTypeContent->fanData && $dataTypeContent->fanData->plata_expeditie == 'expeditor') || $dataTypeContent->fanData == null)) selected @endif>Expeditor</option>
+                        <option value="destinatar" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->plata_expeditie == 'destinatar') @endif>Destinatar</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="packages">Nr. colete</label>
-                      <input type="text" name="packages" id="packages" class="form-control" value="1">
+                      <input type="number" name="numar_colete" id="packages" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->numar_colete) value="{{$dataTypeContent->fanData->numar_colete}}" @else value="1" @endif>
                     </div>
                   </div>
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="weight">Greutate (kg)</label>
-                      <input type="text" name="weight" id="weight" class="form-control" value="1">
+                      <input type="number" name="greutate_totala" id="weight" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->greutate_totala) value="{{$dataTypeContent->fanData->greutate_totala}}" @else value="1" @endif>
                     </div>
                   </div>
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="cashback">Ramburs (ex: 2542.26)</label>
-                      <input type="text" name="cashback" id="cashback" class="form-control" value="0.00">
+                      <input type="number" name="ramburs_numerar" id="cashback" class="form-control" @if($edit) value="{{$dataTypeContent->total_final}}" @endif>
                     </div>
                   </div>
                 </div>
@@ -498,26 +491,26 @@ if($edit){
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="height">Inaltime (cm)</label>
-                      <input type="text" name="height" id="height" class="form-control">
+                      <input type="number" name="inaltime_pachet" id="height" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->inaltime_pachet) value="{{$dataTypeContent->fanData->inaltime_pachet}}" @endif>
                     </div>
                   </div>
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="Width">Latime (cm)</label>
-                      <input type="text" name="Width" id="Width" class="form-control">
+                      <input type="number" name="latime_pachet" id="Width" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->latime_pachet) value="{{$dataTypeContent->fanData->latime_pachet}}" @endif>
                     </div>
                   </div>
                   <div class="row col-md-3" style="margin-right: 3px !important;">
                     <div class="form-group">
                       <label for="lenght">Lungime (cm)</label>
-                      <input type="text" name="lenght" id="lenght" class="form-control">
+                      <input type="number" name="lungime_pachet" id="lenght" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->lungime_pachet) value="{{$dataTypeContent->fanData->lungime_pachet}}" @endif>
                     </div>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
                     <label for="contents">Continut</label>
-                    <input type="text" name="contents" id="contents" class="form-control" value="sisteme acoperis">
+                    <input type="text" name="continut_pachet" id="contents" class="form-control" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->continut_pachet) value="{{$dataTypeContent->fanData->continut_pachet}}" @endif>
                   </div>
                 </div>
                 <div class="col-md-12">
@@ -526,7 +519,7 @@ if($edit){
                     <option disabled="" selected="">Alege...</option>
                     @if($userAddresses != null && count($userAddresses) > 0)
                       @foreach($userAddresses as $address)
-                        <option value="{{$address->id}}">
+                        <option value="{{$address->id}}" @if($edit && $dataTypeContent && $dataTypeContent->fanData && $dataTypeContent->fanData->adresa_livrare_id == $address->id) selected @endif>
                             {{$address->name}} - 
                             {{$address->address}}, 
                             {{$address->city_name}}, 
@@ -538,7 +531,108 @@ if($edit){
                   </select>
                 </div>
                 <div class="col-md-12 panel-footer">
-                  <button type="submit" class="btn btn-primary btnGreenNew btnGenerateAwb">Genereaza AWB</button>
+                  <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwb">Genereaza AWB</button>
+                </div>
+              </form>
+              <form class="panel-body form-fan-courier delivery-method delivery-nemo" method="POST" @if($edit && $dataTypeContent->delivery_type == 'nemo' || $dataTypeContent->delivery_type == null) style="display: block;" @else style="display: none;" @endif>
+                {{csrf_field()}}
+                <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
+                <div class="col-md-12">
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label>Plata expeditie</label>
+                      <select name="plata_expeditie" class="form-control">
+                        <option value="client" @if($edit && (($dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'client') || $dataTypeContent->nemoData == null)) selected @endif>Client</option>
+                        <option value="expeditor" @if($edit && (($dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'expeditor') || $dataTypeContent->nemoData == null)) selected @endif>Expeditor</option>
+                        <option value="destinatar" @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'destinatar') @endif>Destinatar</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="on">Fragil?</label>
+                      <select name="fragil" class="form-control">
+                        <option value="nu" selected>Nu</option>
+                        <option value="da">Da</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="deliveryAccount">Cont Nemo</label>
+                      <select name="deliveryAccount" class="form-control">
+                          <option disabled="" selected="">Alege...</option>
+                          <option @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->client_id == '1') selected @endif value="1">Top Profil Sistem Iasi</option>
+                          <option @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->client_id == '2') selected @endif value="2">Top Profil Sistem Berceni</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="packages">Nr. colete</label>
+                      <input type="number" name="numar_colete" class="form-control" @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->numar_colete) value="{{$dataTypeContent->nemoData->numar_colete}}" @else value="1" @endif>
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="weight">Greutate (kg)</label>
+                      <input type="number" name="greutate_totala" class="form-control" @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->greutate_totala) value="{{$dataTypeContent->nemoData->greutate_totala}}" @else value="1" @endif>
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="cashback">Ramburs (ex: 2542.26)</label>
+                      <input type="number" name="ramburs_numerar" class="form-control" @if($edit) value="{{$dataTypeContent->total_final}}" @endif>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="height">Inaltime (cm)</label>
+                      <input type="number" name="inaltime_pachet" class="form-control" @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->inaltime_pachet) value="{{$dataTypeContent->nemoData->inaltime_pachet}}" @endif>
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="Width">Latime (cm)</label>
+                      <input type="number" name="latime_pachet" class="form-control" @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->latime_pachet) value="{{$dataTypeContent->nemoData->latime_pachet}}" @endif>
+                    </div>
+                  </div>
+                  <div class="row col-md-3" style="margin-right: 3px !important;">
+                    <div class="form-group">
+                      <label for="lenght">Lungime (cm)</label>
+                      <input type="number" name="lungime_pachet" class="form-control" @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->lungime_pachet) value="{{$dataTypeContent->nemoData->lungime_pachet}}" @endif>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="contents">Continut</label>
+                    <input type="text" name="continut_pachet" class="form-control" @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->continut_pachet) value="{{$dataTypeContent->nemoData->continut_pachet}}" @endif>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <label for="deliveryAddressAWB">Adresa de livrare</label>
+                  <select name="deliveryAddressAWB" class="form-control">
+                    <option disabled="" selected="">Alege...</option>
+                    @if($userAddresses != null && count($userAddresses) > 0)
+                      @foreach($userAddresses as $address)
+                        <option value="{{$address->id}}" @if($edit && $dataTypeContent && $dataTypeContent->nemoData && $dataTypeContent->nemoData->adresa_livrare_id == $address->id) selected @endif>
+                            {{$address->name}} - 
+                            {{$address->address}}, 
+                            {{$address->city_name}}, 
+                            {{$address->state_name}},
+                            {{$address->phone}}
+                        </option>
+                      @endforeach
+                    @endif
+                  </select>
+                </div>
+                <div class="col-md-12 panel-footer">
+                  <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwbNemo" already_generated="{{$dataTypeContent->awb_id && $dataTypeContent->delivery_type == 'nemo' ? 1 : 0}}">Genereaza AWB</button>
                 </div>
               </form>
             </div>
@@ -571,6 +665,8 @@ if($edit){
 @stop
 
 @section('javascript')
+<script src="../../../js/lodash.min.js"></script>
+<script src="../../../js/mention.js"></script>
     <script>
         var params = {};
         var $file;
@@ -684,44 +780,13 @@ if($edit){
             $("#data_oferta > input").css("cursor", "not-allowed !important");
             $("#tip_oferta .selection>span").css("cursor", "not-allowed !important");
             $("input[name=price_grid_id]").prop("type", "hidden");
-            var select_html_prices = "<select name='price_grid_id' class='form-control'>";
-            var prRules = {!!$priceRules != "" ? $priceRules : 'false' !!};
-            var price_grid_id = {!! $dataTypeContent->price_grid_id != null ? $dataTypeContent->price_grid_id : 1 !!};
-            window.currentPriceGrid = price_grid_id;
-            if(prRules){
-              for(var i = 0; i < prRules.length; i++){
-                if(prRules[i].id == price_grid_id){
-                  select_html_prices += "<option value='"+prRules[i].id+"' selected>["+prRules[i].code+"] - "+prRules[i].title+"</option>";
-                } else{ 
-                  select_html_prices += "<option value='"+prRules[i].id+"'>["+prRules[i].code+"] - "+prRules[i].title+"</option>";
-                }
-              }
-            }
-            select_html_prices += "</select>";
-            $("input[name=price_grid_id]").parent().append(select_html_prices);
-            $("input[name=price_grid_id]").remove();
+            
             var tip_oferta_label = $("#tip_oferta > label").html();
             $("#tip_oferta").html('');
             $("#tip_oferta").append(tip_oferta_label);
             $("#tip_oferta").append("<input name='type' type='hidden' class='form-control' value='{{$dataTypeContent->type}}'/>");
             $("#tip_oferta").append("<input type='text' readonly class='form-control' value='{{$offerType->title ?? ''}}'/>");
-            
-            var selPrices = {!! $dataTypeContent->prices != "" ? $dataTypeContent->prices : "[]"  !!};
-            var selAttributes = {!! $dataTypeContent->attributes != "" ? $dataTypeContent->attributes : "[]"  !!};
-            if(selPrices != null && selPrices.length > 0){
-              var selAttr = [];
-              for(var i = 0; i< selPrices.length; i++){
-                 if(selPrices[i].qty != null){ 
-                  $("input[parentId="+selPrices[i].parent+"]").val(selPrices[i].qty);
-                 }
-               }
-            }
-            if(selAttributes != null){
-              completePrices(selAttributes, false);
-            }
           }
-          
-          
           $("#select_client > select").on('select2:select', function (e) {
              var data = e.params.data;
              var vthis = this;
@@ -818,14 +883,17 @@ if($edit){
                   dataType: 'json'
               }).done(function(res) {
                   if (res.success == false) {
-                      toastr.error(res.error, 'Eroare');
+                    console.log(res.error);
+                      for(var i = 0 ; i < res.error.length; i++){
+                        toastr.error(res.error[i], 'Eroare');
+                      }
                   } else{
                     var html_addr = completeWithAddresses(res.userAddresses, res.address.id);
                     var html_user_addresses = html_addr[0];
                     var html_awb_addresses = html_addr[1];
                     $("#deliveryAddressAWB").html(html_awb_addresses);
                     $("select[name=delivery_address_user]").html(html_user_addresses);
-                      toastr.success(res.msg, 'Success');
+                    toastr.success(res.msg, 'Success');
                   }
               })
               .fail(function(xhr, status, error) {
@@ -921,263 +989,110 @@ if($edit){
             if($(".selectColor")[0]){
                $(".selectColor").select2({templateSelection: formatState, templateResult: formatState});
             }
+          var timeoutSelectAttribute = null;
           $('.selectAttribute').on('select2:select', function (e) {
               var data = e.params.data;
-              var elements = [];
+              var attributes = [];
               $('.selectAttribute').each(function(index){
                 if ($(this).has('option:selected')){
                   var valoareSelectata = $(this).val();
                   if(valoareSelectata != null){
-                    elements.push(valoareSelectata);
+                    attributes.push(valoareSelectata);
                   }
                 }
               });
               if(isEdit){
-                completePrices(elements, true);
+                 clearTimeout(timeoutSelectAttribute);
+                  timeoutSelectAttribute = setTimeout(function() {
+                    retrievePricesForSelectedAttributes(attributes, {{$dataTypeContent->id}});
+                }, 1500);
               }
           });
-          function completePrices(elements, reset = true){
-            console.log(elements);
-            var combinations = checkClassAndParent(elements);
-            var arrProductsClasses = [];
-            for(var i = 0; i < combinations.length; i++){
-              $(".attributeSelector").each(function(){
-                var attrNr = parseInt($(this).attr("numberofattributes"));
-                var attributes = combinations[i].split(' ');
-                if(attributes.length == attrNr){
-                  var productAttrs = $.parseJSON($(this).attr('attributes'));
-                  if(arraysEqual(attributes, productAttrs)){
-                    arrProductsClasses.push($(this).attr("product_id"));
-                  }
-                }
-              });
-            }
-            console.log(arrProductsClasses);
-            $(".attributeSelector").css("background-color", "white");
-            var prodIds = [];
-            for(var k = 0; k < arrProductsClasses.length; k++){
-              var product_id = $(".attributeSelector[product_id="+arrProductsClasses[k]+"]").attr("prod_id");
-              var category_id = $(".attributeSelector[product_id="+arrProductsClasses[k]+"]").attr("cat_id");
-              var parent_id = $(".attributeSelector[product_id="+arrProductsClasses[k]+"]").attr("par_id");
-              var selQty = $(".changeQty[parentId="+parent_id+"]").val();
-              prodIds.push(product_id);
-              // fetch to get all prices by category and product and currency
-              if(reset){
-                resetAllInputs();
-              }
-              getAllPricesByProductAndCategory(product_id, category_id, parent_id, selQty);
-              if(!reset){
-                setTimeout(function(){  
-                  $(".changeQty").trigger("input"); 
-                }, 1000);
-              }
-            }
-            if(isEdit){
-              $(".selectedProducts").val(prodIds);
-              setTimeout(function(){
-                var totalFinal = {!! $dataTypeContent->total_final != '' ? $dataTypeContent->total_final : '0' !!};
-                var reducere = {!! $dataTypeContent->reducere != '' ? $dataTypeContent->reducere : '0' !!};
-                $("input[name=reducere]").val(parseFloat(reducere).toFixed(2));
-                $("span.reducereRon").text(parseFloat(reducere).toFixed(2));
-                $("input[name=totalFinal]").val(parseFloat(totalFinal).toFixed(2));
-                $("input[name=totalCalculatedPrice]").val(parseFloat(totalFinal).toFixed(2));
-                $("span.totalFinalRon").text(parseFloat(totalFinal).toFixed(2));
-              }, 2000);
-            }
-          }
-          function completeAllInputsWithPrices(parent_id, rulePrices = [], qty = 0, rightFillable = false) {
-            if(rulePrices && rulePrices.length > 0){
-              for(var i = 0; i < rulePrices.length; i++){
-                var rule = rulePrices[i];
-                var baseParentEl = ".baseParent-"+parent_id+".baseRule-"+rule.id;
-                $(baseParentEl).val(rule.formulas.currency_price);
-                var parentEl = "span.parent-"+parent_id+".baseRule-"+rule.id;
-                if(rightFillable){
-                  if(qty == 0){
-                    $(parentEl).text((rule.formulas.currency_price*1).toFixed(2));
-                  } else{
-                    $(parentEl).text((rule.formulas.currency_price*qty).toFixed(2));
-                  }
+          function retrievePricesForSelectedAttributes(attributes, order_id){
+            var vthis = this;
+            $.ajax({
+                method: 'POST',
+                url: '/admin/retrievePricesForSelectedAttributes',//remove this address on POST message after i get all the address data
+                data: {
+                  order_id: order_id,
+                  attributes: attributes
+                },
+                context: this,
+                async: true,
+                cache: false,
+                dataType: 'json'
+            }).done(function(res) {
+                if(res.success){
+                  window.location.reload();
                 } else{
-                  $(parentEl).text('0.00');
+                  toastr.error("S-a produs o eroare la calculul preturilor");
                 }
-                $(".ronCuTVA.parent-"+parent_id).val((rule.formulas.ron_cu_tva*1).toFixed(2));
-                $(".eurFaraTVA.parent-"+parent_id).val((rule.formulas.eur_prod_price*1).toFixed(2));
-                if(qty == 0){
-                  $(".ronTotal.parent-"+parent_id).val('0.00');
-                  $(".pret-intrare.parent-"+parent_id).val((rule.formulas.product_price*1).toFixed(2));
-                } else{
-                  $(".ronTotal.parent-"+parent_id).val((rule.formulas.ron_fara_tva*qty).toFixed(2));
-                  $(".pret-intrare.parent-"+parent_id).val((rule.formulas.product_price*qty).toFixed(2));
+            })
+            .fail(function(xhr, status, error) {
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                    .indexOf("CSRF token mismatch") >= 0) {
+                    window.location.reload();
                 }
-                if(!rightFillable){
-                  $(".pretIntrare.parent-"+parent_id).text(parseFloat(rule.formulas.product_price).toFixed(2));
-                }
-              }
-            } else{
-              qty = qty == 0 ? 1 : qty;
-              $(".baseParent-"+parent_id).each(function(){
-                var basePrice = $(this).val();
-                var calcPrice = (basePrice*qty).toFixed(2);
-                $(this).parent().find(".parent-"+parent_id).text(calcPrice);
-                recalculateTotalPrice(window.currentPriceGrid);
-              });
-            }
+            });
+            return true;
           }
+
           $(document).on("input", ".changeQty", function(){
             var parent_id = $(this).attr("parentId");
             var currentVal = $(this).val();
             currentVal = currentVal == '' ? 0 : currentVal;
-            completeAllInputsWithPrices(parent_id, [], currentVal, true);
-            calculateTotalPricePage();
+            // calculez pretul cu cantitatea asta
           });
-          function checkClassAndParent(elements) {
-            var result = [];
-            var f = function(prefix, elements) {
-              for (var i = 0; i < elements.length; i++) {
-                if(prefix == ''){
-                  result.push(prefix +''+ elements[i]);
-                  f(prefix + elements[i], elements.slice(i + 1));
-                } else{
-                  result.push(prefix +' '+ elements[i]);
-                  f(prefix +' '+ elements[i], elements.slice(i + 1));
-                }
-              }
-            }
-            f('', elements);
-            return result;
-          }
-          function arraysEqual(a, b) {
-            a.sort();
-            b.sort();
-            if (a === b) return true;
-            if (a == null || b == null) return false;
-            if (a.length !== b.length) return false;
-            for (var i = 0; i < a.length; ++i) {
-              if (a[i] !== b[i]) return false;
-            }
-            return true;
-         }
-          function getAllPricesByProductAndCategory(product_id, category_id, parent_id, selQty = null){
-             var vthis = this;
-             var ruleprices = [];
-             $.ajax({
-                  method: 'POST',
-                  url: '/admin/getPricesByProductAndCategory',//remove this address on POST message after i get all the address data
-                  data: {_token: '{{csrf_token()}}', product_id: product_id, category_id: category_id, currency: $("input[name=curs_eur]").val()},
-                  context: this,
-                  async: true,
-                  cache: false,
-                  dataType: 'json'
-              }).done(function(res) {
-                  if (res.success == false) {
-                      toastr.error(res.error, 'Eroare');
-                  } else{
-                    window.ruleprices = res.rulePrices;
-                    console.log(window.ruleprices);
-                    if(window.ruleprices.length > 0){
-                      completeAllInputsWithPrices(parent_id, window.ruleprices, selQty);
-                    }
-                  }
-              })
-              .fail(function(xhr, status, error) {
-                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
-                      .indexOf("CSRF token mismatch") >= 0) {
-                      window.location.reload();
-                  }
-              });
-            return true;
-          }
-          function recalculateTotalPrice(priceRuleId){
-            window.currentPriceGrid = priceRuleId == -1 ? 1 : priceRuleId;
-            $(".inputBaseRule").each(function(){
-              if($(this).val() != ''){
-                var parent_id = $(this).attr("parent_id");
-                var qty = $(".changeQty.parentId-"+parent_id).val();
-                var price = $(".baseParent-"+parent_id+".baseRule-"+window.currentPriceGrid).val();
-                $(".ronTotal.parent-"+parent_id).val((price*qty).toFixed(2));
-              }
-            });
-            calculateTotalPricePage();
-          }
+
           $("select[name=price_grid_id]").on('select2:select', function (e) {
             var data = e.params.data;
             $(".reducereRon").text('0.00');
             $("input[name=reducere]").val('');
-            recalculateTotalPrice(data.id);
           });
-          function calculateTotalPricePage(){
-            var totalPrice = 0;
-            $(".ronTotal").each(function(){
-              var totPrice = $(this).val();
-              totalPrice = totalPrice + parseFloat(totPrice);
-            });
-            totalPrice = parseFloat(totalPrice).toFixed(2);
-            $(".totalGeneralCuTva").text(totalPrice);
-            $("input[name=totalGeneral]").val(totalPrice);
-            $("input[name=totalFinal]").val(totalPrice);
-            $(".totalFinalRon").text(totalPrice);
-            $(".totalHandled").val(totalPrice);
-            var totalBaseRule = [];
-            var totalPretIntrare = 0;
-            $(".inputBaseRule").each(function(){
-              var base_rule_id = $(this).attr("base_rule_id");
-              totalBaseRule[base_rule_id] = 0;
-            });
-            $(".inputBaseRule").each(function(){
-              var base_rule_id = $(this).attr("base_rule_id");
-              totalBaseRule[base_rule_id] = parseFloat(totalBaseRule[base_rule_id]) + parseFloat($(this).parent().find(".baseRule-"+base_rule_id).text());
-            });
-            $(".pretIntrare").each(function(){
-              totalPretIntrare = parseFloat(totalPretIntrare) + parseFloat($(this).text());
-            });
-            $(".totalPricePi").text(totalPretIntrare.toFixed(2));
-            if(totalBaseRule.length > 0){
-              for (var k in totalBaseRule){
-                  if (totalBaseRule.hasOwnProperty(k)) {
-                    $(".totalPrice"+k).text(totalBaseRule[k].toFixed(2));
-                  }
-              }
-            }
-          }
-          function resetAllInputs(){
-            $(".changeQty").val('');
-            $(".eurFaraTVA").val('0.00');
-            $(".ronCuTVA").val('0.00');
-            $(".ronTotal").val('0.00');
-            $(".totalGeneralCuTva").text('0.00');
-            $("input[name=totalGeneral]").val('0.00');
-            $("input[name=reducere]").val('0.00');
-            $("input[name=totalFinal]").val('0.00');
-            $(".totalHandled").val('0.00');
-            $(".totalFinalRon").text('0.00');
-          }
           
           $("select").on('select2:select', function (e) {
+            var vthis = this;
             setTimeout(function(){ 
-              saveNewDataToDb();
+              if($(vthis).attr('name') == 'price_grid_id'){
+                saveNewDataToDb(true);
+              } else{
+                saveNewDataToDb(false);
+              }
             }, 1000);
           });
           
           var timeout = null;
 
           $('input').keyup(function() {
+              var vthis = this;
               clearTimeout(timeout);
               timeout = setTimeout(function() {
-                  saveNewDataToDb();
+                if($(vthis).attr("name") == "offerQty[]"){
+                  saveNewDataToDb(true);
+                } else{
+                  saveNewDataToDb(false);
+                }
               }, 500);
           });
           
           $('textarea').keyup(function() {
+            if($(this).attr("name") != "mentions_textarea"){
               clearTimeout(timeout);
               timeout = setTimeout(function() {
-                  saveNewDataToDb();
+                  saveNewDataToDb(false);
               }, 500);
+            }
           });
           
           $('input[type=date]').change(function() {
               timeout = setTimeout(function() {
-                  saveNewDataToDb();
+                  saveNewDataToDb(false);
+              }, 500);
+          });
+          
+          $('input[name=transparent_band]').change(function(){
+            timeout = setTimeout(function() {
+                  saveNewDataToDb(false);
               }, 500);
           });
           
@@ -1191,18 +1106,37 @@ if($edit){
           $("#packing>textarea[name=packing]").attr("maxlength", 30);
           $("#delivery_details>textarea[name=delivery_details]").attr("maxlength", 100);
           
-          $(".panel-delivery-method").prepend($("#mod_livrare"));
+          var mod_livrare_cloned = $("#mod_livrare").clone();
+          mod_livrare_cloned.find("span").remove();
+          mod_livrare_cloned.find("select")
+            .removeClass("select2")
+            .removeClass("select2-hidden-accessible")
+            .removeAttr("data-select2-id")
+            .removeAttr("tabindex")
+            .removeAttr("aria-hidden")
+            .select2();
+          
+          $(".panel-delivery-method").prepend(mod_livrare_cloned[0]);
           $(".panel-delivery-method").find("#mod_livrare").attr("id", "mod_livrare_detaliu");
           $(".panel-delivery-method").find("#mod_livrare_detaliu").attr("name", "");
           
-          $("#mod_livrare_detaliu").on('select2:select', function (e) {
+          $(document).on('select2:select', '#mod_livrare_detaliu>select[name=delivery_type]', function (e) {
             var data = e.params.data;
+            console.log(data);
             $(".delivery-method").hide();
             $(".delivery-"+data.id).show();
-            $("#mod_livrare_trick").val(data.id);
+            $("#mod_livrare>select[name=delivery_type]").val(data.id).trigger("change");
           });
           
-          function saveNewDataToDb(){
+          $("#mod_livrare>select[name=delivery_type]").on('select2:select', function (e) {
+            var data = e.params.data;
+            console.log(data);
+            $(".delivery-method").hide();
+            $(".delivery-"+data.id).show();
+            $("#mod_livrare_detaliu>select[name=delivery_type]").val(data.id).trigger("change");
+          });
+          
+          function saveNewDataToDb(reload = false){
             $.ajax({
                 method: 'POST',
                 url: '/admin/ajaxSaveUpdateOffer',//remove this address on POST message after i get all the address data
@@ -1212,9 +1146,13 @@ if($edit){
                 cache: false,
                 dataType: 'json'
             }).done(function(res) {
+                if(reload){
+                  window.location.reload();
+                }
                 console.log(res);
                if(res.success){
                 $("input[name=offer_id]").val(res.offer_id);
+                $(".log-evenimente-list").html(res.html_log);
                }
             })
             .fail(function(xhr, status, error) {
@@ -1239,7 +1177,76 @@ if($edit){
           
           
           $(".btnGenerateAwb").click(function(){
-            
+            var order_id = "{!! $dataTypeContent && $dataTypeContent->id ? $dataTypeContent->id : 'null' !!}";
+            var vthis = this;
+            $.ajax({
+                method: 'POST',
+                url: '/admin/generateAwb',//remove this address on POST message after i get all the address data
+                data: $(".delivery-fan").serializeArray(),
+                context: this,
+                async: true,
+                cache: false,
+                dataType: 'json'
+            }).done(function(resp) {
+                if(resp.success){
+                  $(".btnDownloadAwb").attr("href", "/admin/printAwb/" + resp.awb + "/" + resp.client_id);
+                  window.open(
+                    "/admin/printAwb/" + resp.awb + "/" + resp.client_id,
+                    '_blank' 
+                  );
+                  toastr.success(resp.msg);
+                  $(".log-evenimente-list").html(resp.html_log);
+                } else{
+                  for(var key in resp.msg) {
+                    toastr.error(resp.msg[key]);
+                  }
+                }
+            })
+            .fail(function(xhr, status, error) {
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                    .indexOf("CSRF token mismatch") >= 0) {
+                    window.location.reload();
+                }
+            });
+            return true;
+          });
+          $(".btnGenerateAwbNemo").click(function(){
+            var order_id = "{!! $dataTypeContent && $dataTypeContent->id ? $dataTypeContent->id : 'null' !!}";
+            var already_generated = $(this).attr("already_generated");
+            if(already_generated == 1 && confirm("AWB-ul a fost deja generat. Doriti regenerarea AWB-ului?")){
+              var vthis = this;
+              $.ajax({
+                  method: 'POST',
+                  url: '/admin/generateAwbNemo',//remove this address on POST message after i get all the address data
+                  data: $(".delivery-nemo").serializeArray(),
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(resp) {
+                  if(resp.success){
+                    $(".btnDownloadAwbNemo").attr("href", "/admin/printAwbNemo/" + resp.awb + "/" + resp.client_id + "/" + resp.hash);
+                    window.open(
+                      "/admin/printAwbNemo/" + resp.awb + "/" + resp.client_id + "/" + resp.hash,
+                      '_blank' 
+                    );
+                    toastr.success(resp.msg);
+                    $(".log-evenimente-list").html(resp.html_log);
+                  } else{
+                    for(var key in resp.msg) {
+                      toastr.error(resp.msg[key]);
+                    }
+                  }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
+            }
+            return false;
           });
           $(document).on("click", ".btnSchimbaStatus", function(){
             var order_id = $(this).attr("order_id");
@@ -1291,6 +1298,7 @@ if($edit){
                     $(".page-title").text($(".page-title").text() + ' - RETUR');
                   }
                   $(".butoane-oferta").append(html_append);
+                  $(".log-evenimente-list").html(resp.html_log);
                   toastr.success(resp.msg);
                 } else{
                   toastr.error(resp.msg);
@@ -1304,51 +1312,139 @@ if($edit){
             });
             return true;
           });
+          function checkDiff(arr) {
+            return arr.length !== 0 && new Set(arr).size !== 1;
+          }
           $(document).on("click", ".btnAcceptOffer", function(){
-            var order_id = $(this).attr("order_id");
-            var vthis = this;
-            $.ajax({
-                method: 'POST',
-                url: '/admin/launchOrder',//remove this address on POST message after i get all the address data
-                data: {
-                  order_id: order_id,
-                },
-                context: this,
-                async: true,
-                cache: false,
-                dataType: 'json'
-            }).done(function(resp) {
-                if(resp.success){
-                  $(vthis).remove();
-                  var html_append = '';
-                  if(resp.status == 'productie'){
-                    $(".page-content.edit-add.container-fluid").addClass("comanda-productie");
-                    $("body .comanda-productie .selectAttribute").prop("disabled", true).css("cursor", "no-drop");
-                    $("body .comanda-productie input[name=curs_eur]").prop("disabled", true).css("cursor", "no-drop");
-                    $("body .comanda-productie .changeQty").prop("disabled", true).css("cursor", "no-drop");
-                    $("body .comanda-productie select[name=price_grid_id]").prop("disabled", true).css("cursor", "no-drop");
-                    $("body .comanda-productie .totalHandled").prop("disabled", true).css("cursor", "no-drop");
-                    html_append += 
-                      `
-                         <a class="btn btn-success btn-add-new btnFisaComanda" href="/admin/generatePDFFisa/${order_id}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
-                              <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
-                          </a> 
-                      `;
-                  }
-                  $(".butoane-oferta").append(html_append);
-                  toastr.success(resp.msg);
-                } else{
-                  toastr.error(resp.msg);
+            var selectedColors = [];
+            var launchOrder = false;
+            $('.selectColor').each(function(index){
+              if ($(this).has('option:selected')){
+                var valoareSelectata = $(this).val();
+                if(valoareSelectata != null){
+                  valoareSelectata = valoareSelectata.split("_");
+                  selectedColors.push(valoareSelectata[2]);
                 }
-            })
-            .fail(function(xhr, status, error) {
-                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
-                    .indexOf("CSRF token mismatch") >= 0) {
-                    window.location.reload();
-                }
+              }
             });
-            return true;
+            // verific daca exista diferente de culori pentru a afisa un mesaj
+            if(checkDiff(selectedColors)){
+              if(confirm("Comanda pe care urmeaza sa o lansati are culori diferite. Doriti sa lansati comanda?")){
+                launchOrder = true;
+              } else{
+                launchOrder = false;
+              }
+            } else{
+              launchOrder = true;
+            }
+            if(launchOrder){
+              var order_id = $(this).attr("order_id");
+              var vthis = this;
+              $.ajax({
+                  method: 'POST',
+                  url: '/admin/launchOrder',//remove this address on POST message after i get all the address data
+                  data: {
+                    order_id: order_id,
+                  },
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(resp) {
+                  if(resp.success){
+                    $(vthis).remove();
+                    var html_append = '';
+                    if(resp.status == 'productie'){
+                      $(".page-content.edit-add.container-fluid").addClass("comanda-productie");
+                      $("body .comanda-productie .selectAttribute").prop("disabled", true).css("cursor", "no-drop");
+                      $("body .comanda-productie input[name=curs_eur]").prop("disabled", true).css("cursor", "no-drop");
+                      $("body .comanda-productie .changeQty").prop("disabled", true).css("cursor", "no-drop");
+                      $("body .comanda-productie select[name=price_grid_id]").prop("disabled", true).css("cursor", "no-drop");
+                      $("body .comanda-productie .totalHandled").prop("disabled", true).css("cursor", "no-drop");
+                      html_append += 
+                        `
+                           <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank" href="/admin/generatePDFFisa/${order_id}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
+                            </a> 
+                        `;
+                    }
+                    $(".butoane-oferta").append(html_append);
+                    $(".log-evenimente-list").html(resp.html_log);
+                    toastr.success(resp.msg);
+                  } else{
+                    toastr.error(resp.msg);
+                  }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
+            }
           });
+          if(isEdit){
+            var mentionsArray = [];
+            var users = @json($adminUsers);
+            console.log(users);
+            var myMention = new Mention({
+              input: document.querySelector('#mentions'),
+              reverse: true,
+              options: users,
+              update: function() {
+                var selectedElements = this.collect();
+                if(selectedElements.length > 0){
+                  var allIds = this.getAllIds();
+                  if(allIds.length > 0){
+                    $("input[name=mentions]").val(allIds);
+                  }
+                }
+              },
+              template: function(option) {
+                 return '<img style="width: 20px;height:20px;border-radius: 50%;overflow:hidden; margin-right: 5px;" src="../../../storage/'+option.avatar+'"/>' + option.name
+              }
+            });
+            $(".btnSaveMention").click(function(){
+              var order_id = $(this).attr("order_id");
+              var vthis = this;
+              var btnText = $(this).text();
+              $(this).text("Asteptati...");
+              $(this).prop('disabled', true);
+              $.ajax({
+                  method: 'POST',
+                  url: '/admin/saveMention',//remove this address on POST message after i get all the address data
+                  data: {
+                    order_id: order_id,
+                    mentionIds: $("input[name=mentions]").val(),
+                    message: $("textarea#mentions").val(),
+                  },
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(resp) {
+                  if(resp.success){
+                    $(".log-evenimente-list").html(resp.html_log);
+                    $(".log-mesaje").html(resp.html_messages);
+                    $("textarea#mentions").val("");
+                    $("input[name=mentions]").val("");
+                    toastr.success(resp.msg);
+                  } else{
+                    toastr.error(resp.msg);
+                  }
+                  $(vthis).prop('disabled', false);
+                  $(vthis).text(btnText);
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
+            });
+          }
         });
     </script>
 @stop

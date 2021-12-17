@@ -118,13 +118,27 @@
                                                 $data->{$row->field} = $data->{$row->field.'_browse'};
                                             }
                                             @endphp
-                                            <td>
+                                            <td test="{{$row->field}}">
                                                 @if (isset($row->details->view))
                                                     @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $data->{$row->field}, 'action' => 'browse', 'view' => 'browse', 'options' => $row->details])
                                                 @elseif($row->type == 'image')
                                                     <img src="@if( !filter_var($data->{$row->field}, FILTER_VALIDATE_URL)){{ Voyager::image( $data->{$row->field} ) }}@else{{ $data->{$row->field} }}@endif" style="width:100px">
                                                 @elseif($row->type == 'relationship')
-                                                    @include('voyager::formfields.relationship', ['view' => 'browse','options' => $row->details])
+                                                    @if($row->field == "attribute_belongstomany_color_relationship")
+                                                      @php
+                                                        $colors = \App\AttributeColor::with('color')->where('attribute_id', $data->id)->get();
+                                                      @endphp
+                                                      <div class="container-colors-list">
+                                                        @foreach($colors as $key => $col)
+                                                          <div class="color__color-code--cont" style="margin-bottom:3px; justify-content: flex-start; margin-left: 10px;">
+                                                              <span class="color__square" style="background-color: {{ $col->color->value }}"></span>
+                                                              <span class="edit__color-code" style="text-transform: uppercase;">{{ $col->color->ral }} </span>
+                                                          </div>
+                                                        @endforeach
+                                                      </div>
+                                                    @else
+                                                      @include('voyager::formfields.relationship', ['view' => 'browse','options' => $row->details])
+                                                    @endif
                                                 @elseif($row->type == 'select_multiple')
                                                     @if(property_exists($row->details, 'relationship'))
 
@@ -175,35 +189,7 @@
                                                     @else
                                                     {{ $data->{$row->field} }}
                                                     @endif
-                                                @elseif($row->type == 'text' && $row->field == "values")
-                                                    @php
-                                                      if($data->values !=null){
-                                                        $colors = json_decode($data->values, true);
-                                                      }else{
-                                                        $colors = [];
-                                                      }
-                                                    @endphp
-                                                    @if($data->type == 1 && $row->field == "values")
-                                                      @foreach($colors as $key => $color)
-                                                        @php 
-                                                          $foundedColor = array_key_first($color);
-                                                          $val = $color[$foundedColor];
-                                                        @endphp
-                                                        <div class="color__color-code--cont" style="margin-bottom:3px; justify-content: flex-start; margin-left: 10px;">
-                                                            <span class="color__square" style="background-color: {{ $foundedColor }}"></span>
-                                                            <span class="edit__color-code" style="text-transform: uppercase;">{{ $val }} </span>
-                                                        </div>
-                                                      @endforeach
-                                                    @else
-                                                       @foreach($colors as $key => $color)
-                                                          @if($key == count($colors) - 1)
-                                                            <span class="edit__color-code">{{ $color }} </span>
-                                                          @else
-                                                            <span class="edit__color-code">{{ $color }}, </span>
-                                                          @endif
-                                                        @endforeach
-                                                    @endif
-                                                @elseif($row->type == 'text' && $row->field != "values")
+                                                @elseif($row->type == 'text')
                                                     @include('voyager::multilingual.input-hidden-bread-browse')
                                                     <div>{{ mb_strlen( $data->{$row->field} ) > 200 ? mb_substr($data->{$row->field}, 0, 200) . ' ...' : $data->{$row->field} }}</div>
                                                 @elseif($row->type == 'text_area')
