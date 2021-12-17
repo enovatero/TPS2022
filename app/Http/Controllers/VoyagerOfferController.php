@@ -35,6 +35,7 @@ use App\ProductAttribute;
 use App\OfferType;
 use App\OfferEvent;
 use App\OrderWme;
+use App\OfferSerial;
 use PDF;
 use GuzzleHttp\Client as GuzzleClient;
 
@@ -1541,12 +1542,23 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $status = Status::where('title', 'like' , '%productie%')->first();
       $offer->status = $status != null ? $status->id : 1;
       // generez un numar de comanda pe baza comenzilor create anterior. Ex: count(comenzi) + 1
-      $nextOrderNumber = Offer::where('numar_comanda', '!=', null)->count() + 1;
+      $nextOrderNumber = Offer::where('numar_comanda', '!=', null)->where('serie', $offer->serie)->max('numar_comanda');
+      if($nextOrderNumber == 0){
+        $nextOrderNumber = OfferSerial::find($offer->serie)->from;
+      }
+      $nextOrderNumber += 1;
       $offer->numar_comanda = $nextOrderNumber;
       $offer->save();
-      $message = "a lansat comanda";
-      (new self())->createEvent($offer, $message);
-      return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => $status->title, 'html_log' => (new self())->getHtmlLog($offer)];
+      $checkSync = (new self())->syncOrderToWinMentor($offer->id);
+      if($checkSync['success'] == true){
+        $message = "a lansat comanda";
+        (new self())->createEvent($offer, $message);
+        return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => $status->title, 'html_log' => (new self())->getHtmlLog($offer)];
+      } else{
+        $offer->numar_comanda = null;
+        $offer->save();
+        return ['success' => false, 'msg' => $checkSync['msg']];
+      }
     } catch(\Exception $e){
       return ['success' => false, 'msg' => 'Statusul nu a putut fi modificat!'];
     }
@@ -1808,7 +1820,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     return ['success' => true, 'data' => $message];
   }
   
-  
   public static function syncOrderToWinMentor($order_id){
     $host = '78.96.1.252'; 
     $port = 51892; 
@@ -1822,7 +1833,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     } catch(\Exception $e){}
     
     $url = "http://78.96.1.252:51892/datasnap/rest/TServerMethods/ComandaClient//";
-    $order = offer::find($order_id);
+    $order = offer::with('serieName')->find($order_id);
     $client = Client::find($order->client_id);
     $items = [];
     $products = $order->orderProducts;
@@ -1855,7 +1866,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
     $postData = [
         'NrDoc' => $order->numar_comanda,
-        'SerieDoc' => 'TPS21',
+        'SerieDoc' => $order->serieName->name,
         'DataDoc' => Carbon::parse($order->delivery_date)->format('d.m.Y'),
         'IDClient' => $client->mentor_partener_code,
         'Observatii' => '',
@@ -1877,21 +1888,24 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
        $result = json_decode($result, true);
     } else{
        curl_close ($ch);
-       return ['success' => false, 'msg' => 'Nu s-a putut conecta la serverul WinMentor!', 'warning' => false];
+       return ['success' => false, 'msg' => '[WinMentor] Nu s-a putut conecta la serverul WinMentor!', 'warning' => false];
     }
     curl_close ($ch);
     if (array_key_exists('Error', $result) && $result['Error'] == "ok" && $winMentorServer){
       $createdAt = date('Y-m-d H:i:s');
-      $orderWme = new OrderWme();
+      $orderWme = OrderWme::where('order_id', $order->id)->first();
+      if($orderWme == null){
+        $orderWme = new OrderWme();
+      }
       $orderWme->order_id = $order->id;
       $orderWme->cod_comanda = $result['CodComanda'];
       $orderWme->numar_comanda = $result['NumarComanda'];
       $orderWme->created_at = $createdAt;
       $orderWme->updated_at = $createdAt;
       $orderWme->save();
-      return ['success' => true, 'msg' => 'Comanda a fost trimisa cu succes la WinMentor!'];
+      return ['success' => true, 'msg' => '[WinMentor] Comanda a fost trimisa cu succes la WinMentor!'];
     } else{
-      return ['success' => false, 'msg' => array_key_exists('error', $result) ? $result['error'] : $result['Error'], 'warning' => false];
+      return ['success' => false, 'msg' => array_key_exists('error', $result) ? '[WinMentor] '.$result['error'] : '[WinMentor] '.$result['Error'], 'warning' => false];
     }
   }
   

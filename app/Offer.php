@@ -83,7 +83,10 @@ class Offer extends Model
     public function offerWme(){
       return $this->hasOne(OfferWme::class, 'order_id', 'id');
     }
-  
+    public function serieName(){
+      return $this->hasOne(OfferSerial::class, 'id', 'serie');
+    }
+    
     public function attrs(){
       $attributes = $this->attributes;
       $createdAttrs = [];

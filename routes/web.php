@@ -70,7 +70,6 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('uploadDocuments', [VoyagerUploadFilesController::class, 'uploadDocuments'])->middleware('admin.user');
     Route::post('deleteOfferDoc', [VoyagerUploadFilesController::class, 'deleteOfferDoc'])->middleware('admin.user');
     Route::get('retrieveTempUrl/{file_id}', [VoyagerUploadFilesController::class, 'retrieveTempUrl'])->middleware('admin.user');
-    Route::get('test/{off_id}', [VoyagerOfferController::class, 'syncOrderToWinMentor'])->middleware('admin.user');
   
     // Clients Winmentor
     Route::post('syncClientToMentor', [VoyagerClientsController::class, 'syncClientToMentor'])->middleware('admin.user');
