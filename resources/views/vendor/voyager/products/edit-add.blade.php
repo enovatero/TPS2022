@@ -1,26 +1,9 @@
 @php
     $edit = !is_null($dataTypeContent->getKey());
     $add  = is_null($dataTypeContent->getKey());
-    $html_attributes = null;
+    $html_attributes = '';
     if($edit){
-      $html_attributes = '';
-      $parent = \App\ProductParent::find($dataTypeContent->parent_id);
-      $currentProduct = \App\Product::with('allAttributes')->find($dataTypeContent->id);
-      $attributes = $currentProduct->listAttributes($currentProduct->allAttributes);
-      $arrayAttributes = [];
-      if($attributes && count($attributes) > 0){
-        foreach($attributes as $attribute){
-          if(!array_key_exists($attribute['id'], $attribute)){
-            $arrayAttributes[$attribute['id']] = [];
-          }
-          $arrayAttributes[$attribute['id']] = $attribute['values'];
-        }
-      }
-      if($parent == null){
-        $attributes = null;
-      } else{
-        $attributes = \App\Http\Controllers\VoyagerProductsController::getAttributesByParent(new \Illuminate\Http\Request, $parent->id, json_encode($arrayAttributes));
-      }
+      $attributes = \App\Http\Controllers\VoyagerProductsController::getAttributesByParent(new \Illuminate\Http\Request, $dataTypeContent->parent_id, $dataTypeContent->id);
       if($attributes && $attributes['success']){
         $html_attributes = $attributes['html_attributes'];
       }
@@ -317,8 +300,8 @@
                   if (res.success == false) {
                       toastr.error(res.error, 'Eroare');
                   } else{
+                    console.log(res.html_attributes);
                     $(".containerAttributes").html(res.html_attributes);
-//                     $(".retrievedAttribute").select2();
                     $(".selectColor").select2({templateSelection: formatState, templateResult: formatState});
                   }
               })
@@ -335,15 +318,14 @@
                 return state.text;
               }
               var colorValue = state.element.value.split("_");
-              console.log(colorValue.length);
               if(colorValue.length > 1){
                 var $state = $(
                   '<div style="margin-bottom:3px; text-align: left; display: flex;">'+
-                      '<span class="color__square" style="background-color: '+colorValue[1]+'"></span>'+
-                      '<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[2]+'</span>'+
+                      '<span class="color__square" style="background-color: '+colorValue[3]+'"></span>'+
+                      '<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[4]+'</span>'+
                   '</div>'
                 );
-                $state.find(".select2-selection__rendered").html('<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[2]+'</span>');
+                $state.find(".select2-selection__rendered").html('<span class="edit__color-code" style="text-transform: uppercase; text-align: left;">'+colorValue[4]+'</span>');
                 return $state;
               } else{
                 return state.text;

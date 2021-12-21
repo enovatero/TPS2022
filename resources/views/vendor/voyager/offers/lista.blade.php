@@ -5,7 +5,7 @@
 @section('page_header')
     <div class="container-fluid">
         <h1 class="page-title">{{ $title }}</h1>
-        @can('add', app($model))
+        @can('add', app($model)) 
             <a href="{{ route('voyager.'.$slug.'.create') }}" class="btn btn-success btn-add-new">
                 <i class="voyager-plus"></i> <span>{{ __('voyager::generic.add_new') }}</span>
             </a>
@@ -206,7 +206,7 @@
                                     <thead>
                                         <tr>
                                             @foreach ($columns as $column)
-                                                <th class="column_{{ $column['key'] }}" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
+                                             <th class="column_{{ $column['key'] }}" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
                                                     @if ($column['order_by'])
                                                     <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
                                                         'order_by' => $column['order_by'],
@@ -233,16 +233,17 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($day['orders'] as $data)
-                                        <tr>
+                                        <tr class="overflow__x1">
                                             @foreach ($columns as $column)
                                                 <td class="column_{{ $column['key'] }}">
-                                                    
+
+
                                                     @if ($column['key'] == 'nr_com')
                                                         <a href="/admin/offers/{{ $data->id }}/edit">
                                                             {{ $data->numar_comanda }}
                                                         </a>
                                                         @php
-                                                            $ordermessages = $data->numar_comanda != null ? \App\Http\Controllers\VoyagerOfferController::getHtmlLogMentions($data->id) : null;
+                                                            $ordermessages = $data->numar_comanda != null ? \App\Http\Controllers\VoyagerOfferController::getHtmlLogMentions($data->id,5) : null;
                                                         @endphp
                                                         @if ($ordermessages != null)
                                                             <span class="tooltipMessage icon voyager-chat">

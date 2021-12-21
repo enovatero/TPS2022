@@ -49,33 +49,33 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         event(new BreadDataAdded($dataType, $data));
-      
-        
-       // get all attributes like 1_20cm where 1 is attributeId _ is delimitator and 20cm is selectedValue
+        $createdAt = date("Y-m-d H:i:s");
+       // get all attributes like attrType_attrId_color_id || attrType_attrId_dimension_id
         $attributeValues = $request->input('attributeValues');
         if($attributeValues != null){
           $attrWithValues = [];
           foreach($attributeValues as $key => $attr){
             $attribute = explode("_", $attr);
+            // dimensiune 0_13_5_125/087
+            // culoare 1_10_49_#5E2129_3005
+            $attrType = $attribute[0];
+            $attrId = $attribute[1];
+            $dimensionId = null;
+            $colorId = null;
+            if($attrType == 0){
+              $dimensionId = $attribute[2];
+            } else{
+              $colorId = $attribute[2];
+            }
             $insertProductAttribute = new ProductAttribute;
             $insertProductAttribute->product_id = $data->id;
             $insertProductAttribute->parent_id = $data->parent_id;
-            $insertProductAttribute->attribute_id = $attribute[0];
-            if(array_key_exists(2, $attribute)){
-              $colorHex = $attribute[1];
-              $colorVal = $attribute[2];
-              $insertProductAttribute->value = strpos($attribute[1], '#') !== false ? json_encode([$colorHex, $colorVal]) : $attribute[1];
-            } else{
-              if(strpos($attribute[1], '#') !== false){
-                $insertProductAttribute->value = json_encode([$attribute[1], null]);
-              } else{
-                $insertProductAttribute->value = $attribute[1];
-              }
-            }
+            $insertProductAttribute->attribute_id = $attrId;
+            $insertProductAttribute->dimension_id = $dimensionId;
+            $insertProductAttribute->color_id = $colorId;
+            $insertProductAttribute->updated_at = $createdAt; 
+            $insertProductAttribute->created_at = $createdAt;
             $insertProductAttribute->save();
-            $modifiedValueWithAttribute = [
-              $attribute[0] => $attribute[1]
-            ];
           }
         }
       
@@ -135,35 +135,36 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
         $original_data = clone($data);
 
         $this->insertUpdateData($request, $slug, $dataType->editRows, $data);
-      
-       // get all attributes like 1_20cm where 1 is attributeId _ is delimitator and 20cm is selectedValue
+        $updatedAt = date("Y-m-d H:i:s");
+       // get all attributes like attrType_attrId_color_id || attrType_attrId_dimension_id
         $attributeValues = $request->input('attributeValues');
         if($attributeValues != null){
           $attrWithValues = [];
           foreach($attributeValues as $key => $attr){
             $attribute = explode("_", $attr);
-            $insertProductAttribute = ProductAttribute::where('product_id', $data->id)->where('attribute_id', $attribute[0])->first();
+            // dimensiune 0_13_5_125/087
+            // culoare 1_10_49_#5E2129_3005
+            $attrType = $attribute[0];
+            $attrId = $attribute[1];
+            $dimensionId = null;
+            $colorId = null;
+            if($attrType == 0){
+              $dimensionId = $attribute[2];
+            } else{
+              $colorId = $attribute[2];
+            }
+            $insertProductAttribute = ProductAttribute::where('product_id', $data->id)->where('attribute_id', $attrId)->first();
             if($insertProductAttribute == null){
               $insertProductAttribute = new ProductAttribute;
+              $insertProductAttribute->created_at = $updatedAt;
             }
             $insertProductAttribute->product_id = $data->id;
             $insertProductAttribute->parent_id = $data->parent_id;
-            $insertProductAttribute->attribute_id = $attribute[0];
-            if(array_key_exists(2, $attribute)){
-              $colorHex = $attribute[1];
-              $colorVal = $attribute[2];
-              $insertProductAttribute->value = strpos($attribute[1], '#') !== false ? json_encode([$colorHex, $colorVal]) : $attribute[1];
-            } else{
-              if(strpos($attribute[1], '#') !== false){
-                $insertProductAttribute->value = json_encode([$attribute[1], null]);
-              } else{
-                $insertProductAttribute->value = $attribute[1];
-              }
-            }
+            $insertProductAttribute->attribute_id = $attrId;
+            $insertProductAttribute->dimension_id = $dimensionId;
+            $insertProductAttribute->color_id = $colorId;
+            $insertProductAttribute->updated_at = $updatedAt;
             $insertProductAttribute->save();
-            $modifiedValueWithAttribute = [
-              $attribute[0] => $attribute[1]
-            ];
           }
         }
 
@@ -244,100 +245,75 @@ class VoyagerProductsController extends \TCG\Voyager\Http\Controllers\VoyagerBas
 //         return redirect()->route("voyager.{$dataType->slug}.index")->with($data);
         return $redirect;
     }
-  
+    
   // iau atributele articolului pe baza produsului din care face parte
-  public static function getAttributesByParent(Request $request, $parent_id = null, $selectedAttr = null){
-//     try{
-      if(count($request->all()) > 0){
-        $parent = ProductParent::find($request->input('parent_id'));
-        $selectedAttributes = $request->input('selectedAttributes');
-      } else{
-        $parent = ProductParent::find($parent_id);
-        $selectedAttributes = $selectedAttr;
-      }
-      $category = Category::find($parent->category_id);
-      $category_id = $category->id;
-      $selectedAttributes = $selectedAttributes != null ? json_decode($selectedAttributes, true) : null;
-      $category = Category::with('attributes')->where('id', $category_id)->first();
-      $html_attributes = '';
-      // fac o filtrare prin atribute
-      if($category && $category->attributes && count($category->attributes) > 0){
-        foreach($category->attributes as $attribute){
-          $foundedAttribute = null;
-          $foundedAttributeValue = null;
-          if($selectedAttributes != null){
-            foreach($selectedAttributes as $key => $attr){
-              if($attribute->id == $key){
-                $foundedAttribute = $key;
-                if($attribute->type == 1){
-                  $foundedAttributeValue = $attr[0];
-                } else{
-                  $foundedAttributeValue = $attr;
-                }
-                break;
-              }
-            }
-          }
-          // creez selecturile pe baza atributelor selectate/gasite din categorie
+  public static function getAttributesByParent(Request $request, $parent_id = null, $product_id = null){
+    if($parent_id == null){
+      $parent_id = $request->input('parent_id');
+    }
+    // iau parintele produsului selectat
+    $parent = ProductParent::find($parent_id);
+    $selectedColorIds = [];
+    $selectedDimensionIds = [];
+    if($product_id != null){
+      // caut atributele selectate
+      $selectedProductAttributes = ProductAttribute::where('product_id', $product_id)->get();
+      // iau id-urile de culori pentru a selecta culoarea daca sunt pe edit si am selectat deja o culoare
+      $selectedColorIds = $selectedProductAttributes->pluck('color_id')->toArray();
+      // iau id-urile de dimensiuni pentru a selecta dimensiunea daca sunt pe edit si am selectat deja o dimensiune
+      $selectedDimensionIds = $selectedProductAttributes->pluck('dimension_id')->toArray();
+      // scot null-urile
+      $selectedColorIds = array_filter($selectedColorIds);
+      $selectedDimensionIds = array_filter($selectedDimensionIds);
+    }
+    // creez html-ul cu select-urile pe care le trimit in pagina
+    $html_attributes = '';
+    if($parent && $parent->category && $parent->category->attributes && count($parent->category->attributes) > 0){
+      foreach($parent->category->attributes as $attr){
+        // daca sunt pe dimensiune/grosime
+        if($attr->type == 0){
+          $dimensions = $attr->dimensions;
           $html_attributes .= '<div class="form-group col-md-12 ">
-            <label class="control-label" for="name">'.ucfirst($attribute->title).'</label>';
-            if($attribute->type == 1){
-              if($foundedAttribute != null && $foundedAttributeValue != null){
-                $html_attributes .= '<select name="attributeValues[]" class="form-control selectColor"><option disabled>Selecteaza '.$attribute->title.'</option>';
-              } else{
-                $html_attributes .= '<select name="attributeValues[]" class="form-control selectColor"><option selected disabled>Selecteaza '.$attribute->title.'</option>';
+            <label class="control-label" for="name">'.ucfirst($attr->title).'</label>
+            <select name="attributeValues[]" class="form-control retrievedAttribute"><option selected disabled>Selecteaza '.strtolower($attr->title).'</option>';
+          if(count($dimensions) > 0){
+            // trec prin dimensiuni si-mi creez optiunile
+            foreach($dimensions as $dimension){
+              $selectedDimension = '';
+              // verific daca am vreo optiune selectata
+              if(count($selectedDimensionIds) > 0 && in_array($dimension->id, $selectedDimensionIds)){
+                $selectedDimension = 'selected';
               }
-            } else{
-              if($foundedAttribute != null && $foundedAttributeValue != null){
-                $html_attributes .= '<select name="attributeValues[]" class="form-control retrievedAttribute"><option disabled>Selecteaza '.$attribute->title.'</option>';
-              } else{
-                $html_attributes .= '<select name="attributeValues[]" class="form-control retrievedAttribute"><option selected disabled>Selecteaza '.$attribute->title.'</option>';
-              }
+              // attrType_attrId_dimensionId_dimensionValue
+              $html_attributes .= '<option value="'.$attr->type.'_'.$attr->id.'_'.$dimension->id.'_'.$dimension->value.'" '.$selectedDimension.'>'.$dimension->value.'</option>';
             }
-          // populez select-urile cu valorile din atribute
-          $values = $attribute->values != null ? json_decode($attribute->values, true) : [];
-          $selected = false;
-          if(count($values) > 0){
-            foreach($values as $value){
-              $checkValue = $value;
-              if($attribute->type == 1){
-                $foundedColor = array_key_first($value);
-                $checkValue = $foundedColor;
-              }
-              if($foundedAttribute != null && $foundedAttributeValue != null && $attribute->id == $foundedAttribute && $checkValue == $foundedAttributeValue){
-                $selected = true;
-              } else{
-                $selected = false;
-              }
-              if($attribute->type == 1){
-                $foundedColor = array_key_first($value);
-                $val = $value[$foundedColor];
-                if($selected){
-                  $html_attributes .= '<option value="'.$attribute->id.'_'.$foundedColor.'_'.$val.'" selected>'.$val.'</option>';
-                } else{
-                  $html_attributes .= '<option value="'.$attribute->id.'_'.$foundedColor.'_'.$val.'">'.$val.'</option>';
-                }
-              } else{
-                if($selected){
-                  $html_attributes .= '<option value="'.$attribute->id.'_'.$value.'" selected>'.$value.'</option>';
-                } else{
-                  if($attribute->title == 'Dimensiune sistem scurgere' && $value == "125/087"){
-                    $html_attributes .= '<option value="'.$attribute->id.'_'.$value.'" selected>'.$value.'</option>';
-                  } else{
-                    $html_attributes .= '<option value="'.$attribute->id.'_'.$value.'">'.$value.'</option>';
-                  }
-                }
-              }
-            }
+            $html_attributes .= '</select></div>';
           }
-          $html_attributes .= '</select></div>';
+        } else{
+          $colors = $attr->colors;
+          $html_attributes .= '<div class="form-group col-md-12 ">
+            <label class="control-label" for="name">'.ucfirst($attr->title).'</label>
+            <select name="attributeValues[]" class="form-control selectColor"><option selected disabled>Selecteaza '.strtolower($attr->title).'</option>';
+          if(count($colors) > 0){
+            // trec prin dimensiuni si-mi creez optiunile
+            foreach($colors as $color){
+              $selectedColor = '';
+              // verific daca am vreo optiune selectata
+              if(count($selectedColorIds) > 0 && in_array($color->id, $selectedColorIds)){
+                $selectedColor = 'selected';
+              }
+              // attrType_attrId_colorId_colorValue_colorRal
+              $html_attributes .= '<option value="'.$attr->type.'_'.$attr->id.'_'.$color->id.'_'.$color->value.'_'.$color->ral.'" '.$selectedColor.'>'.$color->ral.'</option>';
+            }
+            $html_attributes .= '</select></div>';
+          }
         }
       }
-      return ['success' => true, 'html_attributes' => $html_attributes];
-//     } catch(\Exception $e){
-//       return ['success' => false, 'error' => 'S-a produs o eroare pe server iar datele nu au putut fi preluate!'];
-//     }
+    }
+    // returnez html-ul creat
+    return ['success' => true, 'html_attributes' => $html_attributes];
   }
+  
   // functie care executa php artisan winmentor:fetch pentru a lua produsele din winmentor prin api
   public function forceFetchProductsWinMentor(){
     $callResp = \Artisan::call('winmentor:fetch');

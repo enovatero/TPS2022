@@ -12,8 +12,9 @@ class Product extends Model
     protected $dates = ['deleted_at'];
   
     public function allAttributes(){
-      return $this->belongsToMany(Attribute::class, 'product_attributes', 'product_id', 'attribute_id')->withPivot('value')->orderBy('type', 'DESC');
+      return $this->belongsToMany(Attribute::class, 'product_attributes', 'product_id', 'attribute_id')->orderBy('type', 'DESC');
     }
+  
     public function listAttributes($attributes){
       $attributes = $attributes != null ? json_decode($attributes, true) : [];
       if($attributes && count($attributes) > 0){

@@ -36,6 +36,7 @@ use App\OfferType;
 use App\OfferEvent;
 use App\OrderWme;
 use App\OfferSerial;
+use App\OfferAttribute;
 use PDF;
 use GuzzleHttp\Client as GuzzleClient;
 
@@ -1085,56 +1086,62 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         // Trebuie sa le filtrez si sa afisez o singura data culoarea Rosu
         if($offerType->parents && count($offerType->parents) > 0){
           // iau id-urile de articole pe baza id-urilor de produse din tipul de oferta selectat
-          $prodIds = Product::select('id')->whereIn('parent_id', $parentIds)->get();
-          if(count($prodIds) > 0){
+          $prods = Product::select('id')->whereIn('parent_id', $parentIds)->get();
+          if(count($prods) > 0){
             $arrayOfAttrValues = [];
-            // iau atributele din tabelul de legatura(vor modificari si aici pentru ca voi schimba toate json-urile din baza de date in tabele de legatura...) :|
-            $prodAttrs = ProductAttribute::with('attrs')->whereIn('product_id', $prodIds)->get();
-            $prodAttrs = $prodAttrs->toArray();
-            // trec prin array-ul de atribute si ii scot created_at, updated_at
-            foreach($prodAttrs as $key => &$attr){
-              $attr['attrs'] = $attr['attrs'][0];
-              unset($attr['attrs']['created_at']);
-              unset($attr['attrs']['updated_at']);
-              // verific daca am json, adica am culoare cu hex si valoare sau daca am dimensiune/grosime(care se stocheaza doar ca valoare simpla)
-              $attr['value'] = json_decode($attr['value'], true) && json_last_error() != 4 ? json_decode($attr['value'], true) : $attr['value'];
-              $attr['attrs']['values'] = $attr['value'];
-              // pun valorile in array-ul createdAttributes doar daca nu exista deja, sub forma
-              /*
-                [{"id":10,"title":"Culoare produs","type":1,"values":["#f000b0","roz"]},{"id":11,"title":"Culoare surub tabla","type":1,"values":["#f000b0","roz"]},{"id":12,"title":"Culoare sistem scurgere","type":1,"values":["#f000b0","roz"]},{"id":14,"title":"Culoare surub sipca","type":1,"values":["#f000b0","roz"]},{"id":9,"title":"Grosime produs","type":0,"values":0.5},{"id":9,"title":"Grosime produs","type":0,"values":0.45},{"id":9,"title":"Grosime produs","type":0,"values":0.4},{"id":13,"title":"Dimensiune sistem scurgere","type":0,"values":"150\/100"},{"id":13,"title":"Dimensiune sistem scurgere","type":0,"values":"125\/087 ECO"},{"id":12,"title":"Culoare sistem scurgere","type":1,"values":["#5E2129","3005"]},{"id":12,"title":"Culoare sistem scurgere","type":1,"values":["#0A0A0A","9005"]}]
-              */
-              if(!in_array($attr['attrs'], $createdAttributes)){
-                array_push($createdAttributes, $attr['attrs']);
-              }
-            }
-            $mergedAttributes = [];
-            // mi-am format array-ul cretedAttributes care contine datele care ma intereseaza dar care poate avea valori(care sunt array-uri) multiple si din care ma intereseaza sa am un array cu valorile merge-uite. Spre exemplu, poate exista,
-            // ca in array-ul de mai sus, Grosime produs de mai multe ori, cu valori diferite. Eu trebuie sa-mi formez un array care are titlu Grosime produs si values, toate valorile, intr-un array, de la Grosime produs, spre exemplu
-            foreach($createdAttributes as $key => &$attr){
-              $copyElement = $attr;
-              unset($copyElement['values']);
-              $mergedAttributes[$attr['id']] = $copyElement; // creez array-ul $mergedAttributes pe care-l initializez cu cheia - id-ul attributului iar la valoare ii pun id, titlu si type
-            }
-            // adaug valorile atributelor in fiecare item din array-ul $mergedAttributes, pe baza id-ului 
-            foreach($createdAttributes as $key => &$attr){
-              if(!array_key_exists('values', $mergedAttributes[$attr['id']])){
-                $mergedAttributes[$attr['id']]['values'] = [];
-              }
-              if(!in_array($attr['values'], $mergedAttributes[$attr['id']]['values'])){
-                array_push($mergedAttributes[$attr['id']]['values'], $attr['values']);
-              }
-            }
-            // au cerut sa le afisez in functie de tip: 1 - culoare, 0 - grosime/dimensiune
-            $createdAttributes = $mergedAttributes;
-            function array_sort_by_column(&$arr, $col, $dir = SORT_DESC) {
-                $sort_col = array();
-                foreach ($arr as $key => $row) {
-                    $sort_col[$key] = $row[$col];
+            // trebuie sa le iau cu select distinct, ceva
+            $prodIds = $prods->pluck('id');
+            $idsString = str_replace("[", "", json_encode($prodIds));
+            $idsString = str_replace("]", "", $idsString);
+            $colors = DB::select( DB::raw('SELECT DISTINCT CONCAT(attributes.title, "_", attributes.id) as attr_title, CONCAT(colors.value, "_", colors.id) as color_value, colors.ral as color_ral 
+                              FROM product_attributes 
+                              JOIN attributes ON product_attributes.attribute_id = attributes.id 
+                              LEFT JOIN colors ON product_attributes.color_id = colors.id
+                              WHERE product_attributes.color_id IS NOT NULL AND product_attributes.product_id IN ('.$idsString.') GROUP BY attr_title, color_value, color_ral'));
+            $dimensions = DB::select( DB::raw('SELECT DISTINCT CONCAT(attributes.title, "_", attributes.id) as attr_title, CONCAT(dimensions.value, ";_", dimensions.id) as dimension_value
+                          FROM product_attributes 
+                          JOIN attributes ON product_attributes.attribute_id = attributes.id 
+                          LEFT JOIN dimensions ON dimensions.id = product_attributes.dimension_id
+                          WHERE product_attributes.dimension_id IS NOT NULL AND product_attributes.product_id IN ('.$idsString.') GROUP BY attr_title, dimension_value'));
+            
+            $filteredColors = [];
+            $filteredDimensions = [];
+            if($colors && count($colors)){
+              foreach($colors as &$color){
+                $attrArr = explode("_", $color->attr_title);
+                $color->attr_title = $attrArr[0];
+                $color->attr_id = $attrArr[1];
+                $colorArr = explode("_", $color->color_value);
+                $color->color_value = $colorArr[0];
+                $color->color_id = $colorArr[1];
+                if(!array_key_exists($color->attr_title, $filteredColors)){
+                  $filteredColors[$color->attr_title] = [];
+                  array_push($filteredColors[$color->attr_title], $color);
+                } else{
+                  if(!in_array($color, $filteredColors[$color->attr_title])){
+                    array_push($filteredColors[$color->attr_title], $color);
+                  }
                 }
-
-                array_multisort($sort_col, $dir, $arr);
+              }
             }
-            array_sort_by_column($createdAttributes, 'type');
+            if($dimensions && count($dimensions) > 0){
+              foreach($dimensions as &$dimension){
+                $attrArr = explode("_", $dimension->attr_title);
+                $dimension->attr_title = $attrArr[0];
+                $dimension->attr_id = $attrArr[1];
+                $dimensionArr = explode(";_", $dimension->dimension_value);
+                $dimension->dimension_value = $dimensionArr[0];
+                $dimension->dimension_id = $dimensionArr[1];
+                if(!array_key_exists($dimension->attr_title, $filteredDimensions)){
+                  $filteredDimensions[$dimension->attr_title] = [];
+                  array_push($filteredDimensions[$dimension->attr_title], $dimension);
+                } else{
+                  if(!in_array($dimension, $filteredDimensions[$dimension->attr_title])){
+                    array_push($filteredDimensions[$dimension->attr_title], $dimension);
+                  }
+                }
+              }
+            }
           }
           $offerProducts = OfferProduct::with('prices')->where('offer_id', $offer->id)->get();
           
@@ -1168,6 +1175,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $offerEvents = OfferEvent::where('offer_id', $offer->id)->where('is_mention', 0)->orderBy('created_at', 'DESC')->get();
         $offerMessages = OfferEvent::where('offer_id', $offer->id)->where('is_mention', 1)->orderBy('created_at', 'DESC')->get();
       
+        $offerAttributes = OfferAttribute::where('offer_id', $offer->id)->get();
+        $offerSelectedAttrsArray = [];
+        if($offerAttributes && count($offerAttributes) > 0){
+          foreach($offerAttributes as $offAttr){
+            array_push($offerSelectedAttrsArray, [$offAttr->attribute_id, $offAttr->col_dim_id]);
+          }
+        }
         return Voyager::view($view, compact(
           'dataType', 
           'dataTypeContent', 
@@ -1183,6 +1197,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           'adminUsers',
           'offerEvents',
           'offerMessages',
+          'filteredColors',
+          'filteredDimensions',
+          'offerSelectedAttrsArray',
         ));
     }
   
@@ -1267,7 +1284,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           }
         }
       }
-      return ['success' => true, 'products' => $products];
+      $priceRules = \App\RulesPrice::get();
+      return ['success' => true, 'products' => $products, 'html_prices' => view('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $offer->reducere, 'offer' => $offer, 'priceRules' => $priceRules])->render()];
     }
   
     // la fel si functia asta... sa termin cu JSON-urile mai intai
@@ -1339,9 +1357,34 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->packing = $request->input('packing');
     $offer->delivery_details = $request->input('delivery_details');
     $offer->delivery_type = $request->input('delivery_type');
-    $offer->selected_products = $selectedProducts;
     $offer->save();
     
+    $selectedAttributes = $request->input('selectedAttribute');
+    $updatedAt = date("Y-m-d H:i:s");
+    // trebuie sa imi iau color_id si sa-l pun in selectedAttribute din edit-add
+    if($selectedAttributes != null && count($selectedAttributes) > 0){
+      OfferAttribute::where('offer_id', $offer->id)->delete();
+      foreach($selectedAttributes as $selAttr){
+        $selAttr = explode("_", $selAttr);
+        // primul element e id-ul atributului
+        $attrId = $selAttr[0];
+        // al doilea element e id-ul culorii/dimensiunii
+        $colDimId = $selAttr[1];
+        
+        $offerAttribute = new OfferAttribute();
+        $offerAttribute->offer_id = $offer->id;
+        $offerAttribute->attribute_id = $attrId;
+        $offerAttribute->col_dim_id = $colDimId;
+        $offerAttribute->updated_at = $updatedAt;
+        $offerAttribute->created_at = $updatedAt;
+        $offerAttribute->save();
+      }
+    }
+    /*
+    Trebuie facut mesajul asta, dar vad cum...
+        $resultField = 'Culoare/Dimensiune/Grosime';
+        $changedField = 'attributes';
+    */
     // verific daca editez o oferta existenta si salvez event-ul
     $message = "a modificat oferta";
     $fromValue = 'empty';
@@ -1361,6 +1404,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     if($changedField != 'reducere' || ($fromValue != 0 && $toValue != '0.00')){
       (new self())->createEvent($offer, $message);
     }
+    
+    $offerQty = $request->input('offerQty');
     
     // pentru fiecare produs pentru care am modificat cantitatea, modific si in baza de date
     if($request->input('offerProductIds') != null && $offerQty != null){
@@ -1583,20 +1628,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $resultField = 'Curs valutar';
         $changedField = 'curs_eur';
         break;
-      case $newObj->wasChanged('attributes'):
-        //doar de moment pana cand modific json-ul in tabele separate
-        $attribute = json_decode($newObj->attributes, true);
-        $explodedAttributes = explode("_", $attribute[0]);
-        if(count($explodedAttributes) == 3){
-          $value = $explodedAttributes[2];
-        } else{
-          $value = $explodedAttributes[1];
-        }
-        $fromValue = $oldObj->attributes;
-        $toValue = $value;
-        $resultField = 'Culoare/Dimensiune/Grosime';
-        $changedField = 'attributes';
-        break;
       case $newObj->wasChanged('price_grid_id'):
         $fromValue = $oldObj->rulePrice->title;
         $toValue = $newObj->rulePrice->title;
@@ -1675,8 +1706,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     return view('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents])->render();
   }
   
-  public static function getHtmlLogMentions($offer_id){
-    $orderMentions = OfferEvent::where(['offer_id' => $offer_id, 'is_mention' => 1])->orderBy('created_at', 'DESC')->get();
+  public static function getHtmlLogMentions($offer_id, $limit = 0){
+    $orderMentions = $limit != 0 ? OfferEvent::where(['offer_id' => $offer_id, 'is_mention' => 1])->orderBy('created_at', 'DESC')->take($limit)->get() : OfferEvent::where(['offer_id' => $offer_id, 'is_mention' => 1])->orderBy('created_at', 'DESC')->get();
     return view('vendor.voyager.partials.log_events', ['offerEvents' => $orderMentions])->render();
   }
   

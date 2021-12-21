@@ -38,9 +38,7 @@ class Offer extends Model
     6 => '2O/1K',
   ];
   
-    protected $casts = [
-        'selected_products' => 'array',
-    ];
+    protected $casts = [];
     public function distribuitor(){
       return $this->belongsTo(Distribuitor::class);
     }

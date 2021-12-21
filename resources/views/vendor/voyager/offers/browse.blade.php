@@ -17,7 +17,7 @@
         @endcan
         @can('edit', app($dataType->model_name))
             @if(!empty($dataType->order_column) && !empty($dataType->order_display_column))
-                <a href="{{ route('voyager.'.$dataType->slug.'.order') }}" class="btn btn-primary btn-add-new">
+                <a href="{{ route('voyager.'.$dataType->slug.'.order') }}" class="btn btn-primary btn-add-new btn__lista-off">
                     <i class="voyager-list"></i> <span>{{ __('voyager::bread.order') }}</span>
                 </a>
             @endif
@@ -83,7 +83,7 @@
                         <div class="table-responsive">
                             <table id="dataTable" class="table table-hover">
                                 <thead>
-                                    <tr>
+                                    <tr class="tr__delete-col">
                                         @if($showCheckboxColumn)
                                             <th class="dt-not-orderable">
                                                 <input type="checkbox" class="select_all">
@@ -91,6 +91,8 @@
                                         @endif
                                         @foreach($dataType->browseRows as $row)
                                         <th>
+                                            @if($row->display_name == 'Serie' || $row->display_name == 'Print Awb')
+                                            @else
                                             @if ($isServerSide && in_array($row->field, $sortableColumns))
                                                 <a href="{{ $row->sortByUrl($orderBy, $sortOrder) }}">
                                             @endif
@@ -104,6 +106,7 @@
                                                     @endif
                                                 @endif
                                                 </a>
+                                            @endif
                                             @endif
                                         </th>
                                         @endforeach
@@ -119,6 +122,7 @@
                                         @endif
                                         @foreach($dataType->browseRows as $row)
                                         <th>
+                                            
                                             @if ($isServerSide && in_array($row->field, $sortableColumns))
                                                 <a href="{{ $row->sortByUrl($orderBy, $sortOrder) }}">
                                             @endif
@@ -135,7 +139,6 @@
                                             @endif
                                         </th>
                                         @endforeach
-                                        <th class="actions text-right dt-not-orderable">{{ __('voyager::generic.actions') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -193,12 +196,14 @@
                                                     </div>
                                                 </td>
                                             </tr>
-                                            <tr class="thead">
+                                            <tr class="thead tr__delete-col">
                                                 @if($showCheckboxColumn)
                                                     <th class="dt-not-orderable"></th>
                                                 @endif
                                                 @foreach($dataType->browseRows as $row)
                                                 <th>
+                                                @if($row->display_name == 'Serie' || $row->display_name == 'Print Awb')
+                                            @else
                                                     @if ($isServerSide && in_array($row->field, $sortableColumns))
                                                         <a href="{{ $row->sortByUrl($orderBy, $sortOrder) }}">
                                                     @endif
@@ -213,13 +218,14 @@
                                                         @endif
                                                         </a>
                                                     @endif
+                                                    @endif
                                                 </th>
                                                 @endforeach
                                                 <th class="actions text-right dt-not-orderable">{{ __('voyager::generic.actions') }}</th>
                                             </tr>
                                         @endif
                                     {{-- @endif --}}
-                                    <tr>
+                                    <tr class="tr__list--off">
                                         @if($showCheckboxColumn)
                                             <td>
                                                 <input type="checkbox" name="row_id" id="checkbox_{{ $data->getKey() }}" value="{{ $data->getKey() }}">
@@ -232,6 +238,8 @@
                                             }
                                             @endphp
                                             <td class="offer__list--td" @if($row->field == "numar_comanda" || $row->field == "serie") style="width: 25px" @endif>
+                                            @if($row->display_name == 'Serie' || $row->display_name == 'Print Awb')
+                                            @else
                                                 @if (isset($row->details->view))
                                                     @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $data->{$row->field}, 'action' => 'browse', 'view' => 'browse', 'options' => $row->details])
                                                 @elseif($row->type == 'image')
@@ -310,7 +318,7 @@
                                                     <span class="badge badge-lg" style="background-color: {{ $data->{$row->field} }}">{{ $data->{$row->field} }}</span>
                                                 @elseif($row->type == 'text')
                                                     @include('voyager::multilingual.input-hidden-bread-browse')
-                                                    @if($row->field == "serie")
+                                                    @if($row->field == "serie" || $row->display_name == 'Print Awb')
                                                       <a href="/admin/offers/{{$data->id}}/edit">{{ mb_strlen( $data->{$row->field} ) > 200 ? mb_substr($data->{$row->field}, 0, 200) . ' ...' : $data->{$row->field} }}</a>
                                                       @php
                                                         $ordermessages = $data->numar_comanda != null ? \App\Http\Controllers\VoyagerOfferController::getHtmlLogMentions($data->id) : null;
@@ -431,6 +439,7 @@
                                                     @include('voyager::multilingual.input-hidden-bread-browse')
                                                     <span>{{ $data->{$row->field} }}</span>
                                                 @endif
+                                                @endif
                                             </td>
                                         @endforeach
                                         <td class="no-sort no-click bread-actions">
@@ -443,8 +452,11 @@
                                                 @endif
                                             @endforeach
                                             @if($data->numar_comanda != null)
-                                                <a title="Trimite SMS" class="btn btn-success btn-add-new btnSendSms" order_id="{{$data->id}}">
-                                                    <i class="voyager-telephone"></i> <span class="hidden-xs hidden-sm">Send SMS</span>
+                                                <!-- <a title="Trimite SMS" class="btn btn-success btn-add-new btnSendSms btn__display--none" order_id="{{$data->id}}"> -->
+                                                <a title="Trimite SMS" class="btnSendSms toolTipMsg btn__display--none" order_id="{{$data->id}}">
+                                                    <i class="voyager-telephone"></i> 
+                                                        <div class="tooltip_description" style="display:none" title="Mesaje comanda">
+                                                        </div>
                                                 </a>
                                             @endif
                                         </td>
@@ -500,13 +512,10 @@
     </div><!-- /.modal -->
 @stop
 
+
+
 @section('css')
-    @if(!$dataType->server_side && config('dashboard.data_tables.responsive'))
-        <link rel="stylesheet" href="{{ voyager_asset('lib/css/responsive.dataTables.min.css') }}">
-    @endif
-    @if($is_order_page)
-        <link rel="stylesheet" href="../../../css/jquery.tooltip/jquery.tooltip.css">                              
-    @endif
+    <link rel="stylesheet" href="{{ asset('/css/jquery.tooltip/jquery.tooltip.css') }}">
     <style>
         /* table scrollabil orizontal */
         .table-responsive {
@@ -516,6 +525,15 @@
             width: auto !important;
             max-width: none !important;
             min-width: 100%;
+        }
+        
+        .custom-table-filters {
+            display: flex;
+            flex-direction: row;
+            padding: 2px 10px;
+        }
+        .custom-table-filters .filter-item {
+            margin-right: 10px;
         }
         
         /* header tabel sticky ! :D */
@@ -568,26 +586,46 @@
             background: #fff;
         }
         
-        .table-group-header, .table-group-header:hover {
-            background: #fff !important;
-            cursor: default;
-        }
-        .table-group-header .table-group-details {
+        .table-group-details {
             width: 100%;
             text-align: left;
-            padding: 10px;
-            padding-bottom: 0px;
+            font-weight: 400;
+            padding: 14px 10px;
+            padding-bottom: 6px;
+            cursor: default;
+            color: #000;
         }
-        .table-group-header .table-group-details b {
+        .table-group-details b {
             font-size: 16px;
             color: #6b76d8;
             font-weight: 600;
         }
-        .table-group-header .table-group-details .item {
+        .table-group-details .item {
             display: inline-block;
         }
-        .table-group-header .table-group-details .item.additional {
+        .table-group-details .item.additional {
             margin-left: 14px;
+        }
+        .custom-table-checkbox {
+            transform: scale(1.2);
+        }
+        .table-files-container {
+            padding: 0;
+        }
+        .table-files-container .table-files-link {
+            display: block;
+        }
+        
+        .voyager .table {
+            border-top: 1px solid #ddd !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+        .voyager .table thead th a {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: nowrap;
         }
         .voyager .table > thead > tr > th,
         .voyager .table tr.thead > th {
@@ -602,21 +640,37 @@
             text-align: center !important;
         }
         .voyager .table tr.thead > th:not(:first-child) {
-            color: #6b76d8;
-            text-align: center;
+            /* color: #6b76d8;
+            text-align: center; */
         }
         .voyager .table tr.thead > th {
             background: #f8fafc;
         }
+        .voyager tbody > tr td:nth-child(2) {
+            box-shadow: none;
+        }
+        .voyager tbody > tr > td:not(:last-child) {
+            border-right: 1px solid #cecece !important;
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+        }
+        .voyager tbody .offers__status {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        .voyager .table tbody > tr > td.bread-actions {
+            border-right: none !important;
+        }
     </style>
 @stop
+
 
 @section('javascript')
     @if($is_order_page)
       <script src="../../../js/jquery.tooltip.js"></script>   
       <script>
         $(document).ready(function(){
-          $(".tooltipMessage").tooltip();
+          $(".tooltip_description").tooltip();
         });
       </script>
     @endif
@@ -626,7 +680,11 @@
     @endif
     <script>
         $(document).ready(function () {
-            
+          $(".toolTipMsg").tooltip();
+          $(".edit").tooltip();
+
+    
+
             // table header sticky
 //             $(document).on('scroll', function () {
 //                 var isFixed = $('.table-responsive').hasClass('table-fixed-header');
