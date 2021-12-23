@@ -102,7 +102,7 @@ class NemoExpressController extends Controller
               'cnt' => $form_data['numar_colete'],
               'fragile' => $form_data['fragil'],
               'use_default_from_address' => true, // pentru preluarea adresei de livrare default din contul de client nemo
-              'to_name' => $userAddress->delivery_contact,
+              'to_name' => $userAddress->delivery_contact ?: $userData->name,
               'to_contact' => $userAddress->delivery_contact ?: $userData->name,
               'to_address' => $userAddress->address,
               'to_city' => $userAddress->city_name(),

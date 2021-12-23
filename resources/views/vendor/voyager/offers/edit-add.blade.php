@@ -84,7 +84,7 @@ $isNewClient = false;
             @endif
             <div class="col-md-12" id="oferta">
 
-                <div class="panel panel-bordered">
+                <div class="panel panel-bordered" style="border: none; box-shadow: none;">
                     <!-- form start -->
                     <form role="form"
                             class="form-edit-add"
@@ -98,9 +98,10 @@ $isNewClient = false;
                         <!-- CSRF TOKEN -->
                         {{ csrf_field() }}
 
-                        <div class="container-doua-coloane " style="display: flex;flex-direction: row;justify-content: space-between; flex-wrap: wrap;">
-                          <div>
-                          <div class="panel-body container-doua-col-left" >
+                        <div class="container-doua-coloane " style="display: flex;flex-direction: column;">
+                          <div style="width: 100%;">
+                         @if($edit)
+                         <div class="panel-body container-doua-col-left" style="background: #f9f9f9;width: 100%;">
 
                             @if (count($errors) > 0)
                                 <div class="alert alert-danger">
@@ -121,7 +122,7 @@ $isNewClient = false;
                             @endphp
 
                            <div class="flex__box--cont" >
-                           <div class="flex__box1">
+                           <div class="flex__box1--1">
 
 <!-- || $row->display_name == 'Client' -->
 @foreach($dataTypeRows as $row)
@@ -180,10 +181,15 @@ $isNewClient = false;
  @if($edit)
 
                             <div class="form-group col-md-12 mesaj-intern-container flex__box1">
-                                    <label class="control-label">Mesaj intern</label>
+                                    <label class="control-label">Mesaje comanda</label>
                                     <input name="mentions" type="hidden"/>
-                                    <textarea class="form-control" id="mentions" name="mentions_textarea" placeholder="Mentioneaza pe cineva cu @" rows="5"></textarea>
+                                    <textarea class="form-control" id="mentions" name="mentions_textarea" placeholder="Mesaj nou" rows="5"></textarea>
                                     <button style="float: right;" type="button" class="btn btn-primary save btnSaveMention" order_id="{{$dataTypeContent->id}}">Salveaza mesaj</button>
+                                    <div class="form-group col-md-12 mesaj-intern-container">
+                                        <div class="log-evenimente-list log-mesaje">
+                                          @include('vendor.voyager.partials.log_messages', ['offerMessages' => $offerMessages]) 
+                                        </div>
+                                    </div>
                                   </div>
 
                             @endif
@@ -192,7 +198,7 @@ $isNewClient = false;
 
 
                             <div class="flex__box--cont">
-                            <div class="flex__box1">
+                            <div class="flex__box1--2">
                             @if($edit)
                                   @if($row->field == 'curs_eur' && (count($filteredColors) > 0) || count($filteredDimensions) > 0)
                                     <div class="form-group  col-md-12" >
@@ -234,6 +240,8 @@ $isNewClient = false;
                                         @endforeach
                                     </div>
                                   @endif
+                                @else
+                                  <div class="container-preselect-colors"></div>
                                 @endif
                               @foreach($dataTypeRows as $row)
                                 @php
@@ -274,12 +282,6 @@ $isNewClient = false;
                                     @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents]) 
                                   </div>
                               </div>
-                              <!-- <div class="form-group col-md-12 mesaj-intern-container log-evenimente">
-                                <label class="control-label">Log mesaje</label>
-                                  <div class="log-evenimente-list log-mesaje">
-                                    @include('vendor.voyager.partials.log_messages', ['offerMessages' => $offerMessages]) 
-                                  </div>
-                              </div> -->
                             @endif
 
                             </div>
@@ -347,31 +349,375 @@ $isNewClient = false;
                                         @endforeach
                                     @endif
                                 </div>
+                                      @if(isset($display_options->id) && $display_options->id == 'mod_livrare' && $edit)
+                                        <div class="form-group  col-md-12" >
+                                        <label class="control-label">Adresa livrare</label>
+                                        <select name="delivery_address_user" class="form-control">
+                                          <option value="-1" selected disabled>Alege adresa de livrare</option>
+                                          <option value="-2">Adauga adresa noua</option>
+                                          @if(count($userAddresses) > 0)
+                                            @foreach($userAddresses as $address)
+                                              @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
+                                                @php
+                                                  $address = $selectedAddress;
+                                                @endphp
+                                                <option selected value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name}}" city_id="{{$address->city}}" city_name="{{$address->city_name}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name}}, {{$address->state_name}}</option>
+                                              @else
+                                                <option value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name()}}" city_id="{{$address->city}}" city_name="{{$address->city_name()}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name()}}, {{$address->state_name()}}</option>
+                                              @endif
+                                            @endforeach
+                                          @endif
+                                        </select>
+                                      </div>
+                                      <div class="form-group  col-md-12 container-elements-addresses" style="width: 100%; display: none;">
+                                          <div class="panel-body container-box-adresa">
+                                            <input class="trick-addr-id" value="" type="hidden"/>
+                                            <div class="form-group col-md-12 column-element-address" style="width: 100%">
+                                               <label class="control-label">Tara</label>
+                                               @include('vendor.voyager.formfields.countries', ['selected' => null])                       
+                                            </div>
+                                            <div class="form-group col-md-12 column-element-address">
+                                               <label class="control-label" for="state">Judet/Regiune</label>
+                                               <select name="state" class="form-control select-state"></select>
+                                            </div>
+                                            <div class="form-group col-md-12 column-element-address">
+                                               <label class="control-label">Oras/Localitate/Sector</label>
+                                               <select name="city" class="form-control select-city"></select>        
+                                            </div>
+                                            <div class="form-group col-md-12 column-element-address" style="width: 100%;">
+                                               <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
+                                               <input class="control-label" type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>                          
+                                            </div>
+                                            <div class="form-group col-md-12 column-element-address">
+                                               <label class="control-label" for="state">Telefon</label>
+                                               <input name="delivery_phone" type="text" style="padding: 5px;"/>
+                                            </div>
+                                            <div class="form-group col-md-12 column-element-address">
+                                               <label class="control-label">Persoana de contact</label>
+                                               <input name="delivery_contact" type="text" style="padding: 5px;"/>        
+                                            </div>
+                                          </div>
+                                          <div class="col-md-12 panel-footer" style="    justify-content: flex-end;display: flex;width: 100%;">
+                                            <button type="button" class="btn btn-primary btnGreenNew btnSalveazaAdresa">Salveaza adresa noua</button>
+                                          </div>
+                                      </div>
+                                      @endif
                                     @endif
                                     @endif
                               @endforeach
-                              @if($edit)
-                                    <div class="form-group  col-md-12" >
-                                    <label class="control-label">Adresa livrare</label>
-                                    <select name="delivery_address_user" class="form-control">
-                                      <option value="-1" selected disabled>Alege adresa de livrare</option>
-                                      <option value="-2">Adauga adresa noua</option>
-                                      @if(count($userAddresses) > 0)
-                                        @foreach($userAddresses as $address)
-                                          @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
-                                            @php
-                                              $address = $selectedAddress;
-                                            @endphp
-                                            <option selected value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name}}" city_id="{{$address->city}}" city_name="{{$address->city_name}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name}}, {{$address->state_name}}</option>
-                                          @else
-                                            <option value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name()}}" city_id="{{$address->city}}" city_name="{{$address->city_name()}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name()}}, {{$address->state_name()}}</option>
-                                          @endif
-                                        @endforeach
-                                      @endif
-                                    </select>
-                                  </div>
-                                    @endif
                             </div>
+                         
+
+                                      <!-- ADD SECTION -->
+
+                         @else
+                         <div class="panel-body container-doua-col-left" style="background: #f9f9f9;width: 100%;display: flex;flex-direction: column;">
+
+@if (count($errors) > 0)
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+  @php
+    $isNewClient = count($errors) > 0 && array_key_exists('address', $errors->toArray());
+  @endphp
+@endif
+
+<!-- Adding / Editing -->
+@php
+    $dataTypeRows = $dataType->{($edit ? 'editRows' : 'addRows' )};
+@endphp
+
+<div style="width: 70%;margin: 0;" class="flex__box--cont" >
+<div class="flex__box1--1">
+
+<!-- || $row->display_name == 'Client' -->
+@foreach($dataTypeRows as $row)
+@if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' )
+
+
+@php
+$display_options = $row->details->display ?? NULL;
+if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
+$dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
+}
+@endphp
+@if (isset($row->details->legend) && isset($row->details->legend->text))
+<legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
+@endif 
+
+<div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
+{{ $row->slugify }}
+@if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
+<label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+@endif
+@if($row->field != "offer_belongsto_status_relationship")
+<label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+@endif
+@include('voyager::multilingual.input-hidden-bread-edit-add')
+@if (isset($row->details->view))
+@include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add'), 'view' => ($edit ? 'edit' : 'add'), 'options' => $row->details])
+@elseif ($row->type == 'relationship')
+@if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
+@include('voyager::formfields.relationship', ['options' => $row->details])
+@endif
+@if($row->field != "offer_belongsto_status_relationship")
+@include('voyager::formfields.relationship', ['options' => $row->details])
+@endif
+@else
+@if($row->field == 'price_grid_id')
+{!! $select_html_grids !!}
+@else
+{!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
+@endif
+@endif
+
+@foreach (app('voyager')->afterFormFields($row, $dataType, $dataTypeContent) as $after)
+{!! $after->handle($row, $dataType, $dataTypeContent) !!}
+@endforeach
+@if ($errors->has($row->field))
+@foreach ($errors->get($row->field) as $error)
+<span class="help-block">{{ $error }}</span>
+@endforeach
+@endif
+</div>
+@endif
+
+@endforeach
+</div>
+@if($edit)
+
+<div class="form-group col-md-12 mesaj-intern-container flex__box1">
+        <label class="control-label">Mesaje comanda</label>
+        <input name="mentions" type="hidden"/>
+        <textarea class="form-control" id="mentions" name="mentions_textarea" placeholder="Mesaj nou" rows="5"></textarea>
+        <button style="float: right;" type="button" class="btn btn-primary save btnSaveMention" order_id="{{$dataTypeContent->id}}">Salveaza mesaj</button>
+        <div class="form-group col-md-12 mesaj-intern-container">
+            <div class="log-evenimente-list log-mesaje">
+              @include('vendor.voyager.partials.log_messages', ['offerMessages' => $offerMessages]) 
+            </div>
+        </div>
+      </div>
+
+@endif
+
+</div>
+
+
+<div style="width: 70%;margin: 0;" class="flex__box--cont">
+<div class="flex__box1--2">
+@if($edit)
+      @if($row->field == 'curs_eur' && (count($filteredColors) > 0) || count($filteredDimensions) > 0)
+        <div class="form-group  col-md-12" >
+            @foreach($filteredColors as $key => $item)
+              <div class="form-group">
+                <label class="control-label" for="name">{{ucfirst($key)}}</label>
+                <select name="selectedAttribute[]" class="form-control selectColor selectAttribute">
+                    <option selected disabled>Selecteaza {{strtolower($key)}}</option>
+                    @foreach($item as $color)
+                      @php
+                        $currentArr = [$color->attr_id, $color->color_id];
+                        $selectedColor = '';
+                        if(in_array($currentArr, $offerSelectedAttrsArray)){
+                          $selectedColor = 'selected';
+                        }
+                      @endphp
+                      <option value="{{$color->attr_id}}_{{$color->color_id}}_{{$color->color_value}}_{{$color->color_ral}}" {{$selectedColor}}>{{$color->color_ral}}</option>
+                    @endforeach
+                </select>
+              </div>
+            @endforeach
+            @foreach($filteredDimensions as $key => $item)
+              <div class="form-group">
+                <label class="control-label" for="name">{{ucfirst($key)}}</label>
+                <select name="selectedAttribute[]" class="form-control selectDimension selectAttribute">
+                    <option selected disabled>Selecteaza {{strtolower($key)}}</option>
+                    @foreach($item as $dimension)
+                      @php
+                        $currentArr = [$dimension->attr_id, $dimension->dimension_id];
+                        $selectedDimension = '';
+                        if(in_array($currentArr, $offerSelectedAttrsArray)){
+                          $selectedDimension = 'selected';
+                        }
+                      @endphp
+                      <option value="{{$dimension->attr_id}}_{{$dimension->dimension_id}}_{{$dimension->dimension_value}}" {{$selectedDimension}}>{{$dimension->dimension_value}}</option>
+                    @endforeach
+                </select>
+              </div>
+            @endforeach
+        </div>
+      @endif
+    @else
+      <div class="container-preselect-colors"></div>
+    @endif
+  @foreach($dataTypeRows as $row)
+    @php
+        $display_options = $row->details->display ?? NULL;
+        if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
+            $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
+        }
+    @endphp
+    @if (isset($row->details->legend) && isset($row->details->legend->text))
+        <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
+    @endif 
+
+    @if($row->display_name == 'Observatii') 
+    <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
+        {{ $row->slugify }}
+        
+        @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
+          <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+        @endif
+        @if($row->field != "offer_belongsto_status_relationship")
+          <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+        @endif
+        {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
+
+      </div>
+
+    @endif
+     
+    
+@endforeach
+
+</div>
+@if($edit)
+  
+  <div class="form-group col-md-12 mesaj-intern-container log-evenimente flex__box1 height__1">
+    <label class="control-label">Log evenimente</label>
+      <div class="log-evenimente-list">
+        @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents]) 
+      </div>
+  </div>
+@endif
+
+</div>
+
+
+
+
+
+
+
+<div style="width: 70%;margin: 0;" class="flex__box">
+@foreach($dataTypeRows as $row)
+
+        @if($row->display_name == 'Observatii') 
+
+      
+
+        @else
+
+    @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' ) 
+
+        @else
+    @php
+        $display_options = $row->details->display ?? NULL;
+        if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
+            $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
+        }
+    @endphp
+    @if (isset($row->details->legend) && isset($row->details->legend->text))
+        <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
+    @endif 
+
+   <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
+        {{ $row->slugify }}
+        @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
+          <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+        @endif
+        @if($row->field != "offer_belongsto_status_relationship")
+          <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+        @endif
+        @include('voyager::multilingual.input-hidden-bread-edit-add')
+        @if (isset($row->details->view))
+            @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add'), 'view' => ($edit ? 'edit' : 'add'), 'options' => $row->details])
+        @elseif ($row->type == 'relationship')
+            @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
+             @include('voyager::formfields.relationship', ['options' => $row->details])
+            @endif
+            @if($row->field != "offer_belongsto_status_relationship")
+              @include('voyager::formfields.relationship', ['options' => $row->details])
+            @endif
+        @else
+            @if($row->field == 'price_grid_id')
+              {!! $select_html_grids !!}
+            @else
+              {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
+            @endif
+        @endif
+
+        @foreach (app('voyager')->afterFormFields($row, $dataType, $dataTypeContent) as $after)
+            {!! $after->handle($row, $dataType, $dataTypeContent) !!}
+        @endforeach
+        @if ($errors->has($row->field))
+            @foreach ($errors->get($row->field) as $error)
+                <span class="help-block">{{ $error }}</span>
+            @endforeach
+        @endif
+    </div>
+          @if(isset($display_options->id) && $display_options->id == 'mod_livrare' && $edit)
+            <div class="form-group  col-md-12" >
+            <label class="control-label">Adresa livrare</label>
+            <select name="delivery_address_user" class="form-control">
+              <option value="-1" selected disabled>Alege adresa de livrare</option>
+              <option value="-2">Adauga adresa noua</option>
+              @if(count($userAddresses) > 0)
+                @foreach($userAddresses as $address)
+                  @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
+                    @php
+                      $address = $selectedAddress;
+                    @endphp
+                    <option selected value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name}}" city_id="{{$address->city}}" city_name="{{$address->city_name}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name}}, {{$address->state_name}}</option>
+                  @else
+                    <option value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name()}}" city_id="{{$address->city}}" city_name="{{$address->city_name()}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name()}}, {{$address->state_name()}}</option>
+                  @endif
+                @endforeach
+              @endif
+            </select>
+          </div>
+          <div class="form-group  col-md-12 container-elements-addresses" style="width: 100%; display: none;">
+              <div class="panel-body container-box-adresa">
+                <input class="trick-addr-id" value="" type="hidden"/>
+                <div class="form-group col-md-12 column-element-address" style="width: 100%">
+                   <label class="control-label">Tara</label>
+                   @include('vendor.voyager.formfields.countries', ['selected' => null])                       
+                </div>
+                <div class="form-group col-md-12 column-element-address">
+                   <label class="control-label" for="state">Judet/Regiune</label>
+                   <select name="state" class="form-control select-state"></select>
+                </div>
+                <div class="form-group col-md-12 column-element-address">
+                   <label class="control-label">Oras/Localitate/Sector</label>
+                   <select name="city" class="form-control select-city"></select>        
+                </div>
+                <div class="form-group col-md-12 column-element-address" style="width: 100%;">
+                   <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
+                   <input class="control-label" type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>                          
+                </div>
+                <div class="form-group col-md-12 column-element-address">
+                   <label class="control-label" for="state">Telefon</label>
+                   <input name="delivery_phone" type="text" style="padding: 5px;"/>
+                </div>
+                <div class="form-group col-md-12 column-element-address">
+                   <label class="control-label">Persoana de contact</label>
+                   <input name="delivery_contact" type="text" style="padding: 5px;"/>        
+                </div>
+              </div>
+              <div class="col-md-12 panel-footer" style="    justify-content: flex-end;display: flex;width: 100%;">
+                <button type="button" class="btn btn-primary btnGreenNew btnSalveazaAdresa">Salveaza adresa noua</button>
+              </div>
+          </div>
+          @endif
+        @endif
+        @endif
+  @endforeach
+</div>
+
+                         @endif
 
 
 
@@ -530,6 +876,8 @@ $isNewClient = false;
 
                 </div>
             </div>
+        </div>
+    </div>
           <div class="col-md-12" id="awb" style="display: none;">
             <div class="panel panel-delivery-method">
               <form class="panel-body form-fan-courier delivery-method delivery-fan" method="POST" @if($edit && $dataTypeContent->delivery_type == 'fan' || $dataTypeContent->delivery_type == null) style="display: block;" @else style="display: none;" @endif>
@@ -632,10 +980,10 @@ $isNewClient = false;
                   </select>
                 </div>
                 <div class="col-md-12 panel-footer">
-                  <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwb">Genereaza AWB</button>
+                  <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwb" already_generated="{{$dataTypeContent->awb_id && $dataTypeContent->delivery_type == 'fan' ? 1 : 0}}">Genereaza AWB</button>
                 </div>
               </form>
-              <form class="panel-body form-fan-courier delivery-method delivery-nemo" method="POST" @if($edit && $dataTypeContent->delivery_type == 'nemo' || $dataTypeContent->delivery_type == null) style="display: block;" @else style="display: none;" @endif>
+              <form class="panel-body form-fan-courier delivery-method delivery-nemo" method="POST" @if($edit && $dataTypeContent->delivery_type == 'nemo') style="display: block;" @else style="display: none;" @endif>
                 {{csrf_field()}}
                 <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
                 <div class="col-md-12">
@@ -738,8 +1086,6 @@ $isNewClient = false;
               </form>
             </div>
           </div>
-        </div>
-    </div>
 
     <div class="modal fade modal-danger" id="confirm_delete_modal">
         <div class="modal-dialog">
@@ -963,12 +1309,13 @@ $isNewClient = false;
             var delivery_phone = $(this).parent().parent().parent().find("input[name=delivery_phone]").val();
             var delivery_contact = $(this).parent().parent().parent().find("input[name=delivery_contact]").val();
             var address_id = $(".trick-addr-id").val();
+            var client_id = $("select[name=client_id] option:selected").val() == '' ? null : $("select[name=client_id] option:selected").val();
              $.ajax({
                   method: 'POST',
                   url: '/saveNewAddress',
                   data: {
                     _token: $("meta[name=csrf-token]").attr("content"), 
-                    client_id: "{{$dataTypeContent->client_id}}",
+                    client_id: client_id,
                     offer_id: "{{$dataTypeContent->getKey()}}",
                     country: country,
                     city: city,
@@ -1090,25 +1437,7 @@ $isNewClient = false;
             if($(".selectColor")[0]){
                $(".selectColor").select2({templateSelection: formatState, templateResult: formatState});
             }
-          var timeoutSelectAttribute = null;
-          $('.selectAttribute').on('select2:select', function (e) {
-              var data = e.params.data;
-              var attributes = [];
-              $('.selectAttribute').each(function(index){
-                if ($(this).has('option:selected')){
-                  var valoareSelectata = $(this).val();
-                  if(valoareSelectata != null){
-                    attributes.push(valoareSelectata);
-                  }
-                }
-              });
-              if(isEdit){
-                 clearTimeout(timeoutSelectAttribute);
-                  timeoutSelectAttribute = setTimeout(function() {
-                    retrievePricesForSelectedAttributes(attributes, {{$dataTypeContent->id}});
-                }, 1500);
-              }
-          });
+          
           function retrievePricesForSelectedAttributes(attributes, order_id){
             var vthis = this;
             $.ajax({
@@ -1152,25 +1481,68 @@ $isNewClient = false;
             $("input[name=reducere]").val('');
           });
           
+          $("select[name=type]").on('select2:select', function (e) {
+            var vthis = this;
+            var type_id = e.params.data.id;
+            $.ajax({
+                method: 'POST',
+                url: '/admin/getColorsByOfferType',//remove this address on POST message after i get all the address data
+                data: {offerTypeId: type_id, _token: $("meta[name=csrf-token]").attr("content")},
+                context: this,
+                async: true,
+                cache: false,
+                dataType: 'json'
+            }).done(function(res) {
+               if(res.success){
+                $(".container-preselect-colors").html(res.html_colors);
+                $(".selectColorOfferType").select2({templateSelection: formatState, templateResult: formatState});
+               }
+            })
+            .fail(function(xhr, status, error) {
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                    .indexOf("CSRF token mismatch") >= 0) {
+                    window.location.reload();
+                }
+            });
+            return true;
+          });
+          
+//           $('.selectAttribute').on('select2:select', function (e) {
+//               if(isEdit){
+//                  clearTimeout(timeoutSelectAttribute);
+//                   timeoutSelectAttribute = setTimeout(function() {
+//                     saveNewDataToDb(true);
+//                 }, 1500);
+//               }
+//           });
+          
+          var timeoutSelectAttribute = null;
           $("select").on('select2:select', function (e) {
             var vthis = this;
-            setTimeout(function(){ 
-              if($(vthis).attr('name') == 'price_grid_id'){
-                saveNewDataToDb(true);
-              } else{
-                saveNewDataToDb(false);
-              }
-            }, 1000);
+            if($(vthis).hasClass('selectAttribute') && isEdit){
+              clearTimeout(timeoutSelectAttribute);
+                timeoutSelectAttribute = setTimeout(function() {
+                  saveNewDataToDb(true);
+              }, 1500);
+            } else{
+              setTimeout(function(){ 
+                if($(vthis).hasClass('selectAttribute')){
+                  saveNewDataToDb(true);
+                } else{
+                  saveNewDataToDb(false);
+                }
+              }, 1000);
+            }
           });
           
           var timeout = null;
 
-          $('input').keyup(function() {
+          $(document).on("keyup", 'input', function() {
               var vthis = this;
               clearTimeout(timeout);
               timeout = setTimeout(function() {
                 if($(vthis).attr("name") == "offerQty[]"){
-                  saveNewDataToDb(true);
+                  saveNewDataToDb(true, true);
                 } else{
                   saveNewDataToDb(false);
                 }
@@ -1228,6 +1600,9 @@ $isNewClient = false;
             $(".delivery-method").hide();
             $(".delivery-"+data.id).show();
             $("#mod_livrare>select[name=delivery_type]").val(data.id).trigger("change");
+            timeout = setTimeout(function() {
+                  saveNewDataToDb(false);
+              }, 500);
           });
           
           $("#mod_livrare>select[name=delivery_type]").on('select2:select', function (e) {
@@ -1236,41 +1611,52 @@ $isNewClient = false;
             $(".delivery-method").hide();
             $(".delivery-"+data.id).show();
             $("#mod_livrare_detaliu>select[name=delivery_type]").val(data.id).trigger("change");
+            timeout = setTimeout(function() {
+                  saveNewDataToDb(false);
+              }, 500);
           });
           
-          function saveNewDataToDb(reload = false){
-            $.ajax({
-                method: 'POST',
-                url: '/admin/ajaxSaveUpdateOffer',//remove this address on POST message after i get all the address data
-                data: $(".form-edit-add").serializeArray(),
-                context: this,
-                async: true,
-                cache: false,
-                dataType: 'json'
-            }).done(function(res) {
-                if(reload){
-                  window.location.reload();
+          function saveNewDataToDb(getPrices = false, modifyOfferProductsPrices = false){
+            if(isEdit){
+              var data = $(".form-edit-add").serializeArray();
+              if(getPrices){
+                data.push({name: 'getPrices', value: true});
+                if(modifyOfferProductsPrices){
+                  data.push({name: 'modifyOfferProductsPrices', value: modifyOfferProductsPrices});
                 }
-                console.log(res);
-               if(res.success){
-                $("input[name=offer_id]").val(res.offer_id);
-                $(".log-evenimente-list").html(res.html_log);
-               }
-            })
-            .fail(function(xhr, status, error) {
-                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
-                    .indexOf("CSRF token mismatch") >= 0) {
-                    window.location.reload();
-                }
-            });
-            return true;
+              }
+              $.ajax({
+                  method: 'POST',
+                  url: '/admin/ajaxSaveUpdateOffer',//remove this address on POST message after i get all the address data
+                  data: data,
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(res) {
+                 if(res.success){
+                  $("input[name=offer_id]").val(res.offer_id);
+                  $(".log-evenimente .log-evenimente-list").html(res.html_log);
+                  if(getPrices){
+                    $(".container-offer-listing-products").html(res.html_prices);
+                  }
+                 }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
+            }
+            
           }
-          $(".totalHandled").on("input", function(){
+          $(document).on("input", ".totalHandled", function(){
             var totalHandled = $(this).val();
             var totalGeneral = $("input[name=totalGeneral]").val();
             var reducere = totalGeneral - totalHandled;
             var totalFinal = totalHandled;
-            console.log(reducere);
             $("input[name=reducere]").val(parseFloat(reducere).toFixed(2));
             $("span.reducereRon").text(parseFloat(reducere).toFixed(2));
             $("input[name=totalFinal]").val(parseFloat(totalFinal).toFixed(2));
@@ -1278,45 +1664,65 @@ $isNewClient = false;
           });
           
           
-          $(".btnGenerateAwb").click(function(){
-            var order_id = "{!! $dataTypeContent && $dataTypeContent->id ? $dataTypeContent->id : 'null' !!}";
+          $(document).on("click", ".btnGenerateAwb", function(){
             var vthis = this;
-            $.ajax({
-                method: 'POST',
-                url: '/admin/generateAwb',//remove this address on POST message after i get all the address data
-                data: $(".delivery-fan").serializeArray(),
-                context: this,
-                async: true,
-                cache: false,
-                dataType: 'json'
-            }).done(function(resp) {
-                if(resp.success){
-                  $(".btnDownloadAwb").attr("href", "/admin/printAwb/" + resp.awb + "/" + resp.client_id);
-                  window.open(
-                    "/admin/printAwb/" + resp.awb + "/" + resp.client_id,
-                    '_blank' 
-                  );
-                  toastr.success(resp.msg);
-                  $(".log-evenimente-list").html(resp.html_log);
-                } else{
-                  for(var key in resp.msg) {
-                    toastr.error(resp.msg[key]);
-                  }
-                }
-            })
-            .fail(function(xhr, status, error) {
-                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
-                    .indexOf("CSRF token mismatch") >= 0) {
-                    window.location.reload();
-                }
-            });
-            return true;
-          });
-          $(".btnGenerateAwbNemo").click(function(){
             var order_id = "{!! $dataTypeContent && $dataTypeContent->id ? $dataTypeContent->id : 'null' !!}";
             var already_generated = $(this).attr("already_generated");
-            if(already_generated == 1 && confirm("AWB-ul a fost deja generat. Doriti regenerarea AWB-ului?")){
-              var vthis = this;
+            var next_step = true;
+            if(already_generated == 1){
+              if(confirm("AWB-ul a fost deja generat. Doriti regenerarea AWB-ului?")){
+                next_step = true;
+              } else{ 
+                next_step = false;
+              }
+            }
+            if(next_step){
+              $.ajax({
+                  method: 'POST',
+                  url: '/admin/generateAwb',//remove this address on POST message after i get all the address data
+                  data: $(".delivery-fan").serializeArray(),
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(resp) {
+                  if(resp.success){
+                    $(".btnDownloadAwb").attr("href", "/admin/printAwb/" + resp.awb + "/" + resp.client_id);
+                    window.open(
+                      "/admin/printAwb/" + resp.awb + "/" + resp.client_id,
+                      '_blank' 
+                    );
+                    toastr.success(resp.msg);
+                    $(".log-evenimente .log-evenimente-list").html(resp.html_log);
+                  } else{
+                    for(var key in resp.msg) {
+                      toastr.error(resp.msg[key]);
+                    }
+                  }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
+            }
+            return false;
+          });
+          $(document).on("click", ".btnGenerateAwbNemo", function(){
+            var vthis = this;
+            var order_id = "{!! $dataTypeContent && $dataTypeContent->id ? $dataTypeContent->id : 'null' !!}";
+            var already_generated = $(this).attr("already_generated");
+            var next_step = true;
+            if(already_generated == 1){
+              if(confirm("AWB-ul a fost deja generat. Doriti regenerarea AWB-ului?")){
+                next_step = true;
+              } else{ 
+                next_step = false;
+              }
+            }
+            if(next_step){
               $.ajax({
                   method: 'POST',
                   url: '/admin/generateAwbNemo',//remove this address on POST message after i get all the address data
@@ -1333,7 +1739,7 @@ $isNewClient = false;
                       '_blank' 
                     );
                     toastr.success(resp.msg);
-                    $(".log-evenimente-list").html(resp.html_log);
+                    $(".log-evenimente .log-evenimente-list").html(resp.html_log);
                   } else{
                     for(var key in resp.msg) {
                       toastr.error(resp.msg[key]);
@@ -1346,7 +1752,7 @@ $isNewClient = false;
                       window.location.reload();
                   }
               });
-              return true;
+              return true;    
             }
             return false;
           });
@@ -1400,7 +1806,7 @@ $isNewClient = false;
                     $(".page-title").text($(".page-title").text() + ' - RETUR');
                   }
                   $(".butoane-oferta").append(html_append);
-                  $(".log-evenimente-list").html(resp.html_log);
+                  $(".log-evenimente .log-evenimente-list").html(resp.html_log);
                   toastr.success(resp.msg);
                 } else{
                   toastr.error(resp.msg);
@@ -1425,7 +1831,8 @@ $isNewClient = false;
                 var valoareSelectata = $(this).val();
                 if(valoareSelectata != null){
                   valoareSelectata = valoareSelectata.split("_");
-                  selectedColors.push(valoareSelectata[2]);
+                  // iar valoarea RAL si o pun in selectedColors pentru a compara mai tarziu daca am diferente de culori
+                  selectedColors.push(valoareSelectata[3]);
                 }
               }
             });
@@ -1471,7 +1878,7 @@ $isNewClient = false;
                         `;
                     }
                     $(".butoane-oferta").append(html_append);
-                    $(".log-evenimente-list").html(resp.html_log);
+                    $(".log-evenimente .log-evenimente-list").html(resp.html_log);
                     toastr.success(resp.msg);
                   } else{
                     toastr.error(resp.msg);

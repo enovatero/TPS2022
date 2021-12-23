@@ -24,7 +24,7 @@
                 <div class="panel panel-bordered">
                     <div class="panel-body">
                         
-                        <div class="custom-table-filters">
+                        <div class="custom-table-filters overflow__list-1" >
                             @foreach ($columns as $column)
                                 @if ($column['key'] == 'plata')
                                     <div class="filter-item">
@@ -204,7 +204,7 @@
                                 </div>
                                 <table id="dataTable" class="table table-hover">
                                     <thead>
-                                        <tr>
+                                        <tr class="overflow__list-1">
                                             @foreach ($columns as $column)
                                              <th class="column_{{ $column['key'] }}" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
                                                     @if ($column['order_by'])
@@ -233,9 +233,9 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($day['orders'] as $data)
-                                        <tr class="overflow__x1">
+                                        <tr >
                                             @foreach ($columns as $column)
-                                                <td class="column_{{ $column['key'] }}">
+                                                <td class="overflow__list-1" class="column_{{ $column['key'] }}">
 
 
                                                     @if ($column['key'] == 'nr_com')
@@ -479,18 +479,19 @@
                                                     @endif
                                                 </td>
                                             @endforeach
-                                            <td class="no-sort no-click bread-actions">
+                                            <td class="no-sort no-click bread-actions btn__hide--cont">
                                                 @can('edit', app($model))
-                                                    <a href="/admin/offers/{{ $data->id }}/edit" title="Edit" class="btn btn-sm btn-primary pull-right edit">
+                                                    <a style="border: none !important;border-left: none !important;min-width: 1rem !important;max-width: 1rem !important;" href="/admin/offers/{{ $data->id }}/edit" title="Edit" class="btn btn-sm btn-primary pull-right edit btn__display--none1 tooltip__msg-list-2">
                                                         <i class="voyager-edit"></i>
                                                         <span class="hidden-xs hidden-sm">Edit</span>
                                                     </a>
                                                 @endcan
                                                 @if ($data->numar_comanda != null)
-                                                    <a title="Trimite SMS" class="btn btn-success btn-add-new btnSendSms" order_id="{{ $data->id }}">
-                                                        <i class="voyager-telephone"></i>
-                                                        <span class="hidden-xs hidden-sm">Send SMS</span>
-                                                    </a>
+                                                <a style="border: none !important;border-left: none !important;min-width: 1rem !important;max-width: 1rem !important;" title="Trimite SMS" class="btnSendSms toolTipMsg btn__display--none tooltip__msg-list-1" order_id="{{$data->id}}">
+                                                    <i class="voyager-telephone"></i> 
+                                                        <div class="tooltip_description" style="display:none" title="Mesaje comanda">
+                                                        </div>
+                                                </a>
                                                 @endif
                                             </td>
                                             
@@ -699,7 +700,12 @@
     <script src="{{ asset('/js/jquery.tooltip.js') }}"></script>
     <script>
         $(document).ready(function() {
+       
             $(".tooltipMessage").tooltip();
+
+
+
+
             $('[data-toggle="popover"]').popover({
                 container: 'body',
                 html: true,

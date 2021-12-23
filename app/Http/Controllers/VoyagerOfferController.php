@@ -37,6 +37,8 @@ use App\OfferEvent;
 use App\OrderWme;
 use App\OfferSerial;
 use App\OfferAttribute;
+use App\OffertypePreselectedColor;
+use App\Attribute;
 use PDF;
 use GuzzleHttp\Client as GuzzleClient;
 
@@ -869,6 +871,37 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             \App\Http\Controllers\Admin\VoyagerClientsController::syncClient($client->id);
           } catch(\Exception $e){}
         }
+      
+      // salvez culorile default pe baza culorii selectate
+      if($request->input('selectedColor') != null){
+        // pentru ca am modificat frontend-ul ca sa imi afiseze in selector culoarea, 
+        // acum valoare este un sir concatenat cu _ dupa care iau id-ul de culoare
+        $selectedColor = explode('_', $request->input('selectedColor'))[1];
+        // iau culorile preselectate pentru tipul de oferta selectat
+        $colors = OffertypePreselectedColor::where(['color_id' => $selectedColor, 'offer_type_id' => $offer->type])->get();
+        // daca am culori trec prin fiecare
+        if($colors && count($colors) > 0){
+          $createdAt = date('Y-m-d H:i:s');
+          foreach($colors as $color){
+            // inserez atributul selectat pentru oferta curenta(pentru ca atunci cand intru pe edit, sa am precompletate culorile aferente acestui tip de oferta)
+            $offerAttribute = new OfferAttribute();
+            $offerAttribute->offer_id = $offer->id;
+            $offerAttribute->attribute_id = $color->attribute_id;
+            $offerAttribute->col_dim_id = $color->selected_color_id;
+            $offerAttribute->created_at = $createdAt;
+            $offerAttribute->updated_at = $createdAt;
+            $offerAttribute->save();
+          }
+          // daca ajung la un numar "mare" de date in offerAttribute, resetez id-ul, pentru ca de fiecare data cand selectez o culoare, 
+          // le sterg din DB pe cele din oferta curenta si le reinserez in noua formula
+          $offAttrsCount = OfferAttribute::count('id');
+          if($offAttrsCount == 50000){
+            DB::raw('ALTER TABLE  `offer_attributes` DROP COLUMN `id`');
+            DB::raw('ALTER TABLE `offer_attributes` ADD id INT PRIMARY KEY AUTO_INCREMENT');
+          }
+        }
+        
+      }
         
       // salvez log-ul pentru oferta nou creata
         $message = "a creat o oferta noua";
@@ -1081,6 +1114,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $addr->name = $addr->delivery_contact != null ? $addr->delivery_contact : $addr->userData()->name;
           }
         }
+        $filteredColors = [];
+        $filteredDimensions = [];
         
         // Fiecare articol din produse are atribute selectate. Eu trebuie sa le filtrez pentru a nu afisa acelasi atribut de mai multe ori. Spre exemplu produsul X are culoarea Rosu iar Y are culoarea Rosu
         // Trebuie sa le filtrez si sa afisez o singura data culoarea Rosu
@@ -1104,8 +1139,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                           LEFT JOIN dimensions ON dimensions.id = product_attributes.dimension_id
                           WHERE product_attributes.dimension_id IS NOT NULL AND product_attributes.product_id IN ('.$idsString.') GROUP BY attr_title, dimension_value'));
             
-            $filteredColors = [];
-            $filteredDimensions = [];
             if($colors && count($colors)){
               foreach($colors as &$color){
                 $attrArr = explode("_", $color->attr_title);
@@ -1144,7 +1177,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             }
           }
           $offerProducts = OfferProduct::with('prices')->where('offer_id', $offer->id)->get();
-          
           // pentru oferta pe care ma aflu acum, iau produsele din tabelul de legatura pentru a le lasa disponibil campul cantitate si pentru a afisa preturile calculate pe baz grilelor de pret
           // (pentru celelalte produse pe care nu le gasesc in obiectul asta)
           // voi avea campul cantitate readonly iar restul campurilor vor avea valoarea 0
@@ -1203,89 +1235,127 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         ));
     }
   
-    public function retrievePricesForSelectedAttributes(Request $request){
-      $offer = Offer::find($request->input('order_id'));
+    public function retrievePricesForSelectedAttributes($order_id, $attributes, $modifyOfferProductsPrices){
+      $offer = Offer::find($order_id);
       $offerType = OfferType::find($offer->type);
       $offerType->parents = $offerType->parents();
       $parentIds = $offerType->parents->pluck('id');
-      
-      $attributes = $request->input("attributes");
       $offerProdsIds = [];
       $allProducts = [];
-      foreach($attributes as $attr){
+      $attrQueryArray = [];
+      $totalCalculat = 0;
+      foreach($attributes as $key => $attr){
+        $key_column = 'color_id';
         $attr = explode("_", $attr);
         $attr_id = $attr[0];
-        if(array_key_exists(2, $attr)){
-          $attr_val = json_encode([$attr[1], $attr[2]]);
-        } else{
-          $attr_val = $attr[1];
+        $attr_val_id = $attr[1];
+        $attribute = Attribute::find($attr_id);
+        if($attribute->type == 0){
+          $key_column = 'dimension_id';
         }
-//         \DB::enableQueryLog();
-        $productAttr = ProductAttribute::where([
+        array_push($attrQueryArray, [
           'attribute_id' => $attr_id,
-          'value' => $attr_val,
-        ])->whereIn('parent_id', $parentIds)->first();
-        
-        $parent_id = $productAttr != null ? $productAttr->parent_id : null;
-        if($productAttr != null){
-          $product_id = $productAttr->product_id;
-          if(!in_array($product_id, $offerProdsIds)){
-            array_push($offerProdsIds, $product_id);
+          $key_column => $attr_val_id,
+          'column' => $key_column,
+        ]);
+      }
+      if(count($attrQueryArray) > 0){
+        // trec prin toti parintii ca sa iau produsele cu atributele selectate
+        foreach($offerType->parents as $parent){
+          // iar nr maxim de atribute pe care-l poate avea un parinte
+          $nrOfAttrs = count($attributes) >= count($parent->category->attributes) ? count($parent->category->attributes) : count($attributes);
+          // iau atributele
+          $productAttrs = ProductAttribute::select("*", DB::raw('IF(COUNT(product_id) = '.$nrOfAttrs.', true, false) as founded'))->where('parent_id', $parent->id)
+            ->where(function($query) use($attrQueryArray){
+                foreach($attrQueryArray as $item){
+                  $query->orWhere('attribute_id', $item['attribute_id'])
+                        ->where($item['column'], $item[$item['column']]);
+                }
+            })->groupBy('product_id')->get();
+          // daca am gasit produse cu atributele selectate
+          if($productAttrs && count($productAttrs) > 0 && count($productAttrs->where('founded', 1)) == 1){
+          // daca gasesc doar 1 produs, iau id-ul si-l pun in offerProdsIds
+            $prodAttrIds = $productAttrs->where('founded', 1)->pluck('product_id');
+            // le pun in lista de id-uri pentru ca mai jos sa iau produsele cu toate informatiile
+            $offerProdsIds = array_merge($offerProdsIds,$prodAttrIds->toArray());
           }
         }
       }
+      // elimin dublurile, desi teoretic nu am
+      $offerProdsIds = array_unique($offerProdsIds);
+      // iar produsele pe baza array-ului facut anterior cu id-urile de produse
       $products = Product::whereIn('id', $offerProdsIds)->get();
+      // calculez/iau cursul valutar
       $cursValutar = $offer->curs_eur != null ? $offer->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
       
       $created_at = date("Y-m-d H:i:s");
-      $offerProducts = OfferProduct::where('offer_id', $offer->id)->get();
+      $offerProducts = OfferProduct::with('prices')->where('offer_id', $offer->id)->get();
       
-      // daca am avut ceva selectat pana acum sterg
-      if($offerProducts && count($offerProducts) > 0){
-        foreach($offerProducts as $offProd){
-          OfferPrice::where('offer_products_id', $offProd->id)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
-          $offProd->delete();
-        }
-      }
-      // recreez noile valori pentru offer_products si offer_prices
-      foreach($products as $product){
-        $rulesPrices = (new self())->getRulesPricesByProductCategory($product->categoryId(), $product->price, $cursValutar);
-        if($rulesPrices != null && count($rulesPrices) > 0){
-          $offerProduct = new OfferProduct();
-          $offerProduct->offer_id = $offer->id;
-          $offerProduct->product_id = $product->id;
-          $offerProduct->parent_id = $product->parent_id;
-          $offerProduct->qty = 1; // default 1 pentru cele gasite. La edit trebuie sa iau ce cantitati se trimit
-          $offerProduct->created_at = $created_at;
-          $offerProduct->updated_at = $created_at;
-          $offerProduct->save();
-          
-          foreach($rulesPrices as $rule){
-            $addedDate = date("Y-m-d H:i:s");
-            $offerPrice = new OfferPrice();
-            $offerPrice->offer_products_id = $offerProduct->id;
-            $offerPrice->rule_price_id = $rule->id;
-            $offerPrice->rule_id = $rule->rule_id;
-            $offerPrice->tip_obiect = $rule->tip_obiect;
-            $offerPrice->categorie = $rule->categorie;
-            $offerPrice->categorie_name = $rule->categorie_name;
-            $offerPrice->variabila = $rule->variabila;
-            $offerPrice->operator = $rule->operator;
-            $offerPrice->formula = $rule->formula;
-            $offerPrice->full_formula = $rule->full_formula;
-            $offerPrice->base_price = $product->price;
-            $offerPrice->ron_cu_tva = $rule->ron_cu_tva;
-            $offerPrice->product_price = $rule->price;
-            $offerPrice->currency = $cursValutar;
-            $offerPrice->eur_fara_tva = $rule->eur_fara_tva;
-            $offerPrice->created_at = $addedDate;
-            $offerPrice->updated_at = $addedDate;
-            $offerPrice->save();
+      // daca am avut ceva selectat pana acum sterg pentru a afisa noua combinatie de atribute selectate
+      if($offerProducts && count($offerProducts) > 0 && $modifyOfferProductsPrices){
+        $offProdIds = $offerProducts->pluck('id');
+        OfferProduct::whereIn('id', $offProdIds)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
+        OfferPrice::whereIn('offer_products_id', $offProdIds)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
+      } 
+      if($modifyOfferProductsPrices){
+        // recreez noile valori pentru offer_products si offer_prices
+        foreach($products as $product){
+          $rulesPrices = (new self())->getRulesPricesByProductCategory($product->categoryId(), $product->price, $cursValutar);
+          if($rulesPrices != null && count($rulesPrices) > 0){
+            $offerProduct = new OfferProduct();
+            $offerProduct->offer_id = $offer->id;
+            $offerProduct->product_id = $product->id;
+            $offerProduct->parent_id = $product->parent_id;
+            $offerProduct->qty = 1; // default 1 pentru cele gasite. La edit trebuie sa iau ce cantitati se trimit
+            $offerProduct->created_at = $created_at;
+            $offerProduct->updated_at = $created_at;
+            $offerProduct->save();
+            // pentru fiecare regula de pret, salvez in baza de date
+            // salvez toate datele pentru eventuale rapoarte
+            foreach($rulesPrices as $rule){
+              $addedDate = date("Y-m-d H:i:s");
+              $offerPrice = new OfferPrice();
+              $offerPrice->offer_products_id = $offerProduct->id;
+              $offerPrice->rule_price_id = $rule->id;
+              $offerPrice->rule_id = $rule->rule_id;
+              $offerPrice->tip_obiect = $rule->tip_obiect;
+              $offerPrice->categorie = $rule->categorie;
+              $offerPrice->categorie_name = $rule->categorie_name;
+              $offerPrice->variabila = $rule->variabila;
+              $offerPrice->operator = $rule->operator;
+              $offerPrice->formula = $rule->formula;
+              $offerPrice->full_formula = $rule->full_formula;
+              $offerPrice->base_price = $product->price;
+              $offerPrice->ron_cu_tva = $rule->ron_cu_tva;
+              $offerPrice->product_price = $rule->price;
+              $offerPrice->currency = $cursValutar;
+              $offerPrice->eur_fara_tva = $rule->eur_fara_tva;
+              $offerPrice->created_at = $addedDate;
+              $offerPrice->updated_at = $addedDate;
+              $offerPrice->save();
+            }
           }
         }
       }
+      // iau produsele din oferta si le filtrez pentru a afisa noile preturi in listarea din pagina
+      if($offerProducts && count($offerProducts) > 0){
+        foreach($offerProducts as $offProd){
+          // filtrez produsele din oferta pe baza parent_id
+          $checkedParent = $offerType->parents->filter(function($item) use($offProd){
+              return $item->id == $offProd->parent_id;
+          })->first();
+          $checkedParent->offerProducts = $offProd;
+          $ronCuTVA = $checkedParent != null ? $checkedParent->ron_cu_tva : 0;
+          $ronTotal = $ronCuTVA*$parent->offerProducts->qty;
+          $totalCalculat += $ronTotal;
+        }
+      }
+      $offer->reducere = 0;
+      $offer->total_general = number_format($totalCalculat, 2);
+      $offer->total_final = number_format($totalCalculat, 2);
+      $offer->save();
       $priceRules = \App\RulesPrice::get();
-      return ['success' => true, 'products' => $products, 'html_prices' => view('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $offer->reducere, 'offer' => $offer, 'priceRules' => $priceRules])->render()];
+      return view('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $offer->reducere, 'offer' => $offer, 'priceRules' => $priceRules])->render();
     }
   
     // la fel si functia asta... sa termin cu JSON-urile mai intai
@@ -1401,12 +1471,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $message = ' a modificat <strong>'.$resultField.'</strong> din <strong>'.$fromValue.'</strong> in <strong>'. $toValue.'</strong>';
     }
     // pentru ca am reducere trecut default 0 in baza de date, imi returneaza de fiecare data ca l-am modificat. Verific aici daca l-am modificat cu adevarat sau nu
-    if($changedField != 'reducere' || ($fromValue != 0 && $toValue != '0.00')){
+    if($changedField != 'reducere' || ($fromValue != 'empty' && $toValue != '0.00')){
       (new self())->createEvent($offer, $message);
     }
     
     $offerQty = $request->input('offerQty');
-    
     // pentru fiecare produs pentru care am modificat cantitatea, modific si in baza de date
     if($request->input('offerProductIds') != null && $offerQty != null){
       $offerProductIds = $request->input('offerProductIds');
@@ -1416,7 +1485,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $offerProduct->save();
       }
     }
-    
+    if($request->input('getPrices')){
+      $modifyOfferProductsPrices = true;
+      if($request->input('modifyOfferProductsPrices')){
+        $modifyOfferProductsPrices = false;
+      }
+      $trievedPrices = (new self())->retrievePricesForSelectedAttributes($offer->id, $selectedAttributes, $modifyOfferProductsPrices);
+      return ['success' => true, 'offer_id' => $offer->id, 'html_log' => (new self())->getHtmlLog($offer), 'html_prices' => $trievedPrices];
+    }
     return ['success' => true, 'offer_id' => $offer->id, 'html_log' => (new self())->getHtmlLog($offer)];
   }
   
@@ -1446,7 +1522,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'parent' => $offProd->getParent,
             'qty' => $offProd->qty,
           ]);
-          $dimension += $dimension != null && $dimension != 0 ? $dimension*$offProd->qty : $offProd->qty;
+          $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
           $totalQty += $offProd->qty;
         }
         $boxes = intval(ceil($totalQty/25)); // rotunjire la urmatoarea valoare
@@ -1456,7 +1532,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offer->dimension = $dimension;
       $offer->boxes = $boxes;
       // trimit toate datele in offer_pdf si generez pdf-ul
-      $pdf = PDF::loadView('vendor.pdfs.offer_pdf',['offer' => $offer, 'offerProducts' => $offerProducts]);
+      $attributes = OfferAttribute::with('attribute')->where('offer_id', $offer->id)->get();
+      $pdf = PDF::loadView('vendor.pdfs.offer_pdf',['offer' => $offer, 'offerProducts' => $offerProducts, 'attributes' => $attributes]);
       
       $message = "a generat PDF oferta";
       (new self())->createEvent($offer, $message);
@@ -1543,11 +1620,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
     try{
       $offer = Offer::find($request->input('order_id'));
-      $status = Status::where('title', 'like' , '%productie%')->first();
-      $offer->status = $status != null ? $status->id : 1;
+      $lastStatus = $offer->status;
+      $offer->status = 6; // comanda lansata in productie
       // generez un numar de comanda pe baza comenzilor create anterior. Ex: count(comenzi) + 1
       $nextOrderNumber = Offer::where('numar_comanda', '!=', null)->where('serie', $offer->serie)->max('numar_comanda');
       if($nextOrderNumber == 0){
+        if($offer->serie == null){
+          return ['success' => false, 'msg' => 'Selecteaza o serie pentru a putea lansa comanda!'];
+        }
         $nextOrderNumber = OfferSerial::find($offer->serie)->from;
       }
       $nextOrderNumber += 1;
@@ -1560,11 +1640,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => $status->title, 'html_log' => (new self())->getHtmlLog($offer)];
       } else{
         $offer->numar_comanda = null;
+        $offer->status = $lastStatus;
         $offer->save();
         return ['success' => false, 'msg' => $checkSync['msg']];
       }
     } catch(\Exception $e){
-      return ['success' => false, 'msg' => 'Statusul nu a putut fi modificat!'];
+      return ['success' => false, 'msg' => 'Comanda nu a putut fi lansata - '.$e->getMessage()];
     }
   }
   
@@ -1827,9 +1908,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $client = Client::find($order->client_id);
     $items = [];
     $products = $order->orderProducts;
-    
     foreach($products as $product){
-      $prodPrice = $product->pricesByRule(6)->first();
+      $prodPrice = $product->pricesByRule($order->price_grid_id)->first();
       array_push($items, [
         "ID" => $product->mentor_cod_obiect,
         "Pret" => $prodPrice->ron_cu_tva,
@@ -1895,8 +1975,32 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $orderWme->save();
       return ['success' => true, 'msg' => '[WinMentor] Comanda a fost trimisa cu succes la WinMentor!'];
     } else{
-      return ['success' => false, 'msg' => array_key_exists('error', $result) ? '[WinMentor] '.$result['error'] : '[WinMentor] '.$result['Error'], 'warning' => false];
+      $eroare = array_key_exists('error', $result) ? '[WinMentor] '.$result['error'] : '[WinMentor] '.$result['Error'];
+      if($eroare == "[WinMentor] Nu ai precizat ID client"){
+        $eroare = '[WinMentor] Nu ai precizat ID client - Sincronizeaza mai intai clientul, dupa care lanseaza comanda!';
+      }
+      return ['success' => false, 'msg' => $eroare, 'warning' => false];
     }
+  }
+  
+  public function getColorsByOfferType(Request $request, $offerTypeId = null){
+    if($offerTypeId == null){
+      $offerTypeId = $request->input('offerTypeId');
+    }
+    $selectedColors = OffertypePreselectedColor::with('color')->where('offer_type_id', $offerTypeId)->groupBy('color_id')->get();
+    $html_colors = '';
+    if($selectedColors && count($selectedColors) > 0){
+      $html_colors .= '<div class="form-group col-md-12 ">
+            <label class="control-label" for="name">Culoare</label>
+            <select name="selectedColor" class="form-control selectColorOfferType"><option selected disabled>Selecteaza culoarea</option>';
+      foreach($selectedColors as $item){
+        if($item->color){
+          $html_colors .= '<option value="'.$item->attribute_id.'_'.$item->color->id.'_'.$item->color->value.'_'.$item->color->ral.'">'.$item->color->ral.'</option>';
+        }
+      }
+      $html_colors .= '</select></div>';
+    }
+    return ['success' => true, 'html_colors' => $html_colors];
   }
   
 }

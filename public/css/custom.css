@@ -601,6 +601,10 @@ td {
   box-shadow: none !important;
   background-color: transparent !important;
   cursor: pointer;
+  max-width: 1rem !important;
+  width: 1rem !important;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
 }
 .btnSendSms > span {
   font-size: 12px !important;
@@ -661,4 +665,11 @@ td {
 .container-colors-list {
   max-height: 250px;
   overflow-y: scroll;
+}
+.btn__hide--cont > a:nth-child(1) {
+  border: none !important;
+  border-left: none !important;
+  width: 1rem !important;
+  min-width: 1rem !important;
+  max-width: 1rem !important;
 }

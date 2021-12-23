@@ -41,6 +41,7 @@
                 $totalCalculat += $ronTotal;
                 $totalCalculatPi += $checkRule != null ? $checkRule->base_price : 0;
               } else{
+                $checkRule = null;
                 $eurFaraTVA = 0;
                 $ronCuTVA = 0;
                 $ronTotal = 0;
@@ -49,7 +50,7 @@
             <td>
               {{$key+1}}
             </td>
-            <td style="text-align: left;"> {{$parent->title}}</td>
+            <td style="text-align: left;"> {{$parent->title}}{{$parent->id}}</td>
             <td style="text-align:center">{{$parent->um_title->title}}</td>
             <td style="text-align:center">
               <input type="number"  @if($parent->offerProducts != null) name="offerQty[]" value="{{$parent->offerProducts->qty}}" @else readonly @endif autocomplete="off" class="form-control input-sm changeQty parentId-{{$parent->id}}" parentId="{{$parent->id}}" style="width: 70px; display:inline">
@@ -66,8 +67,8 @@
             <td style="background: lightgrey"></td>
             <td style="text-align: center;">
               <input class="pret-intrare parent-{{$parent->id}}" type="hidden"/>
-              @if($parent->offerProducts != null && $parent->offerProducts->prices != null)
-                <span class="pretIntrare parent-{{$parent->id}}">{{$parent->offerProducts->prices[0]->base_price}}</span>
+              @if($checkRule != null)
+                <span class="pretIntrare parent-{{$parent->id}}">{{$checkRule->base_price}}</span>
               @else
                 <span class="pretIntrare parent-{{$parent->id}}">0.00</span>
               @endif
@@ -106,7 +107,7 @@
         <td colspan="6" class="totals" style="text-align: right;font-weight: bold;">
           <b style="font-weight: bold;">Total general cu TVA inclus - RON -</b>
         </td>
-        <td class="totals"><b><span class="totalGeneralCuTva" style="font-weight: bold;">{{$totalCalculat != 0 ? $totalCalculat : '0.00'}}</span></b><input name="totalGeneral" type="hidden"></td>
+        <td class="totals"><b><span class="totalGeneralCuTva" style="font-weight: bold;">{{$totalCalculat != 0 ? $totalCalculat : '0.00'}}</span></b><input name="totalGeneral" type="hidden" value="{{$totalCalculat != 0 ? $totalCalculat : '0.00'}}"></td>
         <td style="background: lightgrey"></td>
         <td style="text-align: center;font-weight: bold;"><span class="totalPricePi">{{$totalCalculatPi != 0 ? $totalCalculatPi : '0.00'}}</span></td>
         @foreach($cleanRulePrices as $rule)
@@ -115,7 +116,7 @@
       </tr>
       <tr class="total">
         <td colspan="6" class="totals" style="text-align: right;font-weight: bold;"><b style="font-weight: bold;">Reducere - RON -</b></td>
-        <td class="totals"><b><span class="reducereRon" style="font-weight: bold;">{{$reducere != null || $reducere != 0 ? $reducere : '0.00'}}</span></b><input name="reducere" type="hidden" value="{{$reducere}}"></td>
+        <td class="totals"><b><span class="reducereRon" style="font-weight: bold;">{{$reducere != null || $reducere != 0 ? number_format($reducere, 2) : '0.00'}}</span></b><input name="reducere" type="hidden" value="{{number_format($reducere, 2)}}"></td>
         <td style="background: lightgrey"></td>
         <th style="text-align:right;font-weight: bold;">PI</th>
         @foreach($cleanRulePrices as $rule)
@@ -125,7 +126,7 @@
       <tr class="total">
         <td colspan="6" class="totals" style="text-align: right;"><b style="font-weight: bold;">Total final - RON -</b></td>
         <td class="totals">
-          <input type="number" class="totalHandled" class="form-control" style="width: 100px; float: right; text-align: right" name="totalCalculatedPrice" value="{{$totalCalculat != 0 ? $totalCalculat : '0.00'}}">
+          <input type="number" class="totalHandled" class="form-control" style="width: 100px; float: right; text-align: right" name="totalCalculatedPrice" value="{{$totalCalculat != 0 ? number_format($totalCalculat - $reducere, 2) : '0.00'}}">
           <b style="display: none !important;"><span class="totalFinalRon" style="font-weight: bold;">{{$totalCalculat != 0 ? $totalCalculat : '0.00'}}</span></b>
           <input name="totalFinal" type="hidden">
         </td>

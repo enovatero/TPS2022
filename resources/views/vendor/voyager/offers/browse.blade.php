@@ -447,13 +447,16 @@
                                                 @if (strpos(get_class($action), 'Delete') !== false || strpos(get_class($action), 'View') !== false)
                                                     @continue
                                                 @endif
-                                                @if (!method_exists($action, 'massAction'))
+                                               <div class="class__btn-sh">
+                                               @if (!method_exists($action, 'massAction'))
                                                     @include('voyager::bread.partials.actions', ['action' => $action])
                                                 @endif
+                                                    </div>
+
                                             @endforeach
                                             @if($data->numar_comanda != null)
                                                 <!-- <a title="Trimite SMS" class="btn btn-success btn-add-new btnSendSms btn__display--none" order_id="{{$data->id}}"> -->
-                                                <a title="Trimite SMS" class="btnSendSms toolTipMsg btn__display--none" order_id="{{$data->id}}">
+                                                <a style="border: none !important;border-left: none !important;min-width: 1rem !important;max-width: 1rem !important;" title="Trimite SMS" class="btnSendSms toolTipMsg btn__display--none" order_id="{{$data->id}}">
                                                     <i class="voyager-telephone"></i> 
                                                         <div class="tooltip_description" style="display:none" title="Mesaje comanda">
                                                         </div>

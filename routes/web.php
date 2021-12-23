@@ -72,6 +72,7 @@ Route::group(['prefix' => 'admin'], function () {
   
     // Clients Winmentor
     Route::post('syncClientToMentor', [VoyagerClientsController::class, 'syncClientToMentor'])->middleware('admin.user');
+    Route::post('getColorsByOfferType', [VoyagerOfferController::class, 'getColorsByOfferType'])->middleware('admin.user');
 });
 
 Route::get('counties', [FanCourierController::class, 'getCounties']);

@@ -231,7 +231,7 @@ class FanCourierController extends Controller
             'persoana_contact_expeditor_adresa' => 'Sos. de Centura,  nr. 3',
             'observatii' => 'A se contacta telefonic',
             'continut' => $form_data['continut_pachet'] ?: 'Sisteme acoperis',
-            'nume_destinar' => $userAddress->delivery_contact,
+            'nume_destinar' => $userAddress->delivery_contact ?: $userData->name,
             'persoana_contact' => $userAddress->delivery_contact ?: $userData->name,
             'telefon' => $userAddress->phone ?: $userData->phone,
             'fax' => '',
@@ -262,7 +262,9 @@ class FanCourierController extends Controller
           // generez AWB-ul
           $awb = FanCourier::generateAwb(['fisier' => [$date_awb]]);
           $created_at = date("Y-m-d H:i:s");
-          
+          if($awb[0]->awb == false){
+            return ['success' => false, 'msg' => [0 => 'Eroare: '.$awb[0]->error_message]];
+          }
           // imi creez obiectul $fanOrder pentru a stoca toate informatiile cu care am generat awb-ul
           if($offer->awb_id != null && $offer->delivery_type == 'fan'){
             $fanOrder = FanOrder::find($offer->awb_id);
@@ -294,7 +296,7 @@ class FanCourierController extends Controller
           
           return ['success' => true, 'msg' => 'AWB-ul s-a generat cu succes!', 'awb' => $fanOrder->awb, 'id' => $offer->id, 'client_id' => $fanOrder->cont_id, 'html_log' => \App\Http\Controllers\VoyagerOfferController::getHtmlLog($offer)];
         } catch(Exception $e){
-          return ['success' => false, 'msg' => 'Eroare: '.$e->getMessage()];
+          return ['success' => false, 'msg' => [0 => 'Eroare: '.$e->getMessage()]];
         }
    }
   }

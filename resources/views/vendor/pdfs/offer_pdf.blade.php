@@ -71,9 +71,20 @@
 		<td width="{{$offerType && $offerType->header_img != null ? '35%' : '40%'}}" style="text-align: right; font-size: 10pt">
 			Oferta: <b>{{'TPS'.$offer->id}} {{$offer->serie}} / {{\Carbon\Carbon::parse($offer->offer_date)->format('d-m-Y')}}</b>
 			<p style="font-size: 8pt;"><br>
-        @if($offer->attrs() && count($offer->attrs())>0)
-          @foreach($offer->attrs() as $attribute)
-            {{$attribute['title']}}: <strong>{{strtoupper($attribute['value'])}}</strong><br>
+        @if($attributes && count($attributes)>0)
+          @foreach($attributes as $attr)
+            {{$attr->attribute->title}}: 
+            @if($attr->attribute->type == 0)
+              @php
+                $dim = \App\Dimension::find($attr->col_dim_id);
+              @endphp
+              <strong>{{strtoupper($dim->value)}}</strong><br>
+            @else 
+              @php
+                $col = \App\Color::find($attr->col_dim_id);
+              @endphp
+              <strong>{{strtoupper($col->ral)}}</strong><br>
+            @endif
           @endforeach
         @endif
       </p>
@@ -151,7 +162,7 @@
           @endphp
           <tr class="items item_wborder">
               <td align="center">{{$counter++}}</td>
-              <td>{{$offerProduct->product->name}}</td>
+              <td>{{$offerProduct->product->name}} {{$offerProduct->product->id}}</td>
               <td align="center" class="bold">{{$offerProduct->getParent->um_title->title}}</td>
               <td align="center" class="bold">{{$offerProduct->qty}}</td>
               <td align="right" class="bold">{{$eurFaraTVA}}</td>
