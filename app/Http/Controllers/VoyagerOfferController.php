@@ -1346,7 +1346,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           })->first();
           $checkedParent->offerProducts = $offProd;
           $ronCuTVA = $checkedParent != null ? $checkedParent->ron_cu_tva : 0;
-          $ronTotal = $ronCuTVA*$parent->offerProducts->qty;
+          $ronTotal = $ronCuTVA*$checkedParent->offerProducts->qty;
           $totalCalculat += $ronTotal;
         }
       }
