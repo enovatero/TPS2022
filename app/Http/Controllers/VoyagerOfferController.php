@@ -1259,6 +1259,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           'column' => $key_column,
         ]);
       }
+      $offerProducts = OfferProduct::with('prices')->where('offer_id', $offer->id)->get();
+//       dd($offerProducts && count($offerProducts) > 0 && $modifyOfferProductsPrices);
+      // daca am avut ceva selectat pana acum sterg pentru a afisa noua combinatie de atribute selectate
+      if($offerProducts && count($offerProducts) > 0 && $modifyOfferProductsPrices){
+        $offProdIds = $offerProducts->pluck('id');
+        OfferProduct::whereIn('id', $offProdIds)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
+        OfferPrice::whereIn('offer_products_id', $offProdIds)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
+      } 
       if(count($attrQueryArray) > 0){
         // trec prin toti parintii ca sa iau produsele cu atributele selectate
         foreach($offerType->parents as $parent){
@@ -1289,14 +1297,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $cursValutar = $offer->curs_eur != null ? $offer->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
       
       $created_at = date("Y-m-d H:i:s");
-      $offerProducts = OfferProduct::with('prices')->where('offer_id', $offer->id)->get();
-      
-      // daca am avut ceva selectat pana acum sterg pentru a afisa noua combinatie de atribute selectate
-      if($offerProducts && count($offerProducts) > 0 && $modifyOfferProductsPrices){
-        $offProdIds = $offerProducts->pluck('id');
-        OfferProduct::whereIn('id', $offProdIds)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
-        OfferPrice::whereIn('offer_products_id', $offProdIds)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
-      } 
+//       dd($modifyOfferProductsPrices);
       if($modifyOfferProductsPrices){
         // recreez noile valori pentru offer_products si offer_prices
         foreach($products as $product){
@@ -1474,24 +1475,24 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     if($changedField != 'reducere' || ($fromValue != 'empty' && $toValue != '0.00')){
       (new self())->createEvent($offer, $message);
     }
-    
-    $offerQty = $request->input('offerQty');
-    // pentru fiecare produs pentru care am modificat cantitatea, modific si in baza de date
-    if($request->input('offerProductIds') != null && $offerQty != null){
-      $offerProductIds = $request->input('offerProductIds');
-      foreach($offerProductIds as $key => $id){
-        $offerProduct = OfferProduct::where('id', $id)->first();
-        $offerProduct->qty = $offerQty[$key];
-        $offerProduct->save();
+    $modifyOfferProductsPrices = $request->input('modifyOfferProductsPrices') == "true" ? true : false;
+    if($request->input('getPrices') && !$modifyOfferProductsPrices){
+      $offerQty = $request->input('offerQty');
+      // pentru fiecare produs pentru care am modificat cantitatea, modific si in baza de date
+      if($request->input('offerProductIds') != null && $offerQty != null){
+        $offerProductIds = $request->input('offerProductIds');
+        foreach($offerProductIds as $key => $id){
+          $offerProduct = OfferProduct::where('id', $id)->first();
+          $offerProduct->qty = $offerQty[$key];
+          $offerProduct->save();
+        }
       }
     }
     if($request->input('getPrices')){
-      $modifyOfferProductsPrices = true;
-      if($request->input('modifyOfferProductsPrices')){
-        $modifyOfferProductsPrices = false;
-      }
       $trievedPrices = (new self())->retrievePricesForSelectedAttributes($offer->id, $selectedAttributes, $modifyOfferProductsPrices);
       return ['success' => true, 'offer_id' => $offer->id, 'html_log' => (new self())->getHtmlLog($offer), 'html_prices' => $trievedPrices];
+    } else{
+      
     }
     return ['success' => true, 'offer_id' => $offer->id, 'html_log' => (new self())->getHtmlLog($offer)];
   }

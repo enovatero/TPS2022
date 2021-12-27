@@ -1209,9 +1209,11 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               }
           });
           var isEdit = {!! $edit != "" ? 'true' : 'false' !!};
-          if("{{$isNewClient}}" && !isEdit){
+          var isNewClient = {!! $isNewClient != "" && $isNewClient == true ? 'true' : 'false' !!};
+          console.log(isNewClient);
+          if(isNewClient && !isEdit){
             var newOption = new Option("Adauga client nou", -1, false, false);
-            $("#select_client>select").append(newOption).trigger('change');
+            $("select[name=client_id]").append(newOption).val(-1).trigger('change');
           }
           $(".btnOferta").click(function(){
             $("#oferta").show();
@@ -1479,7 +1481,6 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
           var timeoutSelectAttribute = null;
           $("select").on('select2:select', function (e) {
             var vthis = this;
-            console.log($(vthis).attr('price_grid_id'));
             if($(vthis).hasClass('selectAttribute') && isEdit){
               clearTimeout(timeoutSelectAttribute);
                 timeoutSelectAttribute = setTimeout(function() {
@@ -1491,7 +1492,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                   saveNewDataToDb(true);
                 } else{
                    if((typeof $(vthis).attr('name') !== 'undefined' && $(vthis).attr('name') !== false && $(vthis).attr('name') == 'price_grid_id')){
-                    saveNewDataToDb(true, true);
+                    saveNewDataToDb(true, false);
                   } else{
                     saveNewDataToDb(false);
                   }
@@ -1506,8 +1507,8 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               var vthis = this;
               clearTimeout(timeout);
               timeout = setTimeout(function() {
-                if($(vthis).attr("name") == "offerQty[]"){
-                  saveNewDataToDb(true, true);
+                if($(vthis).attr("name") == "offerQty[]" || $(vthis).attr('name') == 'curs_eur'){
+                  saveNewDataToDb(true, false);
                 } else{
                   saveNewDataToDb(false);
                 }
@@ -1586,9 +1587,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               var data = $(".form-edit-add").serializeArray();
               if(getPrices){
                 data.push({name: 'getPrices', value: true});
-                if(modifyOfferProductsPrices){
-                  data.push({name: 'modifyOfferProductsPrices', value: modifyOfferProductsPrices});
-                }
+                data.push({name: 'modifyOfferProductsPrices', value: modifyOfferProductsPrices});
               }
               $.ajax({
                   method: 'POST',

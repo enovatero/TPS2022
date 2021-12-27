@@ -27,6 +27,9 @@
       @if($parents != null)
         @foreach($parents as $key => $parent)
           <tr parent_id="{{$parent->id}}">
+            @php
+              $parent->offerProducts = \App\OfferProduct::where('parent_id', $parent->id)->where('offer_id', $offer->id)->first();
+            @endphp
             @if($parent->offerProducts != null) 
               <input type="hidden" name="offerProductIds[]" value="{{$parent->offerProducts->id}}"/>
             @endif
