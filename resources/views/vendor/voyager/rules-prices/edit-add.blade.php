@@ -112,10 +112,10 @@
                                     <table class="table table-hover">
                                       <tbody>
                                         <tr>
-                                          <th>Tip obiect</th>
-                                          <th>Denumire obiect</th>
-                                          <th>Formula(Variabile, Operator, Alte date)</th>
-                                          <th></th>
+                                          <th style="text-align: center;">Tip obiect</th>
+                                          <th style="text-align: center;">Denumire obiect</th>
+                                          <th style="text-align: center;">Formula(Variabile, Operator, Alte date)</th>
+                                          <th style="text-align: center;">Actiuni</th>
                                         </tr> 
                                         @if($formulas && count($formulas) > 0)
                                           @foreach($formulas as $formula)
@@ -124,7 +124,14 @@
                                               <td>{{$formula->categorie_name}}</td>
                                               <td>{{$formula->full_formula}}</td>
                                               <td class="al_right">
+                                                <input type="hidden" style="display: none !important;" class="type" value="{{$formula->tip_obiect}}"/>
+                                                <input type="hidden" style="display: none !important;" class="category" value="{{$formula->categorie}}"/>
+                                                <input type="hidden" style="display: none !important;" class="categoryName" value="{{$formula->categorie_name}}"/>
+                                                <input type="hidden" style="display: none !important;" class="variabila" value="{{$formula->variabila}}"/>
+                                                <input type="hidden" style="display: none !important;" class="operator" value="{{$formula->operator}}"/>
+                                                <input type="hidden" style="display: none !important;" class="formula" value="{{$formula->formula}}"/>
                                                 <button type="button" class="btn btn-danger btn-xs btnRemoveFormula" formula_id="{{$formula->id}}" title="sterge">Sterge</button>
+                                                <button type="button" class="btn btn-danger btn-xs btnEditFormula" formula_id="{{$formula->id}}" title="editeaza">Editeaza</button>
                                               </td>
                                               <td style="display: none !important;"><div class="json_input" formula='{{json_encode($formula)}}'></div></td>
                                             </tr>  
@@ -162,8 +169,10 @@
                                             </select>
                                             <input name="formula" class="" type="number"/>
                                           </td>
-                                          <td class="al_right">
+                                          <td class="al_right" style="display: flex;">
                                             <button type="button" class="btn btn-primary btn-xs btnAddFormula btnAddFormula2" style="margin-left:1%" title="Adauga formula">Adauga formula</button>
+                                            <button type="button" class="btn btn-primary btn-xs btnEditFormulaBtn hideElement" style="margin-left:1%;" title="Salveaza">Salveaza</button>
+                                            <button type="button" class="btn btn-primary btn-xs btnCancelEditFormula hideElement" style="margin-left:1%;" title="Anuleaza">Anuleaza</button>
                                           </td>
                                         </tr>
                                     </tbody>
@@ -180,7 +189,7 @@
                           </div>
                           @endif
                         </div>
-                            <div class="panel-footer">
+                            <div class="panel-footer" style="display: flex;">
                                 @section('submit-buttons')
                                     <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>
                                 @stop
@@ -300,7 +309,17 @@
             });
             $('[data-toggle="tooltip"]').tooltip();
           
-          $(".btnAddFormula").click(function(){
+          
+          var clearAllSelections = function(){
+            $("select[name=object_type]").prop('selectedIndex',0);
+            $("select[name=object_id]").prop('selectedIndex',0);
+            $(".addedCategory").remove();
+            $("select[name=variabila]").prop('selectedIndex',0);
+            $("select[name=operator]").prop('selectedIndex',0);
+            $("input[name=formula]").val("");
+          }
+          
+          var handleFormulaObj = function(action, formula_id){
             var tip_obiect = $("select[name=object_type] option:selected").val();
             var categorie = $("select[name=object_id] option:selected").val();
             var categorie_name = $("select[name=object_id] option:selected").text();
@@ -332,21 +351,17 @@
                 <td>${tip_obiect}</td>
                 <td>${categorie_name}</td>
                 <td>${full_formula}</td>
-                <td class="al_right">
+                <td class="al_right" style="display: flex;">
                   <button type="button" class="btn btn-danger btn-xs btnRemoveFormula" title="sterge">Sterge</button>
+                  <button type="button" class="btn btn-danger btn-xs btnEditFormula" title="editeaza">Editeaza</button>
                 </td>
                 <td style="display: none !important;"><div class="json_input" formula='${created_formula_json}'></div></td>
               </tr> 
             `;
             $(html_created).insertBefore($(".tr-functions"));
-            $("select[name=object_type]").prop('selectedIndex',0);
-            $("select[name=object_id]").prop('selectedIndex',0);
-            $("select[name=variabila]").prop('selectedIndex',0);
-            $("select[name=operator]").prop('selectedIndex',0);
-            $("input[name=formula]").val("");
-            sendFormulasToDb(JSON.parse(created_formula_json), categorie, 'add');
-          });
-          
+            $(".editing-element").hide();
+            sendFormulasToDb(JSON.parse(created_formula_json), categorie, action, formula_id);
+          }
           $(document).on("click", ".btnRemoveFormula", function(){
             var formula_id = $(this).attr("formula_id");
             var vthis = this;
@@ -380,11 +395,11 @@
                 }
             });
           });
-          function sendFormulasToDb(formulaArray, categorie, type){
+          function sendFormulasToDb(formulaArray, categorie, act, formula_id){
             $.ajax({
                 method: 'POST',
                 url: '/admin/saveRulePrice',
-                data: {_token: '{{csrf_token()}}',rule_id:'{{$dataTypeContent->getKey()}}' , formulaArray: formulaArray},
+                data: {_token: '{{csrf_token()}}',rule_id:'{{$dataTypeContent->getKey()}}' , formulaArray: formulaArray, action: act, formula_id: formula_id},
                 context: this,
                 async: true,
                 cache: false,
@@ -392,9 +407,23 @@
             }).done(function(res) {
                 if (res.success == false) {
                     toastr.error(res.error, 'Eroare');
+                    $(".editing-element").show();
                     $(".just-inserted").last().remove();
                 } else{
                   toastr.success(res.msg, 'Success');
+                  $(".just-inserted").last().find(".btnRemoveFormula").attr('formula_id', res.formula_id);
+                  $(".just-inserted").last().find(".btnEditFormula").attr('formula_id', res.formula_id);
+                  var newHtml = `
+                      <input type="hidden" style="display: none !important;" class="type" value="${res.handledFormula.tip_obiect}"/>
+                      <input type="hidden" style="display: none !important;" class="category" value="${res.handledFormula.categorie}"/>
+                      <input type="hidden" style="display: none !important;" class="categoryName" value="${res.handledFormula.categorie_name}"/>
+                      <input type="hidden" style="display: none !important;" class="variabila" value="${res.handledFormula.variabila}"/>
+                      <input type="hidden" style="display: none !important;" class="operator" value="${res.handledFormula.operator}"/>
+                      <input type="hidden" style="display: none !important;" class="formula" value="${res.handledFormula.formula}"/>
+                  `;
+                  $(".just-inserted").last().find(".al_right").append(newHtml);
+                  $(".editing-element").remove();
+                  $(".btnCancelEditFormula").trigger("click");
                   if(res.categorie != null){
                     $("select[name=object_id] option[value='"+res.categorie+"']").remove();
                   }
@@ -406,6 +435,47 @@
                     window.location.reload();
                 }
             });
+          }
+          $(document).on("click", ".btnEditFormula", function(){
+            $(".btnEditFormulaBtn").attr('formula_id', $(this).attr('formula_id'));
+            $(".btnCancelEditFormula").removeClass('hideElement');
+            $(".btnAddFormula2").addClass('hideElement');
+            $(".btnEditFormulaBtn").removeClass('hideElement');
+            $(this).parent().parent().addClass('editing-element');
+            completeAllInputs($(this).parent());
+          });
+          $(document).on("click", ".btnCancelEditFormula", function(){
+            $(".btnEditFormulaBtn").removeAttr('formula_id');
+            $(".btnCancelEditFormula").addClass('hideElement');
+            $(".btnAddFormula2").removeClass('hideElement');
+            $(".btnEditFormulaBtn").addClass('hideElement');
+            $("tr.editing-element").removeClass("editing-element");
+            clearAllSelections();
+          });
+          
+          $(document).on("click", ".btnAddFormula", function(){
+            handleFormulaObj('add');
+          });
+          
+          $(document).on("click", ".btnEditFormulaBtn", function(){
+            handleFormulaObj('edit', $(this).attr('formula_id'));
+          });
+          
+          var completeAllInputs = function(parent){
+            var type = $(parent).find("input.type").val();
+            var category = $(parent).find("input.category").val();
+            var categoryName = $(parent).find("input.categoryName").val();
+            var variabila = $(parent).find("input.variabila").val();
+            var operator = $(parent).find("input.operator").val();
+            var formula = $(parent).find("input.formula").val();
+            
+            
+            $('select[name=object_type] option[value="'+type+'"]').prop('selected', true);
+            $('select[name=object_id').append('<option value="'+category+'" class="addedCategory">'+categoryName+'</option>');
+            $('select[name=object_id] option[value="'+category+'"]').prop('selected', true);
+            $('select[name=variabila] option[value="'+variabila+'"]').prop('selected', true);
+            $('select[name=operator] option[value="'+operator+'"]').prop('selected', true);
+            $('input[name=formula]').val(formula);
           }
         });
     </script>

@@ -1437,42 +1437,10 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             if($(".selectColor")[0]){
                $(".selectColor").select2({templateSelection: formatState, templateResult: formatState});
             }
-          
-          function retrievePricesForSelectedAttributes(attributes, order_id){
-            var vthis = this;
-            $.ajax({
-                method: 'POST',
-                url: '/admin/retrievePricesForSelectedAttributes',//remove this address on POST message after i get all the address data
-                data: {
-                  order_id: order_id,
-                  attributes: attributes
-                },
-                context: this,
-                async: true,
-                cache: false,
-                dataType: 'json'
-            }).done(function(res) {
-                if(res.success){
-                  // window.location.reload();
-                  $(".container-offer-listing-products").html(res.html_prices);
-                } else{
-                  toastr.error("S-a produs o eroare la calculul preturilor");
-                }
-            })
-            .fail(function(xhr, status, error) {
-                if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
-                    .indexOf("CSRF token mismatch") >= 0) {
-                    window.location.reload();
-                }
-            });
-            return true;
-          }
 
           $(document).on("input", ".changeQty", function(){
-            var parent_id = $(this).attr("parentId");
             var currentVal = $(this).val();
             currentVal = currentVal == '' ? 0 : currentVal;
-            // calculez pretul cu cantitatea asta
           });
 
           $("select[name=price_grid_id]").on('select2:select', function (e) {
@@ -1507,29 +1475,26 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             return true;
           });
           
-//           $('.selectAttribute').on('select2:select', function (e) {
-//               if(isEdit){
-//                  clearTimeout(timeoutSelectAttribute);
-//                   timeoutSelectAttribute = setTimeout(function() {
-//                     saveNewDataToDb(true);
-//                 }, 1500);
-//               }
-//           });
           
           var timeoutSelectAttribute = null;
           $("select").on('select2:select', function (e) {
             var vthis = this;
+            console.log($(vthis).attr('price_grid_id'));
             if($(vthis).hasClass('selectAttribute') && isEdit){
               clearTimeout(timeoutSelectAttribute);
                 timeoutSelectAttribute = setTimeout(function() {
-                  saveNewDataToDb(true);
+                  saveNewDataToDb(true, true);
               }, 1500);
             } else{
               setTimeout(function(){ 
                 if($(vthis).hasClass('selectAttribute')){
                   saveNewDataToDb(true);
                 } else{
-                  saveNewDataToDb(false);
+                   if((typeof $(vthis).attr('name') !== 'undefined' && $(vthis).attr('name') !== false && $(vthis).attr('name') == 'price_grid_id')){
+                    saveNewDataToDb(true, true);
+                  } else{
+                    saveNewDataToDb(false);
+                  }
                 }
               }, 1000);
             }

@@ -142,9 +142,20 @@
 	<tr>
 		<td width="48%">
 			<p style="font-size: 14pt">
-        @if($offer->attrs() && count($offer->attrs())>0)
-          @foreach($offer->attrs() as $attribute)
-            <strong>{{$attribute['title']}}:</strong> {{strtoupper($attribute['value'])}}<br>
+        @if($attributes && count($attributes)>0)
+          @foreach($attributes as $attr)
+            {{$attr->attribute->title}}: 
+            @if($attr->attribute->type == 0)
+              @php
+                $dim = \App\Dimension::find($attr->col_dim_id);
+              @endphp
+              <strong>{{strtoupper($dim->value)}}</strong><br>
+            @else 
+              @php
+                $col = \App\Color::find($attr->col_dim_id);
+              @endphp
+              <strong>{{strtoupper($col->ral)}}</strong><br>
+            @endif
           @endforeach
         @endif
       </p>

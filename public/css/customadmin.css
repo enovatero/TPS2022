@@ -754,7 +754,7 @@ input[type="time"].form-control {
 
 /* Lista oferte */
 
-.btnRemoveFormula {
+.btnRemoveFormula. .btnEditFormula {
   color: red !important;
   background-color: #fff !important;
   border: none !important;
@@ -771,7 +771,7 @@ input[type="time"].form-control {
   margin-left: 2rem !important;
 }
 
-.btnAddFormula {
+.btnAddFormula, .btnCancelEditFormula {
   color: #179bcc !important;
   background-color: #fff !important;
   border: none !important;
@@ -787,7 +787,13 @@ input[type="time"].form-control {
   justify-content: space-around !important;
   margin-left: 2rem !important;
 }
-.btnAddFormula2 {
+.btnEditFormula {
+  border: 1px solid #4ea71b !important;
+  border-left-color: #4ea71b !important;
+  border-left: 6px solid #4ea71b !important;
+  color: #4ea71b !important;
+}
+.btnAddFormula2, .btnEditFormulaBtn {
   color: #5a8ae9 !important;
   background-color: #fff !important;
   border: none !important;
@@ -1966,4 +1972,7 @@ textarea {
 
 .flex__box1--1 > div {
   width: 50% !important;
+}
+.hideElement{
+  display: none !important;
 }

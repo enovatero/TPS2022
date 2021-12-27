@@ -1555,12 +1555,18 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offerType->parents = $offerType->parents();
       
       if($offerProducts && count($offerProducts) > 0){
+        $newPrices = [];
         foreach($offerProducts as &$offProd){
           $checkRule = $offProd->prices->filter(function($item) use($offer){
               return $item->rule_id == $offer->price_grid_id;
           })->first();
           $offProd->selectedPrices = $checkRule;
-          $dimension += $dimension != null && $dimension != 0 ? $dimension*$offProd->qty : $offProd->qty;
+          array_push($newPrices, [
+            'dimension' => $offProd->getParent->dimension,
+            'parent' => $offProd->getParent,
+            'qty' => $offProd->qty,
+          ]);
+          $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
           $totalQty += $offProd->qty;
         }
         $boxes = intval(ceil($totalQty/25)); // rotunjire la urmatoarea valoare
@@ -1568,7 +1574,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       }
       $offer->dimension = $dimension;
       $offer->boxes = $boxes;
-      $pdf = PDF::loadView('vendor.pdfs.offer_pdf_order',['offer' => $offer, 'offerProducts' => $offerProducts]);
+      $attributes = OfferAttribute::with('attribute')->where('offer_id', $offer->id)->get();
+      $pdf = PDF::loadView('vendor.pdfs.offer_pdf_order',['offer' => $offer, 'offerProducts' => $offerProducts, 'attributes' => $attributes]);
       $message = "a generat Fisa PDF oferta";
       (new self())->createEvent($offer, $message);
       return $pdf->download('Fisa Comanda_TPS'.$offer->numar_comanda.'_'.date('m-d-Y').'.pdf');

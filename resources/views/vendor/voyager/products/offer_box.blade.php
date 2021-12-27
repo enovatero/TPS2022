@@ -50,7 +50,7 @@
             <td>
               {{$key+1}}
             </td>
-            <td style="text-align: left;"> {{$parent->title}}{{$parent->id}}</td>
+            <td style="text-align: left;"> {{$parent->title}}</td>
             <td style="text-align:center">{{$parent->um_title->title}}</td>
             <td style="text-align:center">
               <input type="number"  @if($parent->offerProducts != null) name="offerQty[]" value="{{$parent->offerProducts->qty}}" @else readonly @endif autocomplete="off" class="form-control input-sm changeQty parentId-{{$parent->id}}" parentId="{{$parent->id}}" style="width: 70px; display:inline">

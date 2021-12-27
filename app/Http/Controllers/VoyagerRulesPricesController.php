@@ -121,8 +121,14 @@ class VoyagerRulesPricesController extends \TCG\Voyager\Http\Controllers\Voyager
       $formulas = [];
       $formulaArray = $request->input('formulaArray');
       $rule_id = $request->input('rule_id');
-      
-      $formulaForSave = new RulePricesFormula();
+      $action = $request->input('action');
+      if($action == 'edit'){
+        $formulaForSave = RulePricesFormula::find($request->input('formula_id'));
+        $msgAct = 'modificata';
+      } else{
+        $formulaForSave = new RulePricesFormula();
+        $msgAct = 'adaugata';
+      }
       $formulaForSave->rule_id = $rule_id;
       $formulaForSave->tip_obiect = $formulaArray['tip_obiect'];
       $formulaForSave->categorie = $formulaArray['categorie'];
@@ -133,7 +139,7 @@ class VoyagerRulesPricesController extends \TCG\Voyager\Http\Controllers\Voyager
       $formulaForSave->full_formula = $formulaArray['full_formula'];
       $formulaForSave->save();
       // imi returnez categoria a carei formula am sters-o pentru a nu mai permite user-ului sa adauga inca o formula cu aceeasi categorie
-      return ['success' => true, 'msg' => 'Formula a fost adaugata cu succes!', 'categorie' => $formulaForSave->categorie];
+      return ['success' => true, 'msg' => 'Formula a fost '.$msgAct.' cu succes!', 'categorie' => $formulaForSave->categorie, 'formula_id' => $formulaForSave->id, 'handledFormula' => $formulaForSave];
     } catch(\Exception $e){
       return ['success' => false, 'error' => 'S-a produs o eroare pe server iar datele nu au putut fi salvate!'];
     }

@@ -162,7 +162,7 @@
           @endphp
           <tr class="items item_wborder">
               <td align="center">{{$counter++}}</td>
-              <td>{{$offerProduct->product->name}} {{$offerProduct->product->id}}</td>
+              <td>{{$offerProduct->product->name}}</td>
               <td align="center" class="bold">{{$offerProduct->getParent->um_title->title}}</td>
               <td align="center" class="bold">{{$offerProduct->qty}}</td>
               <td align="right" class="bold">{{$eurFaraTVA}}</td>
