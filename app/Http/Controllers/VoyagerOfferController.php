@@ -1413,7 +1413,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->distribuitor_id = $request->input('distribuitor_id');
     $offer->price_grid_id = $request->input('price_grid_id') != null ? $request->input('price_grid_id') : 6; // default Lista
     $offer->curs_eur = $request->input('curs_eur');
-    $offer->agent_id = Auth::user()->id;
+    //$offer->agent_id = Auth::user()->id; // asta nu mai trebuie suprascris
     $offer->delivery_address_user = $request->input('delivery_address_user');
     $offer->delivery_date = $request->input('delivery_date');
     $offer->observations = $request->input('observations');
