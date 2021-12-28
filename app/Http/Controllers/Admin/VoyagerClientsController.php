@@ -923,7 +923,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
       $client->sync_done = 1;
       $client->mentor_partener_code = $codPartener;
       $client->save();
-      return ['success' => true, 'msg' => 'Clientul a fost sincronizat cu succes!'];
+      return ['success' => true, 'msg' => 'Clientul a fost sincronizat cu succes!', 'client' => $client];
     } else{
       return ['success' => false, 'msg' => array_key_exists('error', $result) ? $result['error'] : $result['Error'], 'warning' => false];
     }

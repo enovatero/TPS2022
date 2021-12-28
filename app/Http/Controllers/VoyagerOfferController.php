@@ -1645,7 +1645,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       if($checkSync['success'] == true){
         $message = "a lansat comanda";
         (new self())->createEvent($offer, $message);
-        return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => $status->title, 'html_log' => (new self())->getHtmlLog($offer)];
+        return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => 'productie', 'html_log' => (new self())->getHtmlLog($offer)];
       } else{
         $offer->numar_comanda = null;
         $offer->status = $lastStatus;
@@ -1913,13 +1913,22 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     
     $url = "http://78.96.1.252:51892/datasnap/rest/TServerMethods/ComandaClient//";
     $order = offer::with('serieName')->find($order_id);
+    $reducere = $order->reducere;
+    $total = $order->total_general;
+    $discount = $reducere != null && $reducere != 0 ? number_format($reducere/$total, 4)*100 : "";
     $client = Client::find($order->client_id);
+    if($client->mentor_partener_code == null){
+      $clientSync = \App\Http\Controllers\Admin\VoyagerClientsController::syncClient($client->id);
+      if($clientSync['success']){
+        $client = $clientSync['client'];
+      }
+    }
     $items = [];
     $products = $order->orderProducts;
     foreach($products as $product){
       $prodPrice = $product->pricesByRule($order->price_grid_id)->first();
       array_push($items, [
-        "ID" => $product->mentor_cod_obiect,
+        "ID" => $product->product->mentor_cod_obiect,
         "Pret" => $prodPrice->ron_cu_tva,
         "Observatii" => "",
         "Cant" => $product->qty,
@@ -1934,7 +1943,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 "Cant" => "3"
                 */
             ],
-        "Discount" => "",
+        "Discount" => $discount,
         "AdDim" => "",
         "D1" => "",
         "D2" => "",
@@ -1942,6 +1951,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         "CantUM1" => ""
       ]);
     }
+    dd($items);
     $postData = [
         'NrDoc' => $order->numar_comanda,
         'SerieDoc' => $order->serieName->name,
