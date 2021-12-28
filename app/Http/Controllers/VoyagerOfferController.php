@@ -1645,12 +1645,10 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       if($checkSync['success'] == true){
         $message = "a lansat comanda";
         (new self())->createEvent($offer, $message);
-<<<<<<< HEAD
-        return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => 'productie', 'html_log' => (new self())->getHtmlLog($offer)];
-=======
+
         $status = Status::find($offer->status);
+
         return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => $status->title, 'html_log' => (new self())->getHtmlLog($offer)];
->>>>>>> 6241e9a308242ce54c9da049ad89e6b402b56802
       } else{
         $offer->numar_comanda = null;
         $offer->status = $lastStatus;
