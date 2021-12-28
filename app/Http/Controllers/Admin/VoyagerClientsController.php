@@ -847,14 +847,14 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     $usrAddress = UserAddress::where('user_id', $client->id)->first();
     $usrAddressList = [
       'Denumire' => $usrAddress->address,
-      'Localitate' => $usrAddress->city_name(),
+      'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
       'TipSediu' => 'S',
-      'Strada' => '',
+      'Strada' => $usrAddress->address,
       'Numar' => '',
       'Bloc' => '',
       'Etaj' => '',
       'Apartament' => '',
-      'Judet' => $usrAddress->state_name(),
+      'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$usrAddress->state_name()] : $usrAddress->state_name(),
       'Tara' => $usrAddress->country,
       'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
       'eMail' => $client->email

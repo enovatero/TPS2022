@@ -802,7 +802,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $offer->status = '1';
         $offer->serie = $data->id;
         $offer->distribuitor_id = $request->input('distribuitor_id');
-        $offer->agent_id = Auth::user()->id;
+        $offer->agent_id = Auth::user()->wme_user_id ?: 0;
         $offer->save();
 
         // daca am adaugat un client nou, cu adrese, il creez, verific datele din adresa adaugata si le salvez
