@@ -1919,7 +1919,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     foreach($products as $product){
       $prodPrice = $product->pricesByRule($order->price_grid_id)->first();
       array_push($items, [
-        "ID" => $product->mentor_cod_obiect,
+        "ID" => $product->product->mentor_cod_obiect,
         "Pret" => $prodPrice->ron_cu_tva,
         "Observatii" => "",
         "Cant" => $product->qty,
