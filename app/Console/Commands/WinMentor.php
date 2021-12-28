@@ -43,7 +43,7 @@ class WinMentor extends Command
       $counterInsert = 0;
       $counterUpdate = 0;
       // url final pentru preluare produse din mentor "pe incredere" fara token sau metoda de autentificare, momentan
-      $url = "http://78.96.1.252:51892/datasnap/rest/TServerMethods/%22GetInfoArticole%22/";
+      $url = "http://".config('winmentor.host').":".config('winmentor.port')."/datasnap/rest/TServerMethods/%22GetInfoArticole%22/";
       //  Initiate curl
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
