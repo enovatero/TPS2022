@@ -1956,7 +1956,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         "CantUM1" => ""
       ]);
     }
-    dd($items);
     $postData = [
         'NrDoc' => $order->numar_comanda,
         'SerieDoc' => $order->serieName->name,
