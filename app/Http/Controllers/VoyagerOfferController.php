@@ -45,7 +45,7 @@ use GuzzleHttp\Client as GuzzleClient;
 class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
 {
    use BreadRelationshipParser;
-  
+
     // listez ofertele (atat comenzi cat si oferte)
     public function list_offers(Request $request)
     {
@@ -198,11 +198,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if (view()->exists("voyager::$slug.browse")) {
             $view = "voyager::$slug.browse";
         }
-      
+
         $dataType->display_name_plural = 'Lista oferte';
-      
+
         $is_order_page = false;
-      
+
         return Voyager::view($view, compact(
             'actions',
             'dataType',
@@ -222,7 +222,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'is_order_page'
         ));
     }
-    
+
     // listez comenzile (au numar_comanda != null)
     // controller/view custom refacut complet
     public function list_orders_custom(Request $request)
@@ -232,7 +232,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $model = Offer::class;
         $slug = 'offers';
         $this->authorize('browse', app($model));
-        
+
         // get allowed columns
         $columns = [
             // [
@@ -397,7 +397,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             }
         }
         $columns = array_values($columns);
-        
+
         $query = Offer::query();
         $query->where('numar_comanda', '!=', null);
         $query->with([
@@ -409,14 +409,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'distribuitor',
             'delivery_address',
         ]);
-        
+
         // dynamic filters based on columns
         foreach ($columns as $column) {
             if ($column['order_by'] && $request->get($column['order_by'], false)) {
                 $query->where($column['order_by'], $request->get($column['order_by'], false));
             }
         }
-        
+
         // order by date, and user selectable column
         $orderColumn = ['offer_date', 'desc'];
         $query->orderBy($orderColumn[0], $orderColumn[1]);
@@ -424,7 +424,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $query->orderBy($request->order_by, $request->sort_order);
             $orderColumn = [$request->order_by, $request->sort_order];
         }
-        
+
         // paginate and make query
         $orders = $query->paginate($request->get('per_page', 10));
         if (count($orders) == 0 && $orders->total() > 0) {
@@ -432,7 +432,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'page' => $orders->lastPage(),
             ])));
         }
-        
+
         // calculate delayed orders
         foreach ($orders as $order) {
           $not_delivered_statuses = [
@@ -454,7 +454,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             }
           }
         }
-        
+
         // group by date, and calculate day stats
         $orderGroups = [];
         foreach ($orders->groupBy('offer_date') as $day => $dayOrders) {
@@ -476,7 +476,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 $updateOrder->save();
                 $subtotalMl += $order->prod_ml;
             }
-            
+
             $orderGroups[] = [
                 'date'           => $day,
                 'orders'         => $dayOrders,
@@ -485,7 +485,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ];
         }
         $orderGroups = collect($orderGroups)->sortByDesc('date');
-        
+
         return view('voyager::offers.lista', [
             'title'       => $title,
             'model'       => $model,
@@ -496,7 +496,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'orderGroups' => $orderGroups->values()->all(),
         ]);
     }
-    
+
     public function orderEditField(Request $request)
     {
       $offer = Offer::find($request->id);
@@ -519,14 +519,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       }
       return ['success' => true, 'newValue' => $offer->{$request->field}];
     }
-    
+
     // listez comenzile (au numar_comanda != null)
     public function list_orders(Request $request)
     {
         // noul controller cu view complet custom
         return $this->list_orders_custom($request);
-        
-        
+
+
         // GET THE SLUG, ex. 'posts', 'pages', etc.
         $slug = 'offers';
 
@@ -680,7 +680,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if (view()->exists("voyager::$slug.browse")) {
             $view = "voyager::$slug.browse";
         }
-        
+
         $dataType->display_name_plural = 'Lista comenzi';
         $is_order_page = true;
         return Voyager::view($view, compact(
@@ -702,7 +702,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'is_order_page'
         ));
     }
-    
+
     /**
      * POST BRE(A)D - Store data.
      *
@@ -712,13 +712,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
      */
     public function store(Request $request)
     {
-        $slug = $this->getSlug($request);            
+        $slug = $this->getSlug($request);
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
         // Check permission
         $this->authorize('add', app($dataType->model_name));
         $addrErrs = 0;
         if($request->input('client_id') == -1){
-          
+
           $errMessages = [];
           $addresses = $request->input('address');
           $countries = $request->input('country');
@@ -778,36 +778,36 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           }
         }
       // daca am erori in $errMessages, atunci le afisez in pagina
-      
+
         // Validate fields with ajax
 //         $val = $this->validateBread($request->all(), $dataType->addRows)->validate();
         $val = $this->validateBread($request->all(), $dataType->addRows);
 
         if ($val->fails() || $addrErrs > 0) {
           if(count($errMessages) > 0){
-            $errMessages = array_merge($errMessages, $val->errors()->toArray());         
+            $errMessages = array_merge($errMessages, $val->errors()->toArray());
           } else{
             $errMessages = $val->errors()->toArray();
           }
 //           dd(back()->withInput());
           return back()->withInput()->withErrors($errMessages);
         }
-        
+
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         event(new BreadDataAdded($dataType, $data));
-      
+
         // iau oferta creata cu insertUpdateData si-i modific datele de mai jos
         $offer = Offer::find($data->id);
         $offer->status = '1';
         $offer->serie = $data->id;
         $offer->distribuitor_id = $request->input('distribuitor_id');
-        $offer->agent_id = Auth::user()->id;
+        $offer->agent_id = Auth::user()->wme_user_id ?: 0;
         $offer->save();
-      
+
         // daca am adaugat un client nou, cu adrese, il creez, verific datele din adresa adaugata si le salvez
         if($data->client_id == -1){
-          
+
           $client = new Client;
           $client->name = $request->input('name');
           $client->email = $request->input('email');
@@ -818,7 +818,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           $client->updated_at = $currentDate;
           $client->save();
           $user_id = $client->id;
-          
+
           $offer->client_id = $user_id;
           $offer->save();
 
@@ -851,7 +851,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           $editInsertAddress->save();
           $offer->delivery_address_user = $editInsertAddress->id;
           $offer->save();
-          
+
   //         // insert/update data into individuals/legal_entities (fizica/juridica)
           if($request->input('type') == 'fizica'){
             $individual = new Individual;
@@ -871,10 +871,10 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             \App\Http\Controllers\Admin\VoyagerClientsController::syncClient($client->id);
           } catch(\Exception $e){}
         }
-      
+
       // salvez culorile default pe baza culorii selectate
       if($request->input('selectedColor') != null){
-        // pentru ca am modificat frontend-ul ca sa imi afiseze in selector culoarea, 
+        // pentru ca am modificat frontend-ul ca sa imi afiseze in selector culoarea,
         // acum valoare este un sir concatenat cu _ dupa care iau id-ul de culoare
         $selectedColor = explode('_', $request->input('selectedColor'))[1];
         // iau culorile preselectate pentru tipul de oferta selectat
@@ -892,7 +892,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $offerAttribute->updated_at = $createdAt;
             $offerAttribute->save();
           }
-          // daca ajung la un numar "mare" de date in offerAttribute, resetez id-ul, pentru ca de fiecare data cand selectez o culoare, 
+          // daca ajung la un numar "mare" de date in offerAttribute, resetez id-ul, pentru ca de fiecare data cand selectez o culoare,
           // le sterg din DB pe cele din oferta curenta si le reinserez in noua formula
           $offAttrsCount = OfferAttribute::count('id');
           if($offAttrsCount == 50000){
@@ -900,13 +900,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             DB::raw('ALTER TABLE `offer_attributes` ADD id INT PRIMARY KEY AUTO_INCREMENT');
           }
         }
-        
+
       }
-        
+
       // salvez log-ul pentru oferta nou creata
         $message = "a creat o oferta noua";
         (new self())->createEvent($offer, $message);
-      
+
         if (!$request->has('_tagging')) {
             if (auth()->user()->can('browse', $data)) {
 //                 $redirect = redirect()->route("voyager.{$dataType->slug}.index");
@@ -923,7 +923,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             return response()->json(['success' => true, 'data' => $data]);
         }
     }
-  
+
     // POST BR(E)AD
     public function update(Request $request, $id)
     {
@@ -957,7 +957,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 return $request->hasFile($item->field);
             });
         $original_data = clone($data);
-      
+
         $this->insertUpdateData($request, $slug, $dataType->editRows, $data);
 
         // foloseam inainte sa scot butonul de save, la cererea lor, pentru ca am o functie definita mai jos cu care salvez la fiecare modificare facuta in frontend printr-un ajax call
@@ -968,12 +968,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           $data->total_final = $request->input('totalCalculatedPrice') != null ? number_format(floatval($request->input('totalCalculatedPrice')), 2, '.', '') : 0;
           $data->save();
         }
-      
+
         // salvez log-ul cu oferta modificata
-      
+
         $message = "a modificat oferta";
         (new self())->createEvent($offer, $message);
-      
+
         // Delete Images
         $this->deleteBreadImages($original_data, $to_remove);
 
@@ -990,8 +990,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'message'    => __('voyager::generic.successfully_updated')." {$dataType->getTranslatedAttribute('display_name_singular')}",
             'alert-type' => 'success',
         ]);
-    }  
-  
+    }
+
     public function create(Request $request)
     {
         $slug = $this->getSlug($request);
@@ -1023,7 +1023,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if (view()->exists("voyager::$slug.edit-add")) {
             $view = "voyager::$slug.edit-add";
         }
-      
+
         // definesc variabilele cu valoarea null pe care le "verific"(le verific in pagina de edit si trebuie sa le am definite si in create pentru ca e acelasi view)
         $userAddresses = null;
         $priceRules = null;
@@ -1033,7 +1033,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $adminUsers = null;
         return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'userAddresses', 'priceRules', 'allProducts', 'select_html_grids', 'offerProducts', 'adminUsers'));
     }
-  
+
     public function edit(Request $request, $id)
     {
         $slug = $this->getSlug($request);
@@ -1078,7 +1078,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if (view()->exists("voyager::$slug.edit-add")) {
             $view = "voyager::$slug.edit-add";
         }
-      
+
         // cand intru pe pagina de edit, trebuie sa iau toate produsele pe baza tipului de oferta selectat
         $createdAttributes = [];
         $offer = $dataTypeContent;
@@ -1086,7 +1086,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $userAddresses = \App\UserAddress::where('user_id', $offer->client_id)->get();
         // iau tipul de oferta selectata
         $offerType = OfferType::find($offer->type);
-      
+
         // parintii sunt produsele(asa au vrut ei sa definim parintii ca fiind produse)
         $offerType->parents = $offerType->parents();
         // creez $parentIds pe baza id-urilor produselor din tipul de oferta
@@ -1116,7 +1116,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
         $filteredColors = [];
         $filteredDimensions = [];
-        
+
         // Fiecare articol din produse are atribute selectate. Eu trebuie sa le filtrez pentru a nu afisa acelasi atribut de mai multe ori. Spre exemplu produsul X are culoarea Rosu iar Y are culoarea Rosu
         // Trebuie sa le filtrez si sa afisez o singura data culoarea Rosu
         if($offerType->parents && count($offerType->parents) > 0){
@@ -1128,17 +1128,17 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $prodIds = $prods->pluck('id');
             $idsString = str_replace("[", "", json_encode($prodIds));
             $idsString = str_replace("]", "", $idsString);
-            $colors = DB::select( DB::raw('SELECT DISTINCT CONCAT(attributes.title, "_", attributes.id) as attr_title, CONCAT(colors.value, "_", colors.id) as color_value, colors.ral as color_ral 
-                              FROM product_attributes 
-                              JOIN attributes ON product_attributes.attribute_id = attributes.id 
+            $colors = DB::select( DB::raw('SELECT DISTINCT CONCAT(attributes.title, "_", attributes.id) as attr_title, CONCAT(colors.value, "_", colors.id) as color_value, colors.ral as color_ral
+                              FROM product_attributes
+                              JOIN attributes ON product_attributes.attribute_id = attributes.id
                               LEFT JOIN colors ON product_attributes.color_id = colors.id
                               WHERE product_attributes.color_id IS NOT NULL AND product_attributes.product_id IN ('.$idsString.') GROUP BY attr_title, color_value, color_ral'));
             $dimensions = DB::select( DB::raw('SELECT DISTINCT CONCAT(attributes.title, "_", attributes.id) as attr_title, CONCAT(dimensions.value, ";_", dimensions.id) as dimension_value
-                          FROM product_attributes 
-                          JOIN attributes ON product_attributes.attribute_id = attributes.id 
+                          FROM product_attributes
+                          JOIN attributes ON product_attributes.attribute_id = attributes.id
                           LEFT JOIN dimensions ON dimensions.id = product_attributes.dimension_id
                           WHERE product_attributes.dimension_id IS NOT NULL AND product_attributes.product_id IN ('.$idsString.') GROUP BY attr_title, dimension_value'));
-            
+
             if($colors && count($colors)){
               foreach($colors as &$color){
                 $attrArr = explode("_", $color->attr_title);
@@ -1196,17 +1196,17 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           foreach($priceRules as $price){
             if($price->id == $dataTypeContent->price_grid_id){
               $select_html_grids .= "<option value='".$price->id."' selected>[".$price->code."] - ".$price->title."</option>";
-            } else{ 
+            } else{
               $select_html_grids .= "<option value='".$price->id."'>[".$price->code."] - ".$price->title."</option>";
             }
           }
         }
         $select_html_grids .= "</select>";
-      
+
         $adminUsers = User::get();
         $offerEvents = OfferEvent::where('offer_id', $offer->id)->where('is_mention', 0)->orderBy('created_at', 'DESC')->get();
         $offerMessages = OfferEvent::where('offer_id', $offer->id)->where('is_mention', 1)->orderBy('created_at', 'DESC')->get();
-      
+
         $offerAttributes = OfferAttribute::where('offer_id', $offer->id)->get();
         $offerSelectedAttrsArray = [];
         if($offerAttributes && count($offerAttributes) > 0){
@@ -1215,11 +1215,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           }
         }
         return Voyager::view($view, compact(
-          'dataType', 
-          'dataTypeContent', 
-          'isModelTranslatable', 
-          'createdAttributes', 
-          'userAddresses', 
+          'dataType',
+          'dataTypeContent',
+          'isModelTranslatable',
+          'createdAttributes',
+          'userAddresses',
           'offer',
           'selectedAddress',
           'offerType',
@@ -1234,7 +1234,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           'offerSelectedAttrsArray',
         ));
     }
-  
+
     public function retrievePricesForSelectedAttributes($order_id, $attributes, $modifyOfferProductsPrices){
       $offer = Offer::find($order_id);
       $offerType = OfferType::find($offer->type);
@@ -1266,7 +1266,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $offProdIds = $offerProducts->pluck('id');
         OfferProduct::whereIn('id', $offProdIds)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
         OfferPrice::whereIn('offer_products_id', $offProdIds)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
-      } 
+      }
       if(count($attrQueryArray) > 0){
         // trec prin toti parintii ca sa iau produsele cu atributele selectate
         foreach($offerType->parents as $parent){
@@ -1295,7 +1295,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $products = Product::whereIn('id', $offerProdsIds)->get();
       // calculez/iau cursul valutar
       $cursValutar = $offer->curs_eur != null ? $offer->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
-      
+
       $created_at = date("Y-m-d H:i:s");
 //       dd($modifyOfferProductsPrices);
       if($modifyOfferProductsPrices){
@@ -1358,7 +1358,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $priceRules = \App\RulesPrice::get();
       return view('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $offer->reducere, 'offer' => $offer, 'priceRules' => $priceRules])->render();
     }
-  
+
     // la fel si functia asta... sa termin cu JSON-urile mai intai
     public static function getRulesPricesByProductCategory($categoryId, $productPrice = null, $currency = null){
       $tva = floatVal(setting('admin.tva_products'))/100;
@@ -1373,15 +1373,15 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         // pret_de_baza * currency
         $priceWithCurrency = $price*$currency;
         $priceWithTva = $priceWithCurrency+($priceWithCurrency*$tva);
-        
+
         $item['price'] = number_format($formatedPriceFormula, 2, '.', '');
         $item['eur_fara_tva'] = number_format($price, 2, '.', '');
         $item['ron_cu_tva'] = number_format($priceWithTva, 2, '.', '');
-        
+
       }
       return $rulePricesFilteredByCategory;
     }
-  
+
     public static function generateRandomId($length = 5) {
       $characters = '0123456789';
       $charactersLength = strlen($characters);
@@ -1394,7 +1394,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       }
       return $randomString;
     }
-  
+
   // functie care-mi salveaza in baza de date de fiecare data cand fac modificari in campurile de pe pagina Editare Oferta
   public function ajaxSaveUpdateOffer(Request $request){
     $offer_id = $request->input('offer_id');
@@ -1405,7 +1405,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     } else{
       $offer = new Offer;
     }
-    
+
     // modific toate campurile pe care le-am editat din frotend
     $offer->type = $request->input('type');
     $offer->offer_date = $request->input('offer_date');
@@ -1413,7 +1413,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->distribuitor_id = $request->input('distribuitor_id');
     $offer->price_grid_id = $request->input('price_grid_id') != null ? $request->input('price_grid_id') : 6; // default Lista
     $offer->curs_eur = $request->input('curs_eur');
-    $offer->agent_id = Auth::user()->id;
+    //$offer->agent_id = Auth::user()->id; // asta nu mai trebuie suprascris
     $offer->delivery_address_user = $request->input('delivery_address_user');
     $offer->delivery_date = $request->input('delivery_date');
     $offer->observations = $request->input('observations');
@@ -1429,7 +1429,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->delivery_details = $request->input('delivery_details');
     $offer->delivery_type = $request->input('delivery_type');
     $offer->save();
-    
+
     $selectedAttributes = $request->input('selectedAttribute');
     $updatedAt = date("Y-m-d H:i:s");
     // trebuie sa imi iau color_id si sa-l pun in selectedAttribute din edit-add
@@ -1441,7 +1441,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $attrId = $selAttr[0];
         // al doilea element e id-ul culorii/dimensiunii
         $colDimId = $selAttr[1];
-        
+
         $offerAttribute = new OfferAttribute();
         $offerAttribute->offer_id = $offer->id;
         $offerAttribute->attribute_id = $attrId;
@@ -1492,11 +1492,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $trievedPrices = (new self())->retrievePricesForSelectedAttributes($offer->id, $selectedAttributes, $modifyOfferProductsPrices);
       return ['success' => true, 'offer_id' => $offer->id, 'html_log' => (new self())->getHtmlLog($offer), 'html_prices' => $trievedPrices];
     } else{
-      
+
     }
     return ['success' => true, 'offer_id' => $offer->id, 'html_log' => (new self())->getHtmlLog($offer)];
   }
-  
+
   // generez pdf-ul cu oferta
   public function generatePDF($offer_id){
     // iau oferta pe baza id-ului de oferta
@@ -1509,7 +1509,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offerProducts = OfferProduct::with(['prices', 'product', 'getParent'])->where('offer_id', $offer->id)->get();
       $offerType = OfferType::find($offer->type);
       $offerType->parents = $offerType->parents();
-      
+
       // trec prin fiecare produs pentru a calcula dimensiunea, totalul de cantitati si cutii
       if($offerProducts && count($offerProducts) > 0){
         $newPrices = [];
@@ -1528,22 +1528,22 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
         $boxes = intval(ceil($totalQty/25)); // rotunjire la urmatoarea valoare
         $offer->prices = $newPrices;
-        
+
       }
       $offer->dimension = $dimension;
       $offer->boxes = $boxes;
       // trimit toate datele in offer_pdf si generez pdf-ul
       $attributes = OfferAttribute::with('attribute')->where('offer_id', $offer->id)->get();
       $pdf = PDF::loadView('vendor.pdfs.offer_pdf',['offer' => $offer, 'offerProducts' => $offerProducts, 'attributes' => $attributes]);
-      
+
       $message = "a generat PDF oferta";
       (new self())->createEvent($offer, $message);
-      
+
       return $pdf->download('Oferta_TPS'.$offer->serie.'_'.date('m-d-Y').'.pdf');
     }
     return ['success' => false];
   }
-  
+
   // acelasi lucru ca mai sus
   public function generatePDFFisa($offer_id){
     $offer = Offer::with(['distribuitor', 'client', 'delivery_address'])->find($offer_id);
@@ -1554,7 +1554,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offerProducts = OfferProduct::with(['prices', 'product', 'getParent'])->where('offer_id', $offer->id)->get();
       $offerType = OfferType::find($offer->type);
       $offerType->parents = $offerType->parents();
-      
+
       if($offerProducts && count($offerProducts) > 0){
         $newPrices = [];
         foreach($offerProducts as &$offProd){
@@ -1571,7 +1571,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           $totalQty += $offProd->qty;
         }
         $boxes = intval(ceil($totalQty/25)); // rotunjire la urmatoarea valoare
-        
+
       }
       $offer->dimension = $dimension;
       $offer->boxes = $boxes;
@@ -1598,7 +1598,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
     return ['success' => true, 'calendarOrders' => $calendarOrders];
   }
-  
+
   // schimb statusul comenzii in baza de date
   public function changeStatus(Request $request){
     if($request->input('order_id') == null){
@@ -1620,7 +1620,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       return ['success' => false, 'msg' => 'Statusul nu a putut fi modificat!'];
     }
   }
-  
+
   // s-a apasat butonul de Oferta acceptata - lanseaza comanda
   public function launchOrder(Request $request){
     if($request->input('order_id') == null){
@@ -1645,7 +1645,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       if($checkSync['success'] == true){
         $message = "a lansat comanda";
         (new self())->createEvent($offer, $message);
+<<<<<<< HEAD
         return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => 'productie', 'html_log' => (new self())->getHtmlLog($offer)];
+=======
+        $status = Status::find($offer->status);
+        return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => $status->title, 'html_log' => (new self())->getHtmlLog($offer)];
+>>>>>>> 6241e9a308242ce54c9da049ad89e6b402b56802
       } else{
         $offer->numar_comanda = null;
         $offer->status = $lastStatus;
@@ -1656,7 +1661,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       return ['success' => false, 'msg' => 'Comanda nu a putut fi lansata - '.$e->getMessage()];
     }
   }
-  
+
   // creez evenimentul pe care-l salvez in log-uri
   public static function createEvent($offer, $message, $is_mention = false){
     try{
@@ -1673,7 +1678,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offerEvent->save();
     } catch(\Exception $e){}
   }
- 
+
     // functia care-mi traduce campul modificat si verifica ce camp s-a modificat in baza de date
   public static function getFieldTranslatedName($oldObj, $newObj){
     $resultField = '';
@@ -1788,18 +1793,18 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       'toValue' => $toValue,
     ];
   }
-  
+
   // pentru o anumita oferta, iau log-ul
   public static function getHtmlLog($offer){
     $offerEvents = OfferEvent::where(['offer_id' => $offer->id, 'is_mention' => 0])->orderBy('created_at', 'DESC')->get();
     return view('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents])->render();
   }
-  
+
   public static function getHtmlLogMentions($offer_id, $limit = 0){
     $orderMentions = $limit != 0 ? OfferEvent::where(['offer_id' => $offer_id, 'is_mention' => 1])->orderBy('created_at', 'DESC')->take($limit)->get() : OfferEvent::where(['offer_id' => $offer_id, 'is_mention' => 1])->orderBy('created_at', 'DESC')->get();
     return view('vendor.voyager.partials.log_events', ['offerEvents' => $orderMentions])->render();
   }
-  
+
   // functie care salveaza mentiunile facute pe comanda/oferta si care trimite email catre cei tag-uiti si catre o lista de email-uri din settings
   public function saveMention(Request $request){
     if($request->input('order_id') == null){
@@ -1812,7 +1817,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offer = Offer::find($request->input('order_id'));
       $message = 'Mesaj intern: '.$request->input('message');
       (new self())->createEvent($offer, $message, true);
-      
+
       $taggedUsers = $request->input('mentionIds');
       if($taggedUsers != null){
         $taggedUsers = explode(",", $taggedUsers);
@@ -1825,13 +1830,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           Mail::to($email)->send(new Mentions($offer->id, $offer->id, $message, $offer->agent->name, 'Admin', true)); // trimite catre email-urile din admin
         }
       }
-      
+
       return ['success' => true, 'msg' => 'Mesaj salvat cu succes!', 'html_log' => (new self())->getHtmlLog($offer), 'html_messages' => (new self())->getHtmlLogMentions($offer->id)];
     } catch(\Exception $e){
       return ['success' => false, 'msg' => 'Mesajul nu a putut fi salvat!'];
     }
   }
-  
+
   // trimis SMS catre numarul de telefon al clientului atasat comenzii cu id-ul order_id
   public static function sendSms(Request $request){
     // verific daca s-a facut call-ul cu un id de comanda
@@ -1882,7 +1887,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       return ['success' => false, 'msg' => 'Mesajul nu a putut fi trimis!'];
     }
   }
-  
+
   // returnez mesajul pe baza template-ului din setting
   public static function replaceDataInTemplate($offer){
     $message = setting('admin.message_template');
@@ -1892,26 +1897,26 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
     $courier = $offer->delivery_type == 'fan' ? 'FanCourier' : 'NemoExpress';
     $message = str_replace(
-      array('{nr_comanda}', '{valoare_comanda}', '{courier}', '{awb}', '{ramburs}'),  
-      array($offer->numar_comanda, $offer->total_final, $courier, $courierObj->awb, $courierObj->ramburs_numerar),  
+      array('{nr_comanda}', '{valoare_comanda}', '{courier}', '{awb}', '{ramburs}'),
+      array($offer->numar_comanda, $offer->total_final, $courier, $courierObj->awb, $courierObj->ramburs_numerar),
       $message
     );
     return ['success' => true, 'data' => $message];
   }
-  
+
   public static function syncOrderToWinMentor($order_id){
-    $host = '78.96.1.252'; 
-    $port = 51892; 
+    $host = config('winmentor.host');
+    $port = config('winmentor.port');
     $waitTimeoutInSeconds = 3;
     $winMentorServer = false;
     try{
-      if($fp = fsockopen($host,$port,$errCode,$errStr,$waitTimeoutInSeconds)){   
+      if($fp = fsockopen($host,$port,$errCode,$errStr,$waitTimeoutInSeconds)){
          $winMentorServer = true;
       }
       fclose($fp);
     } catch(\Exception $e){}
-    
-    $url = "http://78.96.1.252:51892/datasnap/rest/TServerMethods/ComandaClient//";
+
+    $url = "http://".config('winmentor.host').":".config('winmentor.port')."/datasnap/rest/TServerMethods/ComandaClient//";
     $order = offer::with('serieName')->find($order_id);
     $reducere = $order->reducere;
     $total = $order->total_general;
@@ -1933,8 +1938,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         "Observatii" => "",
         "Cant" => $product->qty,
         "ZilePlata" => "3",
-        "CAMPEXTENSIELINIECOMANDA" => "", 
-        "Rezervari" => 
+        "CAMPEXTENSIELINIECOMANDA" => "",
+        "Rezervari" =>
             [
                 /*
                 "Gestiune" => "DC",
@@ -1969,7 +1974,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain')); 
+    curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain'));
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
     if($winMentorServer){
        $result = curl_exec($ch);
@@ -2000,7 +2005,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       return ['success' => false, 'msg' => $eroare, 'warning' => false];
     }
   }
-  
+
   public function getColorsByOfferType(Request $request, $offerTypeId = null){
     if($offerTypeId == null){
       $offerTypeId = $request->input('offerTypeId');
@@ -2020,5 +2025,5 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
     return ['success' => true, 'html_colors' => $html_colors];
   }
-  
+
 }

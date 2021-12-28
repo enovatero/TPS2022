@@ -307,7 +307,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             // If Model doest exist, get data from table name
             $dataTypeContent = DB::table($dataType->name)->where('id', $id)->first();
         }
-      
+
         foreach ($dataType->editRows as $key => $row) {
             $dataType->editRows[$key]['col_width'] = isset($row->details->width) ? $row->details->width : 100;
         }
@@ -373,7 +373,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
 
         // Check permission
         $this->authorize('edit', $data);
-      
+
       // pot adauga mai multe adrese pentru un client
         $errMessages = [];
         $addressesCounter = $request->input('addressesCounter');
@@ -407,36 +407,36 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         if($request->iban != null){
           if(!(new self())->checkIBAN($request->iban)){
             $addrErrs++;
-            $errMessages['iban'] = [0 => 'Te rugam sa introduci un iban valid!'];  
+            $errMessages['iban'] = [0 => 'Te rugam sa introduci un iban valid!'];
           }
         }
       // verific daca CNP-ul este corect
         if($request->cnp != null){
           if(!(new self())->validCNP($request->cnp)){
             $addrErrs++;
-            $errMessages['cnp'] = [0 => 'Te rugam sa introduci un CNP valid!'];  
+            $errMessages['cnp'] = [0 => 'Te rugam sa introduci un CNP valid!'];
           }
         }
         // verific daca numarul de telefon respecta formatul 0722222222
         if(!preg_match('/^[0-9]{10}+$/', $request->input('phone'))){
-          $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];  
+          $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];
           $addrErrs++;
         }
-      
+
         // Validate fields with ajax
 //         $val = $this->validateBread($request->all(), $dataType->editRows, $dataType->name, $id)->validate();
         $val = $this->validateBread($request->all(), $dataType->editRows, $dataType->name, $id);
 
         if ($val->fails() || $addrErrs > 0) {
           if(count($errMessages) > 0){
-            $errMessages = array_merge($errMessages, $val->errors()->toArray());         
+            $errMessages = array_merge($errMessages, $val->errors()->toArray());
           } else{
             $errMessages = $val->errors()->toArray();
           }
 //           dd(back()->withInput());
           return back()->withInput()->withErrors($errMessages);
         }
-      
+
         // Get fields with images to remove before updating and make a copy of $data
         $to_remove = $dataType->editRows->where('type', 'image')
             ->filter(function ($item, $key) use ($request) {
@@ -459,7 +459,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
           $states = $request->input('state');
           $cities = $request->input('city');
           $ids = $request->input('ids');
-          
+
           for($key = 0; $key < $addressesCounter; $key++){
             if(array_key_exists($key, $addresses)){
               $address = $addresses[$key];
@@ -479,7 +479,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             } else{
               $editInsertAddress = new UserAddress;
             }
-            
+
             $editInsertAddress->address = $address;
             $editInsertAddress->user_id = $user_id;
             $editInsertAddress->country = $itemCountry;
@@ -513,7 +513,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
           $entity->iban = $request->input('iban');
           $entity->save();
         }
-      
+
         if (auth()->user()->can('browse', app($dataType->model_name))) {
             $redirect = redirect()->route("voyager.{$dataType->slug}.index");
         } else {
@@ -542,7 +542,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
         // Check permission
         $this->authorize('add', app($dataType->model_name));
-        
+
       // aceleasi verificari ca la update
         $errMessages = [];
         $addressesCounter = $request->input('addressesCounter');
@@ -574,18 +574,18 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         if($request->iban != null){
           if(!(new self())->checkIBAN($request->iban)){
             $addrErrs++;
-            $errMessages['iban'] = [0 => 'Te rugam sa introduci un iban valid!'];  
+            $errMessages['iban'] = [0 => 'Te rugam sa introduci un iban valid!'];
           }
         }
         if(!preg_match('/^[0-9]{10}+$/', $request->input('phone'))){
-          $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];  
+          $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];
           $addrErrs++;
         }
         // Validate fields with ajax
         $val = $this->validateBread($request->all(), $dataType->addRows);
         if ($val->fails() || $addrErrs > 0) {
           if(count($errMessages) > 0){
-            $errMessages = array_merge($errMessages, $val->errors()->toArray());         
+            $errMessages = array_merge($errMessages, $val->errors()->toArray());
           } else{
             $errMessages = $val->errors()->toArray();
           }
@@ -593,7 +593,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
           return back()->withInput()->withErrors($errMessages);
         }
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
-      
+
         $user_id = $data->id;
         // insert/update data into user_addresses table
         if($addressesCounter != null){
@@ -602,7 +602,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
           $states = $request->input('state');
           $cities = $request->input('city');
           $ids = $request->input('ids');
-          
+
           for($key = 0; $key < $addressesCounter; $key++){
             if(array_key_exists($key, $addresses)){
               $address = $addresses[$key];
@@ -622,7 +622,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             } else{
               $editInsertAddress = new UserAddress;
             }
-            
+
             $editInsertAddress->address = $address;
             $editInsertAddress->user_id = $user_id;
             $editInsertAddress->country = $itemCountry;
@@ -743,7 +743,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
 
         return redirect()->route("voyager.{$dataType->slug}.index")->with($data);
     }
-  
+
 //   Check IBAN FUNCTION
     public static function checkIBAN($iban) {
       $iban = strtolower(str_replace(' ','',$iban));
@@ -813,28 +813,28 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
       }
       return ($year > 1800 && $year < 2099 && $cnp[12] == $hashResult);
   }
-  
+
   public function syncClientToMentor(Request $request){
     if($request->input('client_id') == null){
       return ['success' => false, 'msg' => 'Trebuie sa selectezi un client pentru a-l sincroniza cu Mentor!', 'warning' => false];
     }
     return (new self())->syncClient($request->input('client_id'));
   }
-  
+
   public static function syncClient($client_id){
-    
-    $host = '78.96.1.252'; 
-    $port = 51892; 
+
+    $host = config('winmentor.host');
+    $port = config('winmentor.port');
     $waitTimeoutInSeconds = 3;
     $winMentorServer = false;
     try{
-      if($fp = fsockopen($host,$port,$errCode,$errStr,$waitTimeoutInSeconds)){   
+      if($fp = fsockopen($host,$port,$errCode,$errStr,$waitTimeoutInSeconds)){
          $winMentorServer = true;
       }
       fclose($fp);
     } catch(\Exception $e){}
-    
-    $url = "http://78.96.1.252:51892/datasnap/rest/TServerMethods/InfoPartener//";
+
+    $url = "http://".config('winmentor.host').":".config('winmentor.port')."/datasnap/rest/TServerMethods/InfoPartener//";
     $client = Client::find($client_id);
     if($client->sync_done == 1){
       return ['success' => false, 'msg' => 'Clientul a fost deja sincronizat cu WinMentor!', 'warning' => true];
@@ -846,17 +846,17 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     $persoanaFizica = 'DA';
     $usrAddress = UserAddress::where('user_id', $client->id)->first();
     $usrAddressList = [
-      'Denumire' => $usrAddress->address, 
-      'Localitate' => $usrAddress->city_name(), 
-      'TipSediu' => 'S', 
-      'Strada' => '', 
-      'Numar' => '', 
-      'Bloc' => '', 
-      'Etaj' => '', 
-      'Apartament' => '', 
-      'Judet' => $usrAddress->state_name(), 
-      'Tara' => $usrAddress->country, 
-      'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone, 
+      'Denumire' => $usrAddress->address,
+      'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
+      'TipSediu' => 'S',
+      'Strada' => $usrAddress->address,
+      'Numar' => '',
+      'Bloc' => '',
+      'Etaj' => '',
+      'Apartament' => '',
+      'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$usrAddress->state_name()] : $usrAddress->state_name(),
+      'Tara' => $usrAddress->country,
+      'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
       'eMail' => $client->email
     ];
     if($client->type == 'fizica'){
@@ -877,7 +877,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         }
         // am diferenta de la ultimul update mai mare de 30 de zile, iau datele de la anaf si le modific in baza de date pentru firma selectata
         if($diff >= 30){
-          $anaf = new \Itrack\Anaf\Client(); 
+          $anaf = new \Itrack\Anaf\Client();
           $dataVerificare = date("Y-m-d");
           $anaf->addCif($cui, $dataVerificare);
           $company = $anaf->first();
@@ -909,7 +909,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain')); 
+    curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain'));
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
     if($winMentorServer){
        $result = curl_exec($ch);
@@ -928,5 +928,5 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
       return ['success' => false, 'msg' => array_key_exists('error', $result) ? $result['error'] : $result['Error'], 'warning' => false];
     }
   }
-  
+
 }
