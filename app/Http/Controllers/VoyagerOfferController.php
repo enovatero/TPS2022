@@ -802,7 +802,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $offer->status = '1';
         $offer->serie = $data->id;
         $offer->distribuitor_id = $request->input('distribuitor_id');
-        $offer->agent_id = Auth::user()->wme_user_id ?: 0;
+        $offer->agent_id = Auth::user()->id;
         $offer->save();
 
         // daca am adaugat un client nou, cu adrese, il creez, verific datele din adresa adaugata si le salvez
@@ -1954,6 +1954,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         "CantUM1" => ""
       ]);
     }
+    $orderUser = User::find($order->agent_id);
     $postData = [
         'NrDoc' => $order->numar_comanda,
         'SerieDoc' => $order->serieName->name,
@@ -1964,7 +1965,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         'Moneda' => 'RON',
         'PretCuAmanuntul'=> 'DA',
         'CodSubunitate' => '2',
-        'Agent' => $order->agent_id,
+        'Agent' => $orderUser->wme_user_id ?: 0,
         'Items' => $items,
     ];
     $ch = curl_init();
