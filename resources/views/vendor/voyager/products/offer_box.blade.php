@@ -119,7 +119,7 @@
       </tr>
       <tr class="total">
         <td colspan="6" class="totals" style="text-align: right;font-weight: bold;"><b style="font-weight: bold;">Reducere - RON -</b></td>
-        <td class="totals"><b><span class="reducereRon" style="font-weight: bold;">{{$reducere != null || $reducere != 0 ? number_format($reducere, 2) : '0.00'}}</span></b><input name="reducere" type="hidden" value="{{number_format($reducere, 2)}}"></td>
+        <td class="totals"><b><span class="reducereRon" style="font-weight: bold;">{{$reducere != null || $reducere != 0 ? number_format($reducere, 2, '.', '') : '0.00'}}</span></b><input name="reducere" type="hidden" value="{{number_format($reducere, 2, '.', '')}}"></td>
         <td style="background: lightgrey"></td>
         <th style="text-align:right;font-weight: bold;">PI</th>
         @foreach($cleanRulePrices as $rule)
@@ -129,7 +129,7 @@
       <tr class="total">
         <td colspan="6" class="totals" style="text-align: right;"><b style="font-weight: bold;">Total final - RON -</b></td>
         <td class="totals">
-          <input type="number" class="totalHandled" class="form-control" style="width: 100px; float: right; text-align: right" name="totalCalculatedPrice" value="{{$totalCalculat != 0 ? number_format($totalCalculat - $reducere, 2) : '0.00'}}">
+          <input type="number" class="totalHandled" class="form-control" style="width: 100px; float: right; text-align: right" name="totalCalculatedPrice" value="{{$totalCalculat != 0 ? number_format($totalCalculat - $reducere, 2, '.', '') : '0.00'}}">
           <b style="display: none !important;"><span class="totalFinalRon" style="font-weight: bold;">{{$totalCalculat != 0 ? $totalCalculat : '0.00'}}</span></b>
           <input name="totalFinal" type="hidden">
         </td>

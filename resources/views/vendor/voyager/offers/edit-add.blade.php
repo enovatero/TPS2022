@@ -2,6 +2,7 @@
 $edit = !is_null($dataTypeContent->getKey());
 $add  = is_null($dataTypeContent->getKey());
 $isNewClient = false;
+$iconUrl = $dataType->icon;
 @endphp
 
 @extends('voyager::master')
@@ -17,9 +18,11 @@ $isNewClient = false;
     <h1 class="page-title">
         <i class="{{ $dataType->icon }}"></i>
         @if($edit && $dataTypeContent->numar_comanda != null)
-          Comanda #{{$dataTypeContent->numar_comanda}}
+          <div class="page-title-text">Comanda #{{$dataTypeContent->numar_comanda}}</div>
         @else
-          Oferta {{$edit ? '#'.$dataTypeContent->serie : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
+          <div class="page-title-text">
+            Oferta {{$edit ? '#'.$dataTypeContent->serie : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
+          </div>
         @endif
     </h1>
     @include('voyager::multilingual.language-selector')
@@ -1843,6 +1846,10 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                     }
                     $(".butoane-oferta").append(html_append);
                     $(".log-evenimente .log-evenimente-list").html(resp.html_log);
+                    $(".page-title-text").html(
+                    `
+                      Comanda #${resp.numar_comanda}
+                    `);
                     toastr.success(resp.msg);
                   } else{
                     toastr.error(resp.msg);

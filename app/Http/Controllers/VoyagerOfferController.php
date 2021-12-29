@@ -1648,7 +1648,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 
         $status = Status::find($offer->status);
 
-        return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => $status->title, 'html_log' => (new self())->getHtmlLog($offer)];
+        return ['success' => true, 'msg' => 'Comanda a fost lansata cu succes!', 'status' => $status->title, 'html_log' => (new self())->getHtmlLog($offer), 'numar_comanda' => $nextOrderNumber];
       } else{
         $offer->numar_comanda = null;
         $offer->status = $lastStatus;
