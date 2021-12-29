@@ -13,14 +13,16 @@
             </a>
         @endcan
         @can('delete', app($dataType->model_name))
-            @include('voyager::partials.bulk-delete')
+            {{-- @include('voyager::partials.bulk-delete') --}}
         @endcan
         @can('edit', app($dataType->model_name))
+            {{--
             @if(!empty($dataType->order_column) && !empty($dataType->order_display_column))
                 <a href="{{ route('voyager.'.$dataType->slug.'.order') }}" class="btn btn-primary btn-add-new btn__lista-off">
                     <i class="voyager-list"></i> <span>{{ __('voyager::bread.order') }}</span>
                 </a>
             @endif
+            --}}
         @endcan
         @can('delete', app($dataType->model_name))
             @if($usesSoftDeletes)
@@ -122,7 +124,7 @@
                                         @endif
                                         @foreach($dataType->browseRows as $row)
                                         <th>
-                                            
+
                                             @if ($isServerSide && in_array($row->field, $sortableColumns))
                                                 <a href="{{ $row->sortByUrl($orderBy, $sortOrder) }}">
                                             @endif
@@ -162,10 +164,10 @@
                                                 // pe ziua selectata care sunt afisate pe pagina curenta.
                                                 // daca sunt alte comenzi pe aceeasi zi pe urmatoare pagina, nu le ia in calcul.
                                                 // $subtotalPriceDay = $dataTypeContent->where('offer_date', $data->offer_date)->sum('total_final');
-                                                
+
                                                 // asta e metoda mai corecta, dar face query-uri in plus
                                                 $subtotalPriceDay = round(app($dataType->model_name)->where('offer_date', $data->offer_date)->sum('total_final'), 2);
-                                                
+
                                                 // calc subtotal ml - metru linear
                                                 foreach ($dataTypeContent->where('offer_date', $data->offer_date)->all() as $dayOffer) {
                                                     foreach ($dayOffer->products()->with('getParent')->get() as $prod) {
@@ -253,7 +255,7 @@
                                                       @endphp
                                                             <span style="text-transform: capitalize;" class="{{$dataStatus == 'noua' ? 'offer__status--green' : ($dataStatus == 'refuzata' ? 'offer__status--orange' : ($dataStatus == 'anulata' ? 'offer__status--yellow' : ($dataStatus == 'modificata' ? 'offer__status--purple' : ( $dataStatus == 'finalizata'  ? 'offer__status--gray' : ( $dataStatus == 'retur'  ? 'offer__status--red' : ( $dataStatus == 'productie'  ? 'offer__status--blue' : '' ) ) ) ) )) }} ">
                                                               @include('voyager::formfields.relationship', ['view' => 'browse','options' => $row->details])
-                                                            </span>        
+                                                            </span>
                                                     </span>
                                                     @else
                                                       @include('voyager::formfields.relationship', ['view' => 'browse','options' => $row->details])
@@ -262,7 +264,7 @@
                                                     @if(property_exists($row->details, 'relationship'))
 
                                                         @foreach($data->{$row->field} as $item)
-                                                            {{ $item->{$row->field} }} 
+                                                            {{ $item->{$row->field} }}
                                                         @endforeach
 
                                                     @elseif(property_exists($row->details, 'options'))
@@ -457,7 +459,7 @@
                                             @if($data->numar_comanda != null)
                                                 <!-- <a title="Trimite SMS" class="btn btn-success btn-add-new btnSendSms btn__display--none" order_id="{{$data->id}}"> -->
                                                 <a style="border: none !important;border-left: none !important;min-width: 1rem !important;max-width: 1rem !important;" title="Trimite SMS" class="btnSendSms toolTipMsg btn__display--none" order_id="{{$data->id}}">
-                                                    <i class="voyager-telephone"></i> 
+                                                    <i class="voyager-telephone"></i>
                                                         <div class="tooltip_description" style="display:none" title="Mesaje comanda">
                                                         </div>
                                                 </a>
@@ -529,7 +531,7 @@
             max-width: none !important;
             min-width: 100%;
         }
-        
+
         .custom-table-filters {
             display: flex;
             flex-direction: row;
@@ -538,7 +540,7 @@
         .custom-table-filters .filter-item {
             margin-right: 10px;
         }
-        
+
         /* header tabel sticky ! :D */
         .table-responsive-fake {
             height: 100vh;
@@ -588,7 +590,7 @@
             display: block;
             background: #fff;
         }
-        
+
         .table-group-details {
             width: 100%;
             text-align: left;
@@ -618,7 +620,7 @@
         .table-files-container .table-files-link {
             display: block;
         }
-        
+
         .voyager .table {
             border-top: 1px solid #ddd !important;
             border-bottom: 1px solid #ddd !important;
@@ -670,7 +672,7 @@
 
 @section('javascript')
     @if($is_order_page)
-      <script src="../../../js/jquery.tooltip.js"></script>   
+      <script src="../../../js/jquery.tooltip.js"></script>
       <script>
         $(document).ready(function(){
           $(".tooltip_description").tooltip();
@@ -686,7 +688,7 @@
           $(".toolTipMsg").tooltip();
           $(".edit").tooltip();
 
-    
+
 
             // table header sticky
 //             $(document).on('scroll', function () {
@@ -704,7 +706,7 @@
 //                     $('.table-responsive-fake').hide(); // placeholder ca sa pastrez inaltimea paginii
 //                 }
 //             });
-            
+
             @if (!$dataType->server_side)
                 var table = $('#dataTable').DataTable({!! json_encode(
                     array_merge([
