@@ -1918,7 +1918,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $order = offer::with('serieName')->find($order_id);
     $reducere = $order->reducere;
     $total = $order->total_general;
-    $discount = $reducere != null && $reducere != 0 ? number_format($reducere/$total, 4)*100 : "";
+    $discount = $reducere != null && $reducere != 0 ? number_format($reducere/$total, 8)*100 : "";
     $client = Client::find($order->client_id);
     if($client->mentor_partener_code == null){
       $clientSync = \App\Http\Controllers\Admin\VoyagerClientsController::syncClient($client->id);
