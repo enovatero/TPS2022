@@ -1287,6 +1287,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             // le pun in lista de id-uri pentru ca mai jos sa iau produsele cu toate informatiile
             $offerProdsIds = array_merge($offerProdsIds,$prodAttrIds->toArray());
           }
+          //cautam produse fara atribute
+            if ($nrOfAttrs == 0) {
+                $thisParentProductsIds = Product::where('parent_id', $parent->id)->pluck('id')->toArray();
+                $offerProdsIds = array_merge($offerProdsIds,$thisParentProductsIds);
+            }
         }
       }
       // elimin dublurile, desi teoretic nu am
