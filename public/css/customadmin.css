@@ -42,12 +42,7 @@
   color: #8088b2;
   font-family: "Roboto-Regular";
 }
-.app-container.expanded
-  .content-container
-  .side-menu
-  .navbar-header
-  .navbar-brand
-  .title {
+.app-container.expanded .content-container .side-menu .navbar-header .navbar-brand .title {
   font-family: "Roboto-Regular";
 }
 /* End of LeftBar style */
@@ -733,9 +728,7 @@ input[type="time"].form-control {
   font-size: 0.9rem;
 }
 
-.select2-container--default
-  .select2-selection--single
-  .select2-selection__rendered {
+.select2-container--default .select2-selection--single .select2-selection__rendered {
   color: #9b9393;
   font-weight: 500;
   font-size: 0.9rem;
@@ -771,7 +764,8 @@ input[type="time"].form-control {
   margin-left: 2rem !important;
 }
 
-.btnAddFormula, .btnCancelEditFormula {
+.btnAddFormula,
+.btnCancelEditFormula {
   color: #179bcc !important;
   background-color: #fff !important;
   border: none !important;
@@ -793,7 +787,8 @@ input[type="time"].form-control {
   border-left: 6px solid #4ea71b !important;
   color: #4ea71b !important;
 }
-.btnAddFormula2, .btnEditFormulaBtn {
+.btnAddFormula2,
+.btnEditFormulaBtn {
   color: #5a8ae9 !important;
   background-color: #fff !important;
   border: none !important;
@@ -1528,21 +1523,11 @@ input[type="time"].form-control {
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
   background-color: #aaaaaa;
 }
-.app-container.expanded
-  .content-container
-  .side-menu
-  .navbar-nav
-  li.dropdown
-  > a:after {
+.app-container.expanded .content-container .side-menu .navbar-nav li.dropdown > a:after {
   content: url("../images/nav_arrow.svg") !important;
   /*   top: 29% !important; */
 }
-.app-container.expanded
-  .content-container
-  .side-menu
-  .navbar-nav
-  li.dropdown
-  > a[aria-expanded="true"]:after {
+.app-container.expanded .content-container .side-menu .navbar-nav li.dropdown > a[aria-expanded="true"]:after {
   transform: rotate(180deg);
 }
 .voyager-custom-menu-img {
@@ -1898,11 +1883,11 @@ textarea {
 }
 
 .tr__list--off td:nth-child(2) {
-  display: none !important;
+  border-right: none !important;
 }
 
 .tr__delete-col th:nth-child(2) {
-  display: none !important;
+  border-right: none !important;
 }
 
 .tr__delete-col th {
@@ -1973,6 +1958,36 @@ textarea {
 .flex__box1--1 > div {
   width: 50% !important;
 }
-.hideElement{
+.hideElement {
   display: none !important;
+}
+.statusTd .select2-selection__arrow {
+  display: none !important;
+}
+.statusTd .select2-selection {
+  border: none !important;
+  height: 25px !important;
+  padding: 0;
+}
+.statusTd .select2-selection__rendered {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  height: 25px;
+}
+.statusTd .offers__status span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 25px;
+  padding: 0px !important;
+}
+
+.tr__list--off > td:nth-child(3) {
+  border-left: hidden !important;
+}
+.tr__list--off > td:nth-child(14) {
+  border-left: hidden !important;
+}
+.form-search .col-2{
+ width: 150px;
 }

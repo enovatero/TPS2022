@@ -213,7 +213,12 @@
                                                         'sort_order' => $orderColumn[0] == $column['order_by'] && $orderColumn[1] == 'asc' ? 'desc' : 'asc',
                                                     ])) }}">
                                                     @endif
+                                                        @if($column['label'] == 'Nr Comanda')
+                                                            #Comanda
+                                                        @else
                                                         {{ $column['label'] }}
+                                                        @endif
+                                                        
                                                         @if ($orderColumn[0] == $column['order_by'])
                                                             @if ($orderColumn[1] == 'asc')
                                                                 <i class="voyager-angle-up pull-right"></i>
@@ -233,10 +238,10 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($day['orders'] as $data)
-                                        <tr >
+                                        <tr  class="tr--list--off" >
                                             @foreach ($columns as $column)
-                                                <td class="overflow__list-1" class="column_{{ $column['key'] }}">
-
+                                                <td class="overflow__list-1 @if($column['key'] == 'status') statusTd @endif" class="column_{{ $column['key'] }}">
+                                                    
 
                                                     @if ($column['key'] == 'nr_com')
                                                         <a href="/admin/offers/{{ $data->id }}/edit">
@@ -308,17 +313,53 @@
                                                                 if ($data->status_name->title == 'productie') $statusClass = 'offer__status--blue';
                                                             }
                                                         @endphp
-                                                        <span class="offers__status">
+                                                        {{-- <span class="offers__status">
                                                             <span style="text-transform: capitalize;" class="{{ $statusClass }}">
                                                                 <p {!! $statusClass == '' ? 'style="color:black"' :'' !!}>
                                                                     {{ $data->status_name ? $data->status_name->title : '-' }}
                                                                 </p>
                                                             </span>
                                                         </span>
-                                                        
+                                                       --}}
+                                                        <select class="offerStatusSelector">
+                                                            @foreach (App\Status::pluck('title', 'id') as $status_id => $status_title)
+                                                                @php
+                                                                    $statusClass = '';
+                                                                    if ($data->status_name) {
+                                                                        if ($status_title == 'noua') $statusClass = 'offer__status--green';
+                                                                        if ($status_title == 'refuzata') $statusClass = 'offer__status--orange';
+                                                                        if ($status_title == 'anulata') $statusClass = 'offer__status--yellow';
+                                                                        if ($status_title == 'modificata') $statusClass = 'offer__status--purple';
+                                                                        if ($status_title == 'finalizata') $statusClass = 'offer__status--gray';
+                                                                        if ($status_title == 'retur') $statusClass = 'offer__status--red';
+                                                                        if ($status_title == 'productie') $statusClass = 'offer__status--blue';
+                                                                    }
+                                                                @endphp
+                                                                <option
+                                                                    value="{{$status_id}}"
+                                                                    statustitle="{{$status_title}}"
+                                                                    statusclass="{{$statusClass}}"
+                                                                    orderid="{{$data->id}}"
+                                                                    {{$data->status == $status_id ? 'selected' : ''}}
+                                                                >
+                                                                    {{ ucfirst($status_title) }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
                                                     @elseif ($column['key'] == 'livrare')
                                                         @if (isset(App\Offer::$delivery_types[$data->delivery_type]))
-                                                            {{ App\Offer::$delivery_types[$data->delivery_type] }}
+                                                            @if( App\Offer::$delivery_types[$data->delivery_type] == 'Fan Courier')
+                                                                    Fan 
+
+                                                            @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Nemo Express')  
+                                                             Nemo      
+                                                            @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Livrare TPS' )
+                                                            TPS
+                                                            @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Ridicare personala' )
+                                                                    ridicare
+                                                            @else
+                                                                    {{ App\Offer::$delivery_types[$data->delivery_type] }}
+                                                            @endif
                                                         @else
                                                             -
                                                         @endif
@@ -770,6 +811,54 @@
             $(".btnUploadFiles").find(".table-files-name").text(textBefore);
             })
             return false;
+          });
+          function formatState (state) {
+              if (!state.id) {
+                return state.text;
+              }
+              var statusClass = $(state.element).attr('statusclass');
+              var statusTitle = $(state.element).attr('statustitle');
+            
+              var $state = $(
+                `
+                <span style="text-transform: capitalize;" class="${statusClass}">
+                  <p>${statusTitle}</p>
+                </span>
+                `
+              );
+              return $state;
+          };
+          $(".offerStatusSelector").select2({templateSelection: formatState}).parent().find(".select2-selection__rendered").addClass('offers__status');
+          $(".offerStatusSelector").on('select2:select', function (e) {
+            var data = e.params.data;
+            var statusId = data.id;
+            var orderId = $(data.element.outerHTML).attr('orderid');
+            // ajax pentru salvarea datelor in DB
+            $.ajax({
+                  method: 'POST',
+                  url: '/admin/changeOfferStatus',//remove this address on POST message after i get all the address data
+                  data: {
+                    orderId: orderId,
+                    statusId: statusId,
+                  },
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(resp) {
+                  if(resp.success){
+                    toastr.success(resp.msg);
+                  } else{
+                    toastr.error(resp.msg);
+                  }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
           });
           $(document).on("click", ".btnDeleteFile", function(){
               var offer_doc_id = $(this).find(".trick-offer-doc-id").text();

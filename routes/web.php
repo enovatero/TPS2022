@@ -12,6 +12,7 @@ use App\Http\Controllers\ColorsController;
 use App\Http\Controllers\NemoExpressController;
 use App\Http\Controllers\Admin\VoyagerClientsController;
 use App\Http\Controllers\VoyagerUploadFilesController;
+use App\Http\Controllers\VoyagerBaseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,8 +55,11 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('/products-incomplete', [VoyagerProductsController::class, 'productsIncomplete'])->middleware('admin.user');
   
     Route::get('/lista-oferte', [VoyagerOfferController::class, 'list_offers'])->middleware('admin.user');
-    Route::get('/lista-comenzi', [VoyagerOfferController::class, 'list_orders'])->middleware('admin.user');
+    Route::get('/lista-comenzi-tigla', [VoyagerOfferController::class, 'list_orders_custom'])->middleware('admin.user');
+    Route::get('/lista-comenzi-sipca', [VoyagerOfferController::class, 'list_orders_custom'])->middleware('admin.user');
     Route::post('/comenzi-edit-field', [VoyagerOfferController::class, 'orderEditField'])->middleware('admin.user');
+    Route::post('/changeOfferStatus', [VoyagerOfferController::class, 'changeOfferStatus'])->middleware('admin.user');
+    Route::post('/retrievePreselectedColors', [VoyagerOfferController::class, 'retrievePreselectedColors'])->middleware('admin.user');
     Route::post('/sendSms', [VoyagerOfferController::class, 'sendSms'])->middleware('admin.user');
     // Fancourier
     Route::post('generateAwb', [FanCourierController::class, 'generateAwb'])->middleware('admin.user');
@@ -69,6 +73,7 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('uploadDocuments', [VoyagerUploadFilesController::class, 'uploadDocuments'])->middleware('admin.user');
     Route::post('deleteOfferDoc', [VoyagerUploadFilesController::class, 'deleteOfferDoc'])->middleware('admin.user');
     Route::get('retrieveTempUrl/{file_id}', [VoyagerUploadFilesController::class, 'retrieveTempUrl'])->middleware('admin.user');
+    Route::get('rel/{model}/relation', [VoyagerBaseController::class, 'relation'])->middleware('admin.user');
   
     // Clients Winmentor
     Route::post('syncClientToMentor', [VoyagerClientsController::class, 'syncClientToMentor'])->middleware('admin.user');

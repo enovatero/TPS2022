@@ -16,7 +16,7 @@ class ProductParent extends Model
     return $this->hasOne(Unit::class, 'id', 'um');
   }
   public function products(){
-    return $this->hasMany(Product::class, 'parent_id', 'id');
+    return $this->hasMany(Product::class, 'parent_id', 'id')->orderBy('name', 'ASC');
   }
   public function category(){
     return $this->belongsTo(Category::class);

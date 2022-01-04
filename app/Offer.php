@@ -40,7 +40,7 @@ class Offer extends Model
   
     protected $casts = [];
     public function distribuitor(){
-      return $this->belongsTo(Distribuitor::class);
+      return $this->belongsTo(Distribuitor::class)->orderBy('title', 'ASC');
     }
     public function status_name(){
       return $this->hasOne(Status::class, 'id', 'status');
@@ -49,10 +49,10 @@ class Offer extends Model
       return $this->hasOne(Models\User::class, 'id', 'agent_id');
     }
     public function client(){
-      return $this->belongsTo(Client::class);
+      return $this->belongsTo(Client::class)->orderBy('name', 'ASC');
     }
     public function category(){
-      return $this->belongsTo(Category::class);
+      return $this->belongsTo(Category::class)->orderBy('title', 'ASC');
     }
     public function delivery_address(){
       return $this->belongsTo(UserAddress::class, 'delivery_address_user', 'id');

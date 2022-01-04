@@ -208,7 +208,7 @@ $iconUrl = $dataType->icon;
                                         @foreach($filteredColors as $key => $item)
                                           <div class="form-group">
                                             <label class="control-label" for="name">{{ucfirst($key)}}</label>
-                                            <select name="selectedAttribute[]" class="form-control selectColor selectAttribute">
+                                            <select name="selectedAttribute[]" class="form-control selectColor selectAttribute @if($item[0]->attr_id == 10) preselectColor @endif  selectColAttr-{{$item[0]->attr_id}}">
                                                 <option selected disabled>Selecteaza {{strtolower($key)}}</option>
                                                 @foreach($item as $color)
                                                   @php
@@ -232,7 +232,7 @@ $iconUrl = $dataType->icon;
                                                   @php
                                                     $currentArr = [$dimension->attr_id, $dimension->dimension_id];
                                                     $selectedDimension = '';
-                                                    if(in_array($currentArr, $offerSelectedAttrsArray)){
+                                                    if(in_array($currentArr, $offerSelectedAttrsArray) || $dimension->dimension_value == '125/087'){
                                                       $selectedDimension = 'selected';
                                                     }
                                                   @endphp
@@ -1485,10 +1485,15 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
           $("select").on('select2:select', function (e) {
             var vthis = this;
             if($(vthis).hasClass('selectAttribute') && isEdit){
-              clearTimeout(timeoutSelectAttribute);
-                timeoutSelectAttribute = setTimeout(function() {
-                  saveNewDataToDb(true, true);
-              }, 1500);
+              if($(vthis).hasClass('preselectColor')){
+                var selectedColor = $(vthis).val();
+                getPreselectedColorsAndUpdate(selectedColor);
+              } else{
+                clearTimeout(timeoutSelectAttribute);
+                  timeoutSelectAttribute = setTimeout(function() {
+                    saveNewDataToDb(true, true);
+                }, 1500);
+              }
             } else{
               setTimeout(function(){ 
                 if($(vthis).hasClass('selectAttribute')){
@@ -1503,6 +1508,42 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               }, 1000);
             }
           });
+          
+          function getPreselectedColorsAndUpdate(selectedColor){
+            $.ajax({
+                  method: 'POST',
+                  url: '/admin/retrievePreselectedColors',//remove this address on POST message after i get all the address data
+                  data: {_token: '{{csrf_token()}}', selectedColor: selectedColor, offerId: '{{$dataTypeContent->id}}', offerType: '{{$dataTypeContent->type}}'},
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(res) {
+                 if(res.success){
+                  var colors = res.colors;
+                  if(colors && colors.length > 0){
+                    for(var i=0;i<colors.length;i++){
+                      var col_for_select = colors[i].attribute_id + '_' + colors[i].selected_color_id + '_' + colors[i].selectedcolor.value + '_' + colors[i].selectedcolor.ral;
+                      var selectAttr = ".selectColAttr-" + colors[i].attribute_id;
+                      var option_check = selectAttr + " option[value='"+col_for_select+"']";
+                      if($(option_check).length > 0){
+                        $(selectAttr).prop('selectedIndex',-1).val(col_for_select).trigger('change');
+                      }
+                    }
+                  }
+                 }
+                setTimeout(function(){
+                   saveNewDataToDb(true, true);
+                }, 1500);
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
+          }
           
           var timeout = null;
 

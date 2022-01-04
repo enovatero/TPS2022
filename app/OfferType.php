@@ -40,7 +40,7 @@ class OfferType extends Model
   public function products(){
     $prodIds = json_decode($this->products, true);
     if($prodIds != null && count($prodIds) > 0){
-      return \App\Product::whereIn('id', $prodIds)->get();
+      return \App\Product::whereIn('id', $prodIds)->orderBy('name', 'ASC')->get();
     } else{
       return [];
     }
@@ -48,7 +48,7 @@ class OfferType extends Model
   public function parents(){
     $prodIds = json_decode($this->products, true);
     if($prodIds != null && count($prodIds) > 0){
-      return \App\ProductParent::with(['um_title', 'products.allAttributes', 'category.attributes'])->whereIn('id', $prodIds)->get();
+      return \App\ProductParent::with(['um_title', 'products.allAttributes', 'category.attributes'])->orderBy('title', 'ASC')->whereIn('id', $prodIds)->get();
     } else{
       return [];
     }

@@ -15,7 +15,7 @@ class Product extends Model
       return $this->belongsToMany(Attribute::class, 'product_attributes', 'product_id', 'attribute_id')->orderBy('type', 'DESC');
     }
   public function getparent(){
-    return $this->belongsTo(ProductParent::class, 'parent_id', 'id');
+    return $this->belongsTo(ProductParent::class, 'parent_id', 'id')->orderBy('title', 'ASC');
   }
   public function categoryId(){
     $parent = $this->getParent();

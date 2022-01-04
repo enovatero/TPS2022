@@ -15,6 +15,7 @@ use TCG\Voyager\Events\BreadDataUpdated;
 use TCG\Voyager\Events\BreadImagesDeleted;
 use TCG\Voyager\Facades\Voyager;
 use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Mentions;
 use Carbon\Carbon;
@@ -398,8 +399,16 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
         $columns = array_values($columns);
 
+        $tileFence = 1; // 0-gard(sipca,etc), 1-tigla
+        if($request->getPathInfo() == '/admin/lista-comenzi-sipca'){
+          $tileFence = 0;
+        }
+      
         $query = Offer::query();
         $query->where('numar_comanda', '!=', null);
+        $query->whereHas('offerType', function (Builder $qr) use($tileFence){
+            $qr->where('tile_fence', $tileFence);
+        });
         $query->with([
             'client',
             'agent',
@@ -873,35 +882,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
 
       // salvez culorile default pe baza culorii selectate
-      if($request->input('selectedColor') != null){
-        // pentru ca am modificat frontend-ul ca sa imi afiseze in selector culoarea,
-        // acum valoare este un sir concatenat cu _ dupa care iau id-ul de culoare
-        $selectedColor = explode('_', $request->input('selectedColor'))[1];
-        // iau culorile preselectate pentru tipul de oferta selectat
-        $colors = OffertypePreselectedColor::where(['color_id' => $selectedColor, 'offer_type_id' => $offer->type])->get();
-        // daca am culori trec prin fiecare
-        if($colors && count($colors) > 0){
-          $createdAt = date('Y-m-d H:i:s');
-          foreach($colors as $color){
-            // inserez atributul selectat pentru oferta curenta(pentru ca atunci cand intru pe edit, sa am precompletate culorile aferente acestui tip de oferta)
-            $offerAttribute = new OfferAttribute();
-            $offerAttribute->offer_id = $offer->id;
-            $offerAttribute->attribute_id = $color->attribute_id;
-            $offerAttribute->col_dim_id = $color->selected_color_id;
-            $offerAttribute->created_at = $createdAt;
-            $offerAttribute->updated_at = $createdAt;
-            $offerAttribute->save();
-          }
-          // daca ajung la un numar "mare" de date in offerAttribute, resetez id-ul, pentru ca de fiecare data cand selectez o culoare,
-          // le sterg din DB pe cele din oferta curenta si le reinserez in noua formula
-          $offAttrsCount = OfferAttribute::count('id');
-          if($offAttrsCount == 50000){
-            DB::raw('ALTER TABLE  `offer_attributes` DROP COLUMN `id`');
-            DB::raw('ALTER TABLE `offer_attributes` ADD id INT PRIMARY KEY AUTO_INCREMENT');
-          }
-        }
-
-      }
+      $selectedColor = $request->input('selectedColor');
+      (new self())->updateOfferAttributeForPreselectedColor($request, $offer->id, $offer->type);
 
       // salvez log-ul pentru oferta nou creata
         $message = "a creat o oferta noua";
@@ -922,6 +904,43 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         } else {
             return response()->json(['success' => true, 'data' => $data]);
         }
+    }
+  
+    public function retrievePreselectedColors(Request $request){
+      return ['success' => true , 'colors' => (new self())->updateOfferAttributeForPreselectedColor($request->input('selectedColor'), $request->input('offerId'), $request->input('offerType'))];
+    }
+  
+    public static function updateOfferAttributeForPreselectedColor($selectedColor, $offerId, $offerType){
+      $colors = [];
+      if($selectedColor != null){
+        // pentru ca am modificat frontend-ul ca sa imi afiseze in selector culoarea,
+        // acum valoare este un sir concatenat cu _ dupa care iau id-ul de culoare
+        $selectedColor = explode('_', $selectedColor)[1];
+        // iau culorile preselectate pentru tipul de oferta selectat
+        $colors = OffertypePreselectedColor::with('selectedcolor')->where(['color_id' => $selectedColor, 'offer_type_id' => $offerType])->get();
+        // daca am culori trec prin fiecare
+        if($colors && count($colors) > 0){
+          $createdAt = date('Y-m-d H:i:s');
+          foreach($colors as $color){
+            // inserez atributul selectat pentru oferta curenta(pentru ca atunci cand intru pe edit, sa am precompletate culorile aferente acestui tip de oferta)
+            $offerAttribute = new OfferAttribute();
+            $offerAttribute->offer_id = $offerId;
+            $offerAttribute->attribute_id = $color->attribute_id;
+            $offerAttribute->col_dim_id = $color->selected_color_id;
+            $offerAttribute->created_at = $createdAt;
+            $offerAttribute->updated_at = $createdAt;
+            $offerAttribute->save();
+          }
+          // daca ajung la un numar "mare" de date in offerAttribute, resetez id-ul, pentru ca de fiecare data cand selectez o culoare,
+          // le sterg din DB pe cele din oferta curenta si le reinserez in noua formula
+          $offAttrsCount = OfferAttribute::count('id');
+          if($offAttrsCount == 50000){
+            DB::raw('ALTER TABLE  `offer_attributes` DROP COLUMN `id`');
+            DB::raw('ALTER TABLE `offer_attributes` ADD id INT PRIMARY KEY AUTO_INCREMENT');
+          }
+        }
+      }
+      return $colors;
     }
 
     // POST BR(E)AD
@@ -1138,7 +1157,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                           JOIN attributes ON product_attributes.attribute_id = attributes.id
                           LEFT JOIN dimensions ON dimensions.id = product_attributes.dimension_id
                           WHERE product_attributes.dimension_id IS NOT NULL AND product_attributes.product_id IN ('.$idsString.') GROUP BY attr_title, dimension_value'));
-
             if($colors && count($colors)){
               foreach($colors as &$color){
                 $attrArr = explode("_", $color->attr_title);
@@ -2027,6 +2045,20 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $html_colors .= '</select></div>';
     }
     return ['success' => true, 'html_colors' => $html_colors];
+  }
+  
+  public function changeOfferStatus(Request $request){
+    $order = Offer::find($request->orderId);
+    $statusId = $request->statusId;
+    if (!$order) {
+      return ['success' => false, 'msg' => 'Comanda nu exista'];
+    }
+    if(!$statusId){
+      return ['success' => false, 'msg' => 'Selecteaza un status!'];
+    }
+    $order->status = $statusId;
+    $order->save();
+    return ['success' => true, 'msg' => 'Statusul a fost modificat cu succes!'];
   }
 
 }
