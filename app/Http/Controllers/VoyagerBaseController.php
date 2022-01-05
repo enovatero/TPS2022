@@ -90,10 +90,15 @@ class VoyagerBaseController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCon
                     ];
                 }
 //                 array_multisort($results, SORT_ASC, $results);
+                if($options->model == "App\Client"){
+                  $results[] = [
+                        'id'   => '-1',
+                        'text' => "Adauga client nou",
+                    ];
+                }
                 usort($results, function ($item1, $item2) {
                     return $item1['text'] <=> $item2['text'];
                 });
-
                 if (!$row->required && !$search && $page == 1) {
                   array_unshift($results, [
                       'id'   => '',

@@ -61,6 +61,7 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('/changeOfferStatus', [VoyagerOfferController::class, 'changeOfferStatus'])->middleware('admin.user');
     Route::post('/retrievePreselectedColors', [VoyagerOfferController::class, 'retrievePreselectedColors'])->middleware('admin.user');
     Route::post('/sendSms', [VoyagerOfferController::class, 'sendSms'])->middleware('admin.user');
+    Route::post('/addNewClient', [VoyagerOfferController::class, 'createNewClient'])->middleware('admin.user');
     // Fancourier
     Route::post('generateAwb', [FanCourierController::class, 'generateAwb'])->middleware('admin.user');
     Route::get('printAwb/{awb}/{client_id}', [FanCourierController::class, 'printAwb'])->middleware('admin.user');

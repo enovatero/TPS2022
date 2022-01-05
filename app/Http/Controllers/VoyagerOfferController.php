@@ -762,6 +762,135 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
     }
   
+    public function createNewClient(Request $request){
+        $addrErrs = 0;
+        $errMessages = [];
+        $addresses = $request->input('address');
+        $countries = $request->input('country');
+        $states = $request->input('state');
+        $cities = $request->input('city');
+        // verific daca au fost completate toate adresele
+        if($addresses == null || !array_key_exists(0, $addresses)){
+          $addrErrs++;
+        }
+        if($countries == null || !array_key_exists(0, $countries)){
+          $addrErrs++;
+        }
+        if($states == null || !array_key_exists(0, $states)){
+          $addrErrs++;
+        }
+        if($cities == null || !array_key_exists(0, $cities)){
+          $addrErrs++;
+        }
+        if($addrErrs > 0){
+          $errMessages[] = 'Va rugam sa verificati campurile Adresa, Tara, Judet, Oras!';
+        }
+        $pers_type = $request->input('persoana_type');
+        $cui = $request->input('cui');
+        $name = $request->input('name');
+        $reg_com = $request->input('reg_com');
+        $banca = $request->input('banca');
+        $iban = $request->input('iban');
+        $cnp = $request->input('cnp');
+        $email = $request->input('email');
+        $phone = $request->input('phone');
+        if($name == null){
+          $errMessages[] = 'Va rugam sa completati numele!';
+        }
+        if($email == null){
+          $errMessages[] = 'Va rugam sa completati adresa de email!';
+        }
+        if($phone == null){
+          $errMessages[] = 'Va rugam sa completati nr. de telefon!';
+        }
+        if($pers_type == 'fizica'){
+          if($cnp == null){
+            $errMessages[] = 'Va rugam sa completati CNP-ul!';
+          }
+        } else{
+          if($cui == null){
+            $errMessages[] = 'Va rugam sa completati CUI-ul!';
+          }
+          if($reg_com == null){
+            $errMessages[] = 'Va rugam sa completati Registrul comertului!';
+          }
+          if($banca == null){
+            $errMessages[] = 'Va rugam sa completati Banca!';
+          }
+          if($iban == null){
+            $errMessages[] = 'Va rugam sa completati IBAN-ul!';
+          }
+        }
+        if ($addrErrs > 0) {
+          return ['success' => false, 'msg' => $errMessages];
+        }
+      
+        $client = new Client;
+        $client->name = $request->input('name');
+        $client->email = $request->input('email');
+        $client->phone = $request->input('phone');
+        $client->type = $request->input('persoana_type');
+        $currentDate = date('Y-m-d H:i:s');
+        $client->created_at = $currentDate;
+        $client->updated_at = $currentDate;
+        $client->save();
+        $user_id = $client->id;
+        
+        $offer = Offer::find($request->input('offer_id'));
+        $offer->client_id = $user_id;
+        $offer->save();
+
+        // insert/update data into user_addresses table
+        $addresses = $request->input('address');
+        $countries = $request->input('country');
+        $states = $request->input('state');
+        $cities = $request->input('city');
+        $ids = $request->input('ids');
+
+        if(array_key_exists(0, $addresses)){
+          $address = $addresses[0];
+        }
+        if(array_key_exists(0, $countries)){
+          $itemCountry = $countries[0];
+        }
+        if($states != null && array_key_exists(0, $states)){
+          $itemState = $states[0];
+        }
+        if($cities != null && array_key_exists(0, $cities)){
+          $itemCity = $cities[0];
+        }
+        // creez adresa user-ului adaugat
+        $editInsertAddress = new UserAddress;
+        $editInsertAddress->address = $address;
+        $editInsertAddress->user_id = $user_id;
+        $editInsertAddress->country = $itemCountry;
+        $editInsertAddress->state = $itemState;
+        $editInsertAddress->city = $itemCity;
+        $editInsertAddress->save();
+        $offer->delivery_address_user = $editInsertAddress->id;
+        $offer->save();
+
+//         // insert/update data into individuals/legal_entities (fizica/juridica)
+        if($request->input('type') == 'fizica'){
+          $individual = new Individual;
+          $individual->user_id = $user_id;
+          $individual->cnp = $request->input('cnp');
+          $individual->save();
+        } else{
+          $entity = new LegalEntity;
+          $entity->user_id = $user_id;
+          $entity->cui = $request->input('cui');
+          $entity->reg_com = $request->input('reg_com');
+          $entity->banca = $request->input('banca');
+          $entity->iban = $request->input('iban');
+          $entity->save();
+        }
+        try{
+          \App\Http\Controllers\Admin\VoyagerClientsController::syncClient($client->id);
+        } catch(\Exception $e){}
+        return ['success' => true, 'client_id' => $client->id, 'client_name' => $client->name];
+    }
+  
     public function retrievePreselectedColors(Request $request){
       return ['success' => true , 'colors' => (new self())->updateOfferAttributeForPreselectedColor($request->input('selectedColor'), $request->input('offerId'), $request->input('offerType'))];
     }

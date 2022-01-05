@@ -2002,3 +2002,21 @@ textarea {
 .form-search-master, .form-search-master #search-input input, .form-search-master #search-input .input-group{
   width: 100%;
 }
+#create_new_client .modal-dialog>.modal-content .modal-body>.container-doua-col-right{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+}
+#create_new_client .modal-dialog>.modal-content .modal-body>.container-doua-col-right>.col-md-12:first-of-type{
+  display: none !important;
+}
+#create_new_client .modal-dialog>.modal-content .modal-body>.container-doua-col-right>.col-md-12{
+  width: 48%;
+}
+.tip-client-container{
+  width: 100% !important;
+}
+.modal-alert-container-client{
+  display: none !important;
+}

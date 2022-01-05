@@ -737,78 +737,80 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                             
                             
                         </div>
-                          @if($add)
-                            <div class="panel-body container-doua-col-right" @if (count($errors) > 0 && array_key_exists('address', $errors->toArray())) style="display: block !important;" @endif>
-                              <div class="form-group  col-md-12 ">     
-                                 <h4 class="control-label font-weight-bold" for="name">Adaugare client</h4>     
+                          <div class="panel-body container-doua-col-right" @if (count($errors) > 0 && array_key_exists('address', $errors->toArray())) style="display: block !important;" @endif>
+                            {{csrf_field()}}
+                            @if($edit)
+                              <input name="offer_id" type="hidden"/>
+                            @endif
+                            <div class="form-group  col-md-12 ">     
+                               <h4 class="control-label font-weight-bold" for="name">Adaugare client</h4>     
+                            </div>
+                            <div class="form-group  col-md-12 tip-client-container">
+                               <label class="control-label" for="name">Tip client</label>
+                               <ul class="radio">
+                                  <li>
+                                      <input type="radio" id="option-type-fizica" name="persoana_type" value="fizica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'fizica' || old('persoana_type', $dataTypeContent->persoana_type) == '') checked="" @endif>
+                                      <label for="option-type-fizica">Persoana fizica</label>
+                                      <div class="check"></div>
+                                  </li>
+                                  <li>
+                                      <input type="radio" id="option-type-juridica" name="persoana_type" value="juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') checked="" @endif>
+                                      <label for="option-type-juridica">Persoana juridica</label>
+                                      <div class="check"></div>
+                                  </li>
+                               </ul>
+                            </div>
+                              <div class="form-group col-md-12">
+                               <label class="control-label" for="name">Nume</label>
+                               <input class="form-control" type="text" name="name" autocomplete="off" value="{{ old('name', $dataTypeContent->name ?? '') != '' ? old('name', $dataTypeContent->name) : ''}}"/>                          
                               </div>
-                              <div class="form-group  col-md-12 ">
-                                 <label class="control-label" for="name">Tip client</label>
-                                 <ul class="radio">
-                                    <li>
-                                        <input type="radio" id="option-type-fizica" name="persoana_type" value="fizica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'fizica' || old('persoana_type', $dataTypeContent->persoana_type) == '') checked="" @endif>
-                                        <label for="option-type-fizica">Persoana fizica</label>
-                                        <div class="check"></div>
-                                    </li>
-                                    <li>
-                                        <input type="radio" id="option-type-juridica" name="persoana_type" value="juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') checked="" @endif>
-                                        <label for="option-type-juridica">Persoana juridica</label>
-                                        <div class="check"></div>
-                                    </li>
-                                 </ul>
+                              <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
+                               <label class="control-label" for="name">CUI</label>
+                               <input class="form-control" type="text" name="cui" autocomplete="off" value="{{ old('cui', $dataTypeContent->cui ?? '') != '' ? old('cui', $dataTypeContent->cui) : ''}}"/>                          
                               </div>
-                                <div class="form-group col-md-12">
-                                 <label class="control-label" for="name">Nume</label>
-                                 <input class="form-control" type="text" name="name" autocomplete="off" value="{{ old('name', $dataTypeContent->name ?? '') != '' ? old('name', $dataTypeContent->name) : ''}}"/>                          
-                                </div>
-                                <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
-                                 <label class="control-label" for="name">CUI</label>
-                                 <input class="form-control" type="text" name="cui" autocomplete="off" value="{{ old('cui', $dataTypeContent->cui ?? '') != '' ? old('cui', $dataTypeContent->cui) : ''}}"/>                          
-                                </div>
-                                <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
-                                 <label class="control-label" for="name">Reg. Com.</label>
-                                 <input class="form-control" type="text" name="reg_com" autocomplete="off" value="{{ old('reg_com', $dataTypeContent->reg_com ?? '') != '' ? old('reg_com', $dataTypeContent->reg_com) : ''}}"/>                          
-                                </div>
-                                <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
-                                 <label class="control-label" for="name">Banca</label>
-                                 <input class="form-control" type="text" name="banca" autocomplete="off"value="{{ old('banca', $dataTypeContent->banca ?? '') != '' ? old('banca', $dataTypeContent->banca) : ''}}" />                          
-                                </div>
-                                <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
-                                 <label class="control-label" for="name">IBAN</label>
-                                 <input class="form-control" type="text" name="iban" autocomplete="off"value="{{ old('iban', $dataTypeContent->iban ?? '') != '' ? old('iban', $dataTypeContent->iban) : ''}}" />                          
-                                </div>
-                                <div class="form-group col-md-12 container-inputs-fizica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: none" @endif>
-                                 <label class="control-label" for="name">CNP</label>
-                                 <input class="form-control" type="text" name="cnp" autocomplete="off" value="{{ old('cnp', $dataTypeContent->cnp ?? '') != '' ? old('cnp', $dataTypeContent->cnp) : ''}}"/>                          
-                                </div>
-                                <div class="form-group  col-md-12 " >
-                                    <label class="control-label" for="name">Email</label>
-                                    <input  type="text" class="form-control" name="email" placeholder="Email" value="{{ old('email', $dataTypeContent->email ?? '') != '' ? old('email', $dataTypeContent->email) : ''}}">
-                                </div>
-                                <div class="form-group  col-md-12 " >
-                                    <label class="control-label" for="name">Telefon</label>
-                                    <input  type="text" class="form-control" name="phone" placeholder="Telefon" value="{{ old('cnp', $dataTypeContent->cnp ?? '') != '' ? old('cnp', $dataTypeContent->cnp) : ''}}">
-                                </div>
-                              <div>
-                                <div class="form-group col-md-12 column-element-address">
-                                   <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
-                                   <input class="control-label" type="text" name="address[]" value="{{ old('address', $dataTypeContent->address ?? '') != '' ? old('address', $dataTypeContent->address)[0] : ''}}"/>                          
-                                </div>
-                                <div class="form-group col-md-12 column-element-address">
-                                   <label class="control-label">Tara</label>
-                                   @include('vendor.voyager.formfields.countries', ['selected' => null]) 
-                                </div>
-                                <div class="form-group col-md-12 column-element-address">
-                                   <label class="control-label" for="state">Judet/Regiune</label>
-                                   <select name="state[]" class="form-control select-state"></select>
-                                </div>
-                                <div class="form-group col-md-12 column-element-address">
-                                   <label class="control-label">Oras/Localitate/Sector</label>
-                                   <select name="city[]" class="form-control select-city"></select>        
-                                </div>
+                              <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
+                               <label class="control-label" for="name">Reg. Com.</label>
+                               <input class="form-control" type="text" name="reg_com" autocomplete="off" value="{{ old('reg_com', $dataTypeContent->reg_com ?? '') != '' ? old('reg_com', $dataTypeContent->reg_com) : ''}}"/>                          
+                              </div>
+                              <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
+                               <label class="control-label" for="name">Banca</label>
+                               <input class="form-control" type="text" name="banca" autocomplete="off"value="{{ old('banca', $dataTypeContent->banca ?? '') != '' ? old('banca', $dataTypeContent->banca) : ''}}" />                          
+                              </div>
+                              <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
+                               <label class="control-label" for="name">IBAN</label>
+                               <input class="form-control" type="text" name="iban" autocomplete="off"value="{{ old('iban', $dataTypeContent->iban ?? '') != '' ? old('iban', $dataTypeContent->iban) : ''}}" />                          
+                              </div>
+                              <div class="form-group col-md-12 container-inputs-fizica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: none" @endif>
+                               <label class="control-label" for="name">CNP</label>
+                               <input class="form-control" type="text" name="cnp" autocomplete="off" value="{{ old('cnp', $dataTypeContent->cnp ?? '') != '' ? old('cnp', $dataTypeContent->cnp) : ''}}"/>                          
+                              </div>
+                              <div class="form-group  col-md-12 " >
+                                  <label class="control-label" for="name">Email</label>
+                                  <input  type="text" class="form-control" name="email" placeholder="Email" value="{{ old('email', $dataTypeContent->email ?? '') != '' ? old('email', $dataTypeContent->email) : ''}}">
+                              </div>
+                              <div class="form-group  col-md-12 " >
+                                  <label class="control-label" for="name">Telefon</label>
+                                  <input  type="text" class="form-control" name="phone" placeholder="Telefon" value="{{ old('cnp', $dataTypeContent->cnp ?? '') != '' ? old('cnp', $dataTypeContent->cnp) : ''}}">
+                              </div>
+                            <div>
+                              <div class="form-group col-md-12 column-element-address">
+                                 <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
+                                 <input class="form-control" type="text" name="address[]" value="{{ old('address', $dataTypeContent->address ?? '') != '' ? old('address', $dataTypeContent->address)[0] : ''}}"/>                          
+                              </div>
+                              <div class="form-group col-md-12 column-element-address">
+                                 <label class="control-label">Tara</label>
+                                 @include('vendor.voyager.formfields.countries', ['selected' => null]) 
+                              </div>
+                              <div class="form-group col-md-12 column-element-address">
+                                 <label class="control-label" for="state">Judet/Regiune</label>
+                                 <select name="state[]" class="form-control select-state"></select>
+                              </div>
+                              <div class="form-group col-md-12 column-element-address">
+                                 <label class="control-label">Oras/Localitate/Sector</label>
+                                 <select name="city[]" class="form-control select-city"></select>        
                               </div>
                             </div>
-                          @endif
+                          </div>
                         </div>
                         @if($edit)
                         <input name="offer_id" type="hidden" value="{{$dataTypeContent->getKey()}}"/>
@@ -1089,7 +1091,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               </form>
             </div>
           </div>
-
+    
     <div class="modal fade modal-danger" id="confirm_delete_modal">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -1111,6 +1113,30 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             </div>
         </div>
     </div>
+    @if($edit)
+      <div class="modal fade modal-danger" id="create_new_client" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-hidden="true">&times;</button>
+                    <h4 class="modal-title"><i class="voyager-warning"></i>Adaugare client nou</h4>
+                </div>
+                <div class="alert alert-danger modal-alert-container-client">
+                    <ul></ul>
+                </div>
+                <form class="modal-body form-new-client">
+                    
+                </form>
+
+                <div class="modal-footer" style="display: flex;">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{ __('voyager::generic.cancel') }}</button>
+                    <button type="button" class="btn btn-danger" id="confirm_create_client" style="height: 3.2rem;">Adauga client</button>
+                </div>
+            </div>
+        </div>
+      </div> 
+    @endif
     <!-- End Delete File Modal -->
 @stop
 
@@ -1187,13 +1213,21 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                 $('#confirm_delete_modal').modal('hide');
             });
             $('[data-toggle="tooltip"]').tooltip();
-            $("#option-type-fizica").change(function() {
+            $(document).on("change", "#option-type-fizica", function() {
               $(".container-inputs-juridica").hide();
               $(".container-inputs-fizica").show();
             });
-            $("#option-type-juridica").change(function() {
+            $(document).on("change", "#option-type-juridica", function() {
               $(".container-inputs-fizica").hide();
               $(".container-inputs-juridica").show();
+            });
+            $('#select_client select').on('select2:select', function (e) {
+              var data = e.params.data;
+                if(data.id == -1){
+                  $(".container-doua-col-right").show();
+                } else{
+                  $(".container-doua-col-right").hide();
+                }
             });
 //           var newOption = new Option("Client nou", -1, false, false);
 //           $("#select_client>select").append(newOption).trigger('change');
@@ -1202,15 +1236,6 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
           $("input[name=offer_date]").val(now.toISOString().slice(0,10));
           $("#agent_oferta>input").val("{{Auth::user()->name}}");
           $("#agent_oferta>input").attr("disabled","disabled");
-          $('#select_client select').on('select2:select', function (e) {
-              var data = e.params.data;
-            console.log(data.text);
-              if(data.text == "Adauga client nou"){
-                $(".container-doua-col-right").show();
-              } else{
-                $(".container-doua-col-right").hide();
-              }
-          });
           var isEdit = {!! $edit != "" ? 'true' : 'false' !!};
           var isNewClient = {!! $isNewClient != "" && $isNewClient == true ? 'true' : 'false' !!};
           console.log(isNewClient);
@@ -1239,39 +1264,49 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             $("#tip_oferta").append("<input name='type' type='hidden' class='form-control' value='{{$dataTypeContent->type}}'/>");
             $("#tip_oferta").append("<input type='text' readonly class='form-control' value='{{$offerType->title ?? ''}}'/>");
           }
+          var new_client_clone = $(".container-doua-col-right").clone();
+          if(isEdit){
+            $(".container-doua-col-right").remove();
+          }
+          console.log(new_client_clone);
           $("#select_client > select").on('select2:select', function (e) {
              var data = e.params.data;
-             var vthis = this;
-             $(".container-box-adresa select").prop('selectedIndex',0);
-             $(".container-box-adresa input").val('');
-             $.ajax({
-                  method: 'POST',
-                  url: '/getUserAddresses',
-                  data: {_token: $("meta[name=csrf-token]").attr("content"), user_id: data.id},
-                  context: this,
-                  async: true,
-                  cache: false,
-                  dataType: 'json'
-              }).done(function(res) {
-                  if (res.success == false) {
-                      toastr.error(res.error, 'Eroare');
-                  } else{
-                    var html_addr = completeWithAddresses(res.userAddresses);
-                    var html_user_addresses = html_addr[0];
-                    var html_awb_addresses = html_addr[1];
-                    $("#deliveryAddressAWB").html(html_awb_addresses);
-                    $("select[name=delivery_address_user]").html(html_user_addresses);
-                    var transparent_band = res.transparent_band == 1 ? true : false;
-                    $("input[name=transparent_band]").prop("checked", transparent_band).trigger("click");
-                  }
-              })
-              .fail(function(xhr, status, error) {
-                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
-                      .indexOf("CSRF token mismatch") >= 0) {
-                      window.location.reload();
-                  }
-              });
-            return false;
+              if(data.id != -1){
+                 var vthis = this;
+                 $(".container-box-adresa select").prop('selectedIndex',0);
+                 $(".container-box-adresa input").val('');
+                 $.ajax({
+                      method: 'POST',
+                      url: '/getUserAddresses',
+                      data: {_token: $("meta[name=csrf-token]").attr("content"), user_id: data.id},
+                      context: this,
+                      async: true,
+                      cache: false,
+                      dataType: 'json'
+                  }).done(function(res) {
+                      if (res.success == false) {
+                          toastr.error(res.error, 'Eroare');
+                      } else{
+                        var html_addr = completeWithAddresses(res.userAddresses);
+                        var html_user_addresses = html_addr[0];
+                        var html_awb_addresses = html_addr[1];
+                        $("#deliveryAddressAWB").html(html_awb_addresses);
+                        $("select[name=delivery_address_user]").html(html_user_addresses);
+                        var transparent_band = res.transparent_band == 1 ? true : false;
+                        $("input[name=transparent_band]").prop("checked", transparent_band).trigger("click");
+                      }
+                  })
+                  .fail(function(xhr, status, error) {
+                      if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                          .indexOf("CSRF token mismatch") >= 0) {
+                          window.location.reload();
+                      }
+                  });
+                return false;
+              } else{
+                $("#create_new_client>.modal-dialog .modal-body").html(new_client_clone[0]);
+                $('#create_new_client').modal('show');
+              }
           });
           $("select[name=delivery_address_user]").on('select2:select', function (e) {
             console.log($(this).val());
@@ -1544,6 +1579,42 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               });
               return true;
           }
+          
+          $(document).on("click", "#confirm_create_client", function(){
+            var data = $(".form-new-client").serializeArray();
+            $.ajax({
+                  method: 'POST',
+                  url: '/admin/addNewClient',//remove this address on POST message after i get all the address data
+                  data: data,
+                  context: this,
+                  async: true,
+                  cache: false,
+                  dataType: 'json'
+              }).done(function(res) {
+                 if(res.success){
+                   $('#create_new_client').modal('hide');
+                   $(".modal-alert-container-client").html('').hide();
+                   $("#create_new_client>.modal-dialog .modal-body").html('');
+                   var newOption = new Option(res.client_name, res.client_id, false, false);
+                   $("select[name=client_id]").append(newOption).val(res.client_id).trigger('change');
+                 } else{
+                   var html_err = '';
+                   console.log(res.msg);
+                   for(var i = 0; i < res.msg.length; i++){
+                   console.log(res.msg[i]);
+                     html_err += `<li>${res.msg[i]}</li>`;
+                   }
+                   $(".modal-alert-container-client").html(html_err).show();
+                 }
+              })
+              .fail(function(xhr, status, error) {
+                  if (xhr && xhr.responseJSON && xhr.responseJSON.message && xhr.responseJSON.message
+                      .indexOf("CSRF token mismatch") >= 0) {
+                      window.location.reload();
+                  }
+              });
+              return true;
+          });
           
           var timeout = null;
 
