@@ -1991,3 +1991,14 @@ textarea {
 .form-search .col-2{
  width: 150px;
 }
+.form-search-master #search-input button{
+  border-left: none;
+}
+.form-search-master #search-input{
+  background: transparent;
+  width: 100%;
+  margin-bottom: 0;
+}
+.form-search-master, .form-search-master #search-input input, .form-search-master #search-input .input-group{
+  width: 100%;
+}

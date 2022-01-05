@@ -4,6 +4,16 @@
 
 @section('page_header')
     <div class="container-fluid">
+        <form method="get" class="form-search form-search-master">
+            <div id="search-input">
+                <div class="input-group col-md-12">
+                    <input type="text" class="form-control" placeholder="{{ __('voyager::generic.search') }}" name="master">
+                    <button class="btn btn-info btn-lg" type="submit">
+                        <i class="voyager-search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
         <h1 class="page-title">{{ $title }}</h1>
         @can('add', app($model)) 
             <a href="{{ route('voyager.'.$slug.'.create') }}" class="btn btn-success btn-add-new">
