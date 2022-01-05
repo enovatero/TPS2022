@@ -283,7 +283,8 @@
         $(".btnCancelAddress").hide();
         $(".btnRemoveAddress").show();
         $(".container-delete-adresa").css("display", "none");
-        $(".addressesCounter").val($(".addressesCounter").val()+1);
+        var addrCounter = parseInt($(".addressesCounter").val())+1;
+        $(".addressesCounter").val(addrCounter);
         $(".container-addresses-list>.container-box-adresa").last().find('select').prop('required',true);
         $(".container-addresses-list>.container-box-adresa").last().find('input').prop('required',true);
       });
@@ -291,7 +292,6 @@
         $(this).hide();
         $(".btnCancelAddress").show();
         $(".container-delete-adresa").css("display", "flex");
-        $(".addressesCounter").val($(".addressesCounter").val()-1);
       });
       $(".btnCancelAddress").click(function(){
         $(this).hide();
@@ -316,6 +316,8 @@
                       toastr.error(res.error, 'Eroare');
                   } else{
                     $(vthis).parent().remove();
+                    var addrCounter = parseInt($(".addressesCounter").val())-1;
+                    $(".addressesCounter").val(addrCounter);
                   }
               })
               .fail(function(xhr, status, error) {
@@ -327,6 +329,8 @@
             return false;
            } else{
             $(this).parent().remove();
+            var addrCounter = parseInt($(".addressesCounter").val())-1;
+            $(".addressesCounter").val(addrCounter);
            }
         }
       });

@@ -1147,7 +1147,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $prodIds = $prods->pluck('id');
             $idsString = str_replace("[", "", json_encode($prodIds));
             $idsString = str_replace("]", "", $idsString);
-            $colors = DB::select( DB::raw('SELECT DISTINCT CONCAT(attributes.title, "_", attributes.id) as attr_title, CONCAT(colors.value, "_", colors.id) as color_value, colors.ral as color_ral
+            $colors = DB::select( DB::raw('SELECT DISTINCT product_attributes.id, CONCAT(attributes.title, "_", attributes.id) as attr_title, CONCAT(colors.value, "_", colors.id) as color_value, colors.ral as color_ral
                               FROM product_attributes
                               JOIN attributes ON product_attributes.attribute_id = attributes.id
                               LEFT JOIN colors ON product_attributes.color_id = colors.id
@@ -1159,20 +1159,23 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                           WHERE product_attributes.dimension_id IS NOT NULL AND product_attributes.product_id IN ('.$idsString.') GROUP BY attr_title, dimension_value'));
             if($colors && count($colors)){
               foreach($colors as &$color){
-                $attrArr = explode("_", $color->attr_title);
-                $color->attr_title = $attrArr[0];
-                $color->attr_id = $attrArr[1];
-                $colorArr = explode("_", $color->color_value);
-                $color->color_value = $colorArr[0];
-                $color->color_id = $colorArr[1];
-                if(!array_key_exists($color->attr_title, $filteredColors)){
-                  $filteredColors[$color->attr_title] = [];
-                  array_push($filteredColors[$color->attr_title], $color);
-                } else{
-                  if(!in_array($color, $filteredColors[$color->attr_title])){
-                    array_push($filteredColors[$color->attr_title], $color);
-                  }
+                if($color->color_value != null){
+                    $attrArr = explode("_", $color->attr_title);
+                    $color->attr_title = $attrArr[0];
+                    $color->attr_id = $attrArr[1];
+                    $colorArr = explode("_", $color->color_value);
+                    $color->color_value = $colorArr[0];
+                    $color->color_id = $colorArr[1];
+                    if(!array_key_exists($color->attr_title, $filteredColors)){
+                      $filteredColors[$color->attr_title] = [];
+                      array_push($filteredColors[$color->attr_title], $color);
+                    } else{
+                      if(!in_array($color, $filteredColors[$color->attr_title])){
+                        array_push($filteredColors[$color->attr_title], $color);
+                      }
+                    }
                 }
+
               }
             }
             if($dimensions && count($dimensions) > 0){
