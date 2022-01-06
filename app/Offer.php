@@ -28,6 +28,7 @@ class Offer extends Model
     6 => 'Link2Pay',
     7 => 'La Termen',
     8 => 'Avans',
+    9 => 'Ramburs',
   ];
   public static $attr_p_values = [
     1 => '1K',

@@ -21,7 +21,7 @@ $iconUrl = $dataType->icon;
           <div class="page-title-text">Comanda #{{$dataTypeContent->numar_comanda}}</div>
         @else
           <div class="page-title-text">
-            Oferta {{$edit ? '#'.$dataTypeContent->serie : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
+            Oferta {{$edit ? '#'.$dataTypeContent->id : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
           </div>
         @endif
     </h1>
@@ -125,11 +125,11 @@ $iconUrl = $dataType->icon;
                             @endphp
 
                            <div class="flex__box--cont" >
-                           <div class="flex__box1--1">
+                           <div class="flex__box1--1 flex-first-box">
 
 <!-- || $row->display_name == 'Client' -->
 @foreach($dataTypeRows as $row)
-     @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' )
+     @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' || $row->display_name == 'Grila pret' || $row->display_name == 'Tip oferta custom' )
 
 
      @php
@@ -142,7 +142,7 @@ $iconUrl = $dataType->icon;
          <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
      @endif 
 
-    <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
+    <div @if($row->display_name == 'Tip oferta' || $row->display_name == 'Tip oferta custom') style="width: 100% !important;" @endif class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
          {{ $row->slugify }}
          @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
            <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
@@ -177,9 +177,45 @@ $iconUrl = $dataType->icon;
              @endforeach
          @endif
      </div>
+      @if($row->display_name == 'Serie')
+        @php
+          $isOrder = $dataTypeContent->numar_comanda != null ? true : false;
+        @endphp
+        <div class="form-group col-md-12">
+         <label class="control-label" for="name">
+          @if($isOrder) Numar comanda @else Numar oferta @endif
+         </label>
+         <input type="text" class="form-control" @if($isOrder != null) value="{{$dataTypeContent->numar_comanda}}" @else value="{{$dataTypeContent->id}}" @endif disabled="disabled">
+        </div>
+      @endif
     @endif
 
    @endforeach
+   <div class="form-group col-md-12" style="width: 100% !important;">
+     <label class="control-label" for="name">
+      Metoda de plata
+     </label>
+      <select
+          class="custom-table-select form-control"
+          name="payment_type"
+      >
+          <option value=""> - </option>
+          @foreach (App\Offer::$payment_types as $pkey => $payment_type)
+              <option
+                  value="{{ $pkey }}"
+                  {{ $dataTypeContent->payment_type == $pkey ? 'selected' : '' }}
+              >
+                  {{ $payment_type }}
+              </option>
+          @endforeach
+      </select>
+   </div>
+   <div class="form-group col-md-12" style="width: 100% !important;">
+     <label class="control-label" for="name">
+      Numar comanda distribuitor
+     </label>
+     <input type="text" class="form-control" name="external_number" value="{{$dataTypeContent->external_number}}">
+   </div>
  </div>
  @if($edit)
 
@@ -198,11 +234,9 @@ $iconUrl = $dataType->icon;
                             @endif
 
                           </div>
-
-
+@if($edit)
                             <div class="flex__box--cont">
                             <div class="flex__box1--2">
-                            @if($edit)
                                   @if($row->field == 'curs_eur' && (count($filteredColors) > 0) || count($filteredDimensions) > 0)
                                     <div class="form-group  col-md-12" >
                                         @foreach($filteredColors as $key => $item)
@@ -243,9 +277,6 @@ $iconUrl = $dataType->icon;
                                         @endforeach
                                     </div>
                                   @endif
-                                @else
-                                  <div class="container-preselect-colors"></div>
-                                @endif
                               @foreach($dataTypeRows as $row)
                                 @php
                                     $display_options = $row->details->display ?? NULL;
@@ -280,7 +311,11 @@ $iconUrl = $dataType->icon;
                             @if($edit)
                               
                               <div class="form-group col-md-12 mesaj-intern-container log-evenimente flex__box1 height__1">
-                                <label class="control-label">Log evenimente</label>
+                                  <label class="control-label">Log evenimente</label>
+                                  <div class="show-hide-log hide-log">
+                                    <div class="control-label">Vezi log</div>
+                                    <span class="icon voyager-double-up"></span>
+                                  </div>
                                   <div class="log-evenimente-list">
                                     @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents]) 
                                   </div>
@@ -288,23 +323,22 @@ $iconUrl = $dataType->icon;
                             @endif
 
                             </div>
+                            @endif
 
 
 
 
 
 
-
-                            <div class="flex__box">
+                            <div class="flex__box third-box">
                            @foreach($dataTypeRows as $row)
-                          
                                     @if($row->display_name == 'Observatii') 
 
                                   
 
                                     @else
 
-                                @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' ) 
+                                @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' || $row->display_name == 'Grila pret' || $row->display_name == 'External Number' || $row->display_name == 'Tip oferta custom' ) 
 
                                     @else
                                 @php
@@ -317,7 +351,7 @@ $iconUrl = $dataType->icon;
                                     <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
                                 @endif 
 
-                               <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
+                               <div @if($row->display_name == 'Ambalare' || $row->display_name == 'Banda transparenta') style="width: 49% !important;" @endif class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
                                     {{ $row->slugify }}
                                     @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
                                       <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
@@ -352,7 +386,8 @@ $iconUrl = $dataType->icon;
                                         @endforeach
                                     @endif
                                 </div>
-                                      @if(isset($display_options->id) && $display_options->id == 'mod_livrare' && $edit)
+                              
+                                      @if($row->display_name == 'Client' && $edit)
                                         <div class="form-group  col-md-12" >
                                         <label class="control-label">Adresa livrare</label>
                                         <select name="delivery_address_user" class="form-control">
@@ -429,17 +464,16 @@ $iconUrl = $dataType->icon;
   @endphp
 @endif
 
-<!-- Adding / Editing -->
 @php
     $dataTypeRows = $dataType->{($edit ? 'editRows' : 'addRows' )};
 @endphp
 
-<div style="width: 70%;margin: 0;" class="flex__box--cont" >
+<div @if($edit) style="width: 70%;margin: 0;" @else style="width: 100%;margin: 0;" @endif class="flex__box--cont" >
 <div class="flex__box1--1">
 
 <!-- || $row->display_name == 'Client' -->
 @foreach($dataTypeRows as $row)
-@if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' )
+@if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' )
 
 
 @php
@@ -509,7 +543,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
 
 </div>
 
-
+@if($edit)
 <div style="width: 70%;margin: 0;" class="flex__box--cont">
 <div class="flex__box1--2">
 @if($edit)
@@ -591,20 +625,24 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
   
   <div class="form-group col-md-12 mesaj-intern-container log-evenimente flex__box1 height__1">
     <label class="control-label">Log evenimente</label>
-      <div class="log-evenimente-list">
-        @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents]) 
-      </div>
+    <div class="show-hide-log hide-log">
+      <div>Vezi log</div>
+      <span class="icon voyager-double-down"></span>
+    </div>
+    <div class="log-evenimente-list test123">
+      @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents]) 
+    </div>
   </div>
 @endif
 
 </div>
+@endif
 
 
 
 
 
-
-
+@if($edit)
 <div style="width: 70%;margin: 0;" class="flex__box">
 @foreach($dataTypeRows as $row)
 
@@ -719,7 +757,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
         @endif
   @endforeach
 </div>
-
+@endif
                          @endif
 
 
@@ -861,7 +899,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                           </div>
                         @endif
                         @if(!$edit)
-                          <div class="panel-footer">
+                          <div class="panel-footer" style="background: #f9f9f9;width: 100%;">
                               @section('submit-buttons')
                                   <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>
                               @stop
@@ -1229,6 +1267,18 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                   $(".container-doua-col-right").hide();
                 }
             });
+            $("input[name=offer_date]").prop("readonly", true).css('cursor', 'not-allowed');
+            $(".show-hide-log").click(function(){
+              if($(this).hasClass('show-log')){
+                $(this).removeClass('show-log').addClass('hide-log');
+                $(this).find(".control-label").text("Vezi log");
+                $(".log-evenimente>.log-evenimente-list").css("display", 'none');
+              } else{
+                $(this).removeClass('hide-log').addClass('show-log');
+                $(this).find(".control-label").text("Ascunde log");
+                $(".log-evenimente>.log-evenimente-list").css("display", 'flex');
+              }
+            });
 //           var newOption = new Option("Client nou", -1, false, false);
 //           $("#select_client>select").append(newOption).trigger('change');
           var now = new Date();
@@ -1292,8 +1342,10 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                         var html_awb_addresses = html_addr[1];
                         $("#deliveryAddressAWB").html(html_awb_addresses);
                         $("select[name=delivery_address_user]").html(html_user_addresses);
-                        var transparent_band = res.transparent_band == 1 ? true : false;
-                        $("input[name=transparent_band]").prop("checked", transparent_band).trigger("click");
+//                         var transparent_band = res.transparent_band == 1 ? true : false;
+//                         $("input[name=transparent_band]").prop("checked", transparent_band).trigger("click");
+                        console.log(res.transparent_band);
+                        $('select[name=transparent_band] option[value='+res.transparent_band+']').prop('selected', true).trigger("change");
                       }
                   })
                   .fail(function(xhr, status, error) {

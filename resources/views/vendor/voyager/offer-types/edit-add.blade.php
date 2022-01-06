@@ -8,7 +8,7 @@
       $selectedProducts = [];
       if($selectedIds != null && count($selectedIds) > 0){
         $products = \App\ProductParent::orderBy('title', 'ASC')->whereNotIn('id', $selectedIds)->get();
-        $selectedProducts = \App\ProductParent::whereIn('id', $selectedIds)->orderBy('id')->get();
+        $selectedProducts = \App\ProductParent::whereIn('id', $selectedIds)->orderBy(\DB::raw('FIELD(id, '.implode(', ', $selectedIds).')'))->get();
       } else{
         $products = \App\ProductParent::orderBy('title', 'ASC')->get();
       }

@@ -172,7 +172,7 @@
   
    @if($offerProducts)
     @foreach($offerProducts as $offerProduct)
-      @if($offerProduct->product && $offerProduct->product != null)
+      @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
         @php
           if($offerProduct->getParent->category->two_columns == 0){
             array_push($newProductsLeft, [
@@ -235,25 +235,27 @@
             @if($item['two_columns'] == 1)
               continue;
             @else
-              <tr class="items">
-                <td align="center">{{$counterLeft++}}</td>
-                <td>{{$item['product']->name}}</td>
-                <td align="center">{{$item['parent']->um_title->title}}</td>
-                <td align="center">{{$item['qty']}}</td>
-                @if(array_key_exists($key+1, $newProducts) && $newProducts[$key+1]['two_columns'] == 1)
-                  <td align="center" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;"></td>
-                  <td align="center">{{$counterRight++}}</td>
-                  <td>{{$newProducts[$key+1]['product']->name}}</td>
-                  <td align="center">{{$newProducts[$key+1]['parent']->um_title->title}}</td>
-                  <td align="center">{{$newProducts[$key+1]['qty']}}</td>
-                @else
-                  <td align="center" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;"></td>
-                  <td align="center">{{$counterRight++}}</td>
-                  <td align="center"></td>
-                  <td align="center"></td>
-                  <td align="center"></td>
-                @endif
-              </tr>
+              @if($item['qty'] > 0)
+                <tr class="items">
+                  <td align="center">{{$counterLeft++}}</td>
+                  <td>{{$item['product']->name}}</td>
+                  <td align="center">{{$item['parent']->um_title->title}}</td>
+                  <td align="center">{{$item['qty']}}</td>
+                  @if(array_key_exists($key+1, $newProducts) && $newProducts[$key+1]['two_columns'] == 1)
+                    <td align="center" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;"></td>
+                    <td align="center">{{$counterRight++}}</td>
+                    <td>{{$newProducts[$key+1]['product']->name}}</td>
+                    <td align="center">{{$newProducts[$key+1]['parent']->um_title->title}}</td>
+                    <td align="center">{{$newProducts[$key+1]['qty']}}</td>
+                  @else
+                    <td align="center" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;"></td>
+                    <td align="center">{{$counterRight++}}</td>
+                    <td align="center"></td>
+                    <td align="center"></td>
+                    <td align="center"></td>
+                  @endif
+                </tr>
+              @endif
             @endif
             
           @endforeach
@@ -277,7 +279,7 @@
     
   @if($offerProducts)
     @foreach($offerProducts as $offerProduct)
-       @if($offerProduct->product && $offerProduct->product != null)
+       @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
           <tr class="items item_wborder">
               <td align="center">{{$counter++}}</td>
               <td>{{$offerProduct->product->name}}</td>

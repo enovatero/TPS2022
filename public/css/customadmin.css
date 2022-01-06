@@ -2020,3 +2020,40 @@ textarea {
 .modal-alert-container-client{
   display: none !important;
 }
+.show-hide-log{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  z-index: 3;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+.show-hide-log > .icon{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.show-hide-log > div {
+  font-weight: 500 !important;
+  color: #000;
+}
+.show-log > .icon{
+  transform: rotateX(180deg);
+}
+.log-evenimente > .log-evenimente-list{
+  display: none;
+}
+.flex-first-box, .third-box{
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+}
+input[readonly] {
+  cursor: not-allowed;
+}

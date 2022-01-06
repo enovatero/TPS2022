@@ -38,7 +38,7 @@ class AddressController extends Controller
       if($counties){
         return $counties;
       }
-      $counties = DB::table('states')->get();
+      $counties = DB::table('states')->orderBy('state_name')->get();
       cache(['counties' => $counties]);
       return $counties;
     } 
@@ -67,7 +67,7 @@ class AddressController extends Controller
       if($cities){
         return $cities;
       }
-      $cities = DB::table('cities')->where(['state_code' => $stateCode, 'country_code' => $countryCode])->get();
+      $cities = DB::table('cities')->where(['state_code' => $stateCode, 'country_code' => $countryCode])->orderBy('city_name')->get();
       cache(['cities_'.$stateCode.'_'.$countryCode => $cities]);
       return $cities;
     } 

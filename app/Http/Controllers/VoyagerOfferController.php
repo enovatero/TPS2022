@@ -121,7 +121,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                     $qr->where('phone', $master);
                 })
                 ->orWhereHas('client', function (Builder $qr) use($master){
-                  $qr->where('name', $master);
+                  $qr->where('name', 'like' ,'%'.$master.'%');
                 })
                 ->orWhereHas('nemoData', function (Builder $qr) use($master){
                   $qr->where('awb', $master);
@@ -447,7 +447,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 $qr->where('phone', $master);
             })
             ->orWhereHas('client', function (Builder $qr) use($master){
-              $qr->where('name', $master);
+              $qr->where('name', 'like' ,'%'.$master.'%');
             })
             ->orWhereHas('nemoData', function (Builder $qr) use($master){
               $qr->where('awb', $master);
@@ -661,11 +661,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         event(new BreadDataAdded($dataType, $data));
-
+        
+        $serieDefault = OfferSerial::where('default', 1)->first();
+//       dd($serieDefault);
         // iau oferta creata cu insertUpdateData si-i modific datele de mai jos
         $offer = Offer::find($data->id);
         $offer->status = '1';
-        $offer->serie = $data->id;
+        $offer->serie = $serieDefault && $serieDefault->id ? $serieDefault->id : null;
         $offer->distribuitor_id = $request->input('distribuitor_id');
         $offer->agent_id = Auth::user()->id;
         $offer->save();
@@ -1426,21 +1428,26 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->curs_eur = $request->input('curs_eur');
     //$offer->agent_id = Auth::user()->id; // asta nu mai trebuie suprascris
     $offer->delivery_address_user = $request->input('delivery_address_user');
+    $offer->payment_type = $request->input('payment_type');
+    $offer->external_number = $request->input('external_number');
+    $offer->custom_off_type = $request->input('custom_off_type');
     $offer->delivery_date = $request->input('delivery_date');
     $offer->observations = $request->input('observations');
     $offer->created_at = $request->input('created_at');
     $offer->updated_at = $request->input('updated_at');
-    $offer->status = $request->input('status');
+    if($request->input('status') != null){
+      $offer->status = $request->input('status');
+    }
     $offer->serie = $request->input('serie');
     $offer->total_general = $request->input('totalGeneral') != null ? number_format(floatval($request->input('totalGeneral')), 2, '.', '') : 0;
     $offer->reducere = $request->input('reducere') != null ? number_format(floatval(abs($request->input('reducere'))), 2, '.', '') : 0;
     $offer->total_final = $request->input('totalCalculatedPrice') != null ? number_format(floatval($request->input('totalCalculatedPrice')), 2, '.', '') : 0;
-    $offer->transparent_band = $request->input('transparent_band') == 'on' ? 1 : 0;
+    $offer->transparent_band = $request->input('transparent_band');
     $offer->packing = $request->input('packing');
     $offer->delivery_details = $request->input('delivery_details');
     $offer->delivery_type = $request->input('delivery_type');
     $offer->save();
-
+//     dd($offer->toArray());
     $selectedAttributes = $request->input('selectedAttribute');
     $updatedAt = date("Y-m-d H:i:s");
     // trebuie sa imi iau color_id si sa-l pun in selectedAttribute din edit-add
@@ -1941,29 +1948,31 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $products = $order->orderProducts;
     foreach($products as $product){
       $prodPrice = $product->pricesByRule($order->price_grid_id)->first();
-      array_push($items, [
-        "ID" => $product->product->mentor_cod_obiect,
-        "Pret" => $prodPrice->ron_cu_tva,
-        "Observatii" => "",
-        "Cant" => $product->qty,
-        "ZilePlata" => "3",
-        "CAMPEXTENSIELINIECOMANDA" => "",
-        "Rezervari" =>
-            [
-                /*
-                "Gestiune" => "DC",
-                "Serie" => "ABCDE",
-                "LocatieGest" => "",
-                "Cant" => "3"
-                */
-            ],
-        "Discount" => $discount,
-        "AdDim" => "",
-        "D1" => "",
-        "D2" => "",
-        "D3" => "",
-        "CantUM1" => ""
-      ]);
+      if($product->qty > 0){
+        array_push($items, [
+          "ID" => $product->product->mentor_cod_obiect,
+          "Pret" => $prodPrice->ron_cu_tva,
+          "Observatii" => "",
+          "Cant" => $product->qty,
+          "ZilePlata" => "3",
+          "CAMPEXTENSIELINIECOMANDA" => "",
+          "Rezervari" =>
+              [
+                  /*
+                  "Gestiune" => "DC",
+                  "Serie" => "ABCDE",
+                  "LocatieGest" => "",
+                  "Cant" => "3"
+                  */
+              ],
+          "Discount" => $discount,
+          "AdDim" => "",
+          "D1" => "",
+          "D2" => "",
+          "D3" => "",
+          "CantUM1" => ""
+        ]);
+      }
     }
     $orderUser = User::find($order->agent_id);
     $postData = [

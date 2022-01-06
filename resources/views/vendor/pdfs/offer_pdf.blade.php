@@ -149,7 +149,7 @@
     
   @if($offerProducts)
     @foreach($offerProducts as $offerProduct)
-      @if($offerProduct->product && $offerProduct->product != null)
+      @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
          @php
             $checkRule = $offerProduct->prices->filter(function($item) use($offer){
                 return $item->rule_id == $offer->price_grid_id;
@@ -162,7 +162,7 @@
           @endphp
           <tr class="items item_wborder">
               <td align="center">{{$counter++}}</td>
-              <td>{{$offerProduct->product->name}}</td>
+              <td>{{$offerProduct->getParent->title}}</td>
               <td align="center" class="bold">{{$offerProduct->getParent->um_title->title}}</td>
               <td align="center" class="bold">{{$offerProduct->qty}}</td>
               <td align="right" class="bold">{{$eurFaraTVA}}</td>
