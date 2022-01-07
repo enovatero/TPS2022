@@ -493,7 +493,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
 
         // order by date, and user selectable column
-        $orderColumn = ['offer_date', 'desc'];
+        $orderColumn = ['delivery_date', 'desc'];
         $query->orderBy($orderColumn[0], $orderColumn[1]);
         if ($request->order_by) {
             $query->orderBy($request->order_by, $request->sort_order);
