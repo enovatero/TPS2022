@@ -1591,7 +1591,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
               'parent' => $offProd->getParent,
               'qty' => $offProd->qty,
             ]);
-            $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
+            
+            if($offProd->getParent->um == 8){
+              $dimension += $offProd->qty;
+            }
+            if($offProd->getParent->um == 1 && $offProd->getParent->dimension > 0){
+              $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
+            }
+//               $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
             $totalQty += $offProd->qty;
           }
         }
@@ -1637,7 +1644,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
               'parent' => $offProd->getParent,
               'qty' => $offProd->qty,
             ]);
-            $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
+            if($offProd->getParent->um == 8){
+              $dimension += $offProd->qty;
+            }
+            if($offProd->getParent->um == 1 && $offProd->getParent->dimension > 0){
+              $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
+            }
+//               $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
             $totalQty += $offProd->qty;
           }
         }

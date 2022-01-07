@@ -1280,12 +1280,14 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             });
 //           var newOption = new Option("Client nou", -1, false, false);
 //           $("#select_client>select").append(newOption).trigger('change');
-          var now = new Date();
-          now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-          $("input[name=offer_date]").val(now.toISOString().slice(0,10));
           $("#agent_oferta>input").val("{{Auth::user()->name}}");
           $("#agent_oferta>input").attr("disabled","disabled");
           var isEdit = {!! $edit != "" ? 'true' : 'false' !!};
+          if(!isEdit){
+            var now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            $("input[name=offer_date]").val(now.toISOString().slice(0,10));
+          }
           var isNewClient = {!! $isNewClient != "" && $isNewClient == true ? 'true' : 'false' !!};
           console.log(isNewClient);
           if(isNewClient && !isEdit){
