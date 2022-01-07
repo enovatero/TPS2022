@@ -59,29 +59,7 @@
                                         </label>
                                     </div>
                                 
-                                @elseif ($column['key'] == 'p')
-                                    <div class="filter-item">
-                                        <label>
-                                            <div>Filtru {{ $column['label'] }}</div>
-                                            <select
-                                                class="custom-table-select form-control"
-                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                    'attr_'.$column['key'] => 'value'
-                                                ])) }}').replace('value', this.value)"
-                                            >
-                                                <option value=""> - </option>
-                                                @foreach (App\Offer::$attr_p_values as $pkey => $pvalue)
-                                                    <option
-                                                        value="{{ $pkey }}"
-                                                        {{ request()->get('attr_'.$column['key']) == $pkey ? 'selected' : '' }}
-                                                    >
-                                                        {{ $pvalue }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </label>
-                                    </div>
-                                @elseif (($column['key'] == 'pjal' || $column['key'] == 'pu') && $tileFence == 0)
+                                @elseif (($column['key'] == 'p' || $column['key'] == 'pjal' || $column['key'] == 'pu') && $tileFence == 0)
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
@@ -264,7 +242,7 @@
                                               @if(in_array($column['key'],['oras', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
                                                 @continue
                                               @endif
-                                              @if(in_array($column['key'],['print_awb', 'awb', 'pjal', 'pu']) && $tileFence == 1)
+                                              @if(in_array($column['key'],['print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
                                                 @continue
                                               @endif
                                              <th class="column_{{ $column['key'] }}" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
@@ -304,7 +282,7 @@
                                                 @if(in_array($column['key'],['oras', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
                                                   @continue
                                                 @endif
-                                                @if(in_array($column['key'],['print_awb', 'awb', 'pjal', 'pu']) && $tileFence == 1)
+                                                @if(in_array($column['key'],['print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
                                                   @continue
                                                 @endif
                                                 <td class="overflow__list-1 @if($column['key'] == 'status') statusTd @endif" class="column_{{ $column['key'] }}">
@@ -499,23 +477,7 @@
                                                             @endforeach
                                                         </select>
                                                     
-                                                    @elseif ($column['key'] == 'p')
-                                                        <select
-                                                            class="custom-table-select form-control"
-                                                            onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'attr_{{ $column['key'] }}')"
-                                                        >
-                                                            <option value=""> - </option>
-                                                            @foreach (App\Offer::$attr_p_values as $pkey => $pvalue)
-                                                                <option
-                                                                    value="{{ $pkey }}"
-                                                                    {{ $data->{'attr_'.$column['key']} == $pkey ? 'selected' : '' }}
-                                                                >
-                                                                    {{ $pvalue }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                  
-                                                    @elseif (($column['key'] == 'pjal' || $column['key'] == 'pu') && $tileFence == 0)
+                                                    @elseif (($column['key'] == 'p' || $column['key'] == 'pjal' || $column['key'] == 'pu') && $tileFence == 0)
                                                         <select
                                                             class="custom-table-select form-control"
                                                             onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'attr_{{ $column['key'] }}')"
