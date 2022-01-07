@@ -38,6 +38,15 @@ class Offer extends Model
     5 => '1K/2O',
     6 => '2O/1K',
   ];
+  public static $attr_p_values_new = [
+    1 => '1K',
+    2 => '2K',
+    3 => '1O',
+    4 => '2O',
+    5 => '1K/2O',
+    6 => '2O/1K',
+    7 => 'N/A',
+  ];
   
     protected $casts = [];
     public function distribuitor(){

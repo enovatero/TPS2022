@@ -84,7 +84,7 @@
 <table width="100%">
 	<tr>
 		<td width="48%">
-      <p style="font-size: 18pt;">
+      <p style="font-size: 24pt;">
         {{$offer->offerType->title}}
       </p>
 			<p style="font-size: 12pt">
@@ -99,7 +99,7 @@
         </p>
       @endif
 		</td>
-		<td width="40%" style="text-align: right; font-size: 18pt">
+		<td width="40%" style="text-align: right; font-size: 24pt">
 			Comanda: <b>#{{$offer->numar_comanda}}</b>
 			<p style="text-align: left; font-size: 12pt">
         <strong>Livrare:</strong> Ridicare personala
@@ -109,17 +109,21 @@
       </p>
       @if(!$twoColumns)
         <p style="text-align: left; font-size: 12pt">
-          <strong>Ambalare:</strong> {{$offer->packing != null ? $offer->packing : '-'}}
+          <strong>Ambalare:</strong> {{$offer->packing != null ? ($offer->packing == 0 ? 'Nu' : 'Da') : '-'}}
         </p>
-        @if($offer->transparent_band == 1)
+        <!-- Ascund doar pentru jaluzele -->
+        @if(strpos($offer->offerType->title, 'aluze') === false)
           <p style="text-align: left; font-size: 12pt">
-            <strong>Banda transparenta</strong>
+            <strong>Numar cutii:</strong> {{$offer->boxes}}
           </p>
         @endif
-        <p style="text-align: left; font-size: 12pt">
-          <strong>Numar cutii:</strong> {{$offer->boxes}}
+      @endif
+      @if($offer->transparent_band == 1 && !$twoColumns)
+        <p style="text-align: left; font-size: 12pt; border: 1.5px solid #000000; padding: 5px;width: max-content;">
+          <strong>Banda transparenta</strong>
         </p>
       @endif
+      <br>
 			<p style="text-align: left; font-size: 12pt">
         <strong>Responsabil ambalare:</strong>
       </p>
@@ -217,15 +221,15 @@
         <table class="items" width="100%" cellpadding="1">
         <thead>
         <tr>
-          <td width="5%">Nr.<br>crt.</td>
-          <td>Denumirea produselor</td>
-          <td width="5%">U.M.</td>
-          <td width="10%">Cantitate</td>
-          <td width="10%" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;"></td>
-          <td width="5%">Nr.<br>crt.</td>
-          <td>Denumirea produselor</td>
-          <td width="5%">U.M.</td>
-          <td width="10%">Cantitate</td>
+          <td width="5%" style="font-size: 14px;">Nr.<br>crt.</td>
+          <td style="font-size: 14px;">Denumirea produselor</td>
+          <td width="5%" style="font-size: 14px;">U.M.</td>
+          <td width="10%" style="font-size: 14px;">Cantitate</td>
+          <td width="10%" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;font-size: 14px;"></td>
+          <td width="5%" style="font-size: 14px;">Nr.<br>crt.</td>
+          <td style="font-size: 14px;">Denumirea produselor</td>
+          <td width="5%" style="font-size: 14px;">U.M.</td>
+          <td width="10%" style="font-size: 14px;">Cantitate</td>
         </tr>
         </thead>
         <tbody>
@@ -238,13 +242,13 @@
               @if($item['qty'] > 0)
                 <tr class="items">
                   <td align="center">{{$counterLeft++}}</td>
-                  <td>{{$item['product']->name}}</td>
+                  <td>{{$item['parent']->title}}</td>
                   <td align="center">{{$item['parent']->um_title->title}}</td>
                   <td align="center">{{$item['qty']}}</td>
                   @if(array_key_exists($key+1, $newProducts) && $newProducts[$key+1]['two_columns'] == 1)
                     <td align="center" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;"></td>
                     <td align="center">{{$counterRight++}}</td>
-                    <td>{{$newProducts[$key+1]['product']->name}}</td>
+                    <td>{{$newProducts[$key+1]['parent']->title}}</td>
                     <td align="center">{{$newProducts[$key+1]['parent']->um_title->title}}</td>
                     <td align="center">{{$newProducts[$key+1]['qty']}}</td>
                   @else
@@ -269,10 +273,10 @@
   <table class="items" width="100%" cellpadding="1">
 	<thead>
 	<tr>
-		<td width="5%">Nr.<br>crt.</td>
-		<td>Denumirea produselor</td>
-		<td width="5%">U.M.</td>
-		<td width="10%">Cantitate</td>
+		<td width="5%" style="font-size: 14px;">Nr.<br>crt.</td>
+		<td style="font-size: 14px;">Denumirea produselor</td>
+		<td width="5%" style="font-size: 14px;">U.M.</td>
+		<td width="10%" style="font-size: 14px;">Cantitate</td>
 	</tr>
 	</thead>
 	<tbody>
@@ -281,10 +285,10 @@
     @foreach($offerProducts as $offerProduct)
        @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
           <tr class="items item_wborder">
-              <td align="center">{{$counter++}}</td>
-              <td>{{$offerProduct->product->name}}</td>
-              <td align="center" class="bold">{{$offerProduct->getParent->um_title->title}}</td>
-              <td align="center" class="bold">{{$offerProduct->qty}}</td>
+              <td align="center" style="font-size: 14px;">{{$counter++}}</td>
+              <td style="font-size: 14px;">{{$offerProduct->getParent->title}}</td>
+              <td align="center" class="bold" style="font-size: 14px;">{{$offerProduct->getParent->um_title->title}}</td>
+              <td align="center" class="bold" style="font-size: 14px;">{{$offerProduct->qty}}</td>
             </tr>
       @endif
     @endforeach

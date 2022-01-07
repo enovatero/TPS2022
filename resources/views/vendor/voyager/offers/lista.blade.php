@@ -59,7 +59,7 @@
                                         </label>
                                     </div>
                                 
-                                @elseif ($column['key'] == 'p' || $column['key'] == 'pjal' || $column['key'] == 'pu')
+                                @elseif ($column['key'] == 'p')
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
@@ -71,6 +71,51 @@
                                             >
                                                 <option value=""> - </option>
                                                 @foreach (App\Offer::$attr_p_values as $pkey => $pvalue)
+                                                    <option
+                                                        value="{{ $pkey }}"
+                                                        {{ request()->get('attr_'.$column['key']) == $pkey ? 'selected' : '' }}
+                                                    >
+                                                        {{ $pvalue }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+                                @elseif (($column['key'] == 'pjal' || $column['key'] == 'pu') && $tileFence == 0)
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru {{ $column['label'] }}</div>
+                                            <select
+                                                class="custom-table-select form-control"
+                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                    'attr_'.$column['key'] => 'value'
+                                                ])) }}').replace('value', this.value)"
+                                            >
+                                                <option value=""> - </option>
+                                                @foreach (App\Offer::$attr_p_values as $pkey => $pvalue)
+                                                    <option
+                                                        value="{{ $pkey }}"
+                                                        {{ request()->get('attr_'.$column['key']) == $pkey ? 'selected' : '' }}
+                                                    >
+                                                        {{ $pvalue }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+                          
+                                @elseif (($column['key'] == 'ptabla' || $column['key'] == 'pacc') && $tileFence == 1)
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru {{ $column['label'] }}</div>
+                                            <select
+                                                class="custom-table-select form-control"
+                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                    'attr_'.$column['key'] => 'value'
+                                                ])) }}').replace('value', this.value)"
+                                            >
+                                                <option value=""> - </option>
+                                                @foreach (App\Offer::$attr_p_values_new as $pkey => $pvalue)
                                                     <option
                                                         value="{{ $pkey }}"
                                                         {{ request()->get('attr_'.$column['key']) == $pkey ? 'selected' : '' }}
@@ -203,7 +248,7 @@
                                 <div class="table-group-details">
                                     <div class="item">
                                         Comenzi din data:
-                                        <b>{{ $day['date'] }}</b>
+                                        <b style="text-transform: uppercase;">{{ \Carbon\Carbon::parse($day['date'])->format('d M') }}</b>
                                     </div>
                                     <div class="item additional">
                                         Subtotal: <span>{{ $day['subtotal_price'] }} lei</span>
@@ -216,6 +261,12 @@
                                     <thead>
                                         <tr class="overflow__list-1">
                                             @foreach ($columns as $column)
+                                              @if(in_array($column['key'],['oras', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
+                                                @continue
+                                              @endif
+                                              @if(in_array($column['key'],['print_awb', 'awb', 'pjal', 'pu']) && $tileFence == 1)
+                                                @continue
+                                              @endif
                                              <th class="column_{{ $column['key'] }}" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
                                                     @if ($column['order_by'])
                                                     <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
@@ -250,6 +301,12 @@
                                         @foreach ($day['orders'] as $data)
                                         <tr  class="tr--list--off" >
                                             @foreach ($columns as $column)
+                                                @if(in_array($column['key'],['oras', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
+                                                  @continue
+                                                @endif
+                                                @if(in_array($column['key'],['print_awb', 'awb', 'pjal', 'pu']) && $tileFence == 1)
+                                                  @continue
+                                                @endif
                                                 <td class="overflow__list-1 @if($column['key'] == 'status') statusTd @endif" class="column_{{ $column['key'] }}">
                                                     
 
@@ -270,19 +327,22 @@
                                                         
                                                     @elseif ($column['key'] == 'culoare')
                                                         @php
-                                                            $attributes = json_decode($data->attributes, true);
+                                                            $attributes = $data->attrs;
                                                             $colors = [];
                                                             if ($attributes && count($attributes) > 0) {
                                                                 foreach ($attributes as $attr) {
-                                                                    $elems = explode("_", $attr);
-                                                                    $isColor = count($elems) == 3 ? true : false;
-                                                                    if ($isColor) {
-                                                                        $arrCol = [
-                                                                            'color' => $elems[1],
-                                                                            'colorName' => $elems[2],
-                                                                        ];
-                                                                        if (!in_array($arrCol, $colors)) {
-                                                                            array_push($colors, $arrCol);
+                                                                    $dbAttr = \App\Attribute::find($attr->attribute_id);
+                                                                    $type = $dbAttr != null ? $dbAttr->type : null;
+                                                                    if ($type != null) {
+                                                                        $color = \App\Color::find($attr->col_dim_id);
+                                                                        if($color != null){
+                                                                          $arrCol = [
+                                                                              'color' => $color->value,
+                                                                              'colorName' => $color->ral,
+                                                                          ];
+                                                                          if (!in_array($arrCol, $colors)) {
+                                                                              array_push($colors, $arrCol);
+                                                                          }
                                                                         }
                                                                     }
                                                                 }
@@ -303,6 +363,9 @@
                                                         
                                                     @elseif ($column['key'] == 'valoare')
                                                         {{ $data->total_final }}
+                                                  
+                                                    @elseif ($column['key'] == 'tip_comanda')
+                                                        {{ $data->offerType->short_title }}
                                                         
                                                     @elseif ($column['key'] == 'sursa')
                                                         {{ $data->distribuitor ? $data->distribuitor->title : '-' }}
@@ -436,7 +499,7 @@
                                                             @endforeach
                                                         </select>
                                                     
-                                                    @elseif ($column['key'] == 'p' || $column['key'] == 'pjal' || $column['key'] == 'pu')
+                                                    @elseif ($column['key'] == 'p')
                                                         <select
                                                             class="custom-table-select form-control"
                                                             onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'attr_{{ $column['key'] }}')"
@@ -451,12 +514,74 @@
                                                                 </option>
                                                             @endforeach
                                                         </select>
+                                                  
+                                                    @elseif (($column['key'] == 'pjal' || $column['key'] == 'pu') && $tileFence == 0)
+                                                        <select
+                                                            class="custom-table-select form-control"
+                                                            onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'attr_{{ $column['key'] }}')"
+                                                        >
+                                                            <option value=""> - </option>
+                                                            @foreach (App\Offer::$attr_p_values as $pkey => $pvalue)
+                                                                <option
+                                                                    value="{{ $pkey }}"
+                                                                    {{ $data->{'attr_'.$column['key']} == $pkey ? 'selected' : '' }}
+                                                                >
+                                                                    {{ $pvalue }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    @elseif (($column['key'] == 'ptabla' || $column['key'] == 'pacc') && $tileFence == 1)
+                                                        <select
+                                                            class="custom-table-select form-control"
+                                                            onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'attr_{{ $column['key'] }}')"
+                                                        >
+                                                            <option value=""> - </option>
+                                                            @foreach (App\Offer::$attr_p_values_new as $pkey => $pvalue)
+                                                                <option
+                                                                    value="{{ $pkey }}"
+                                                                    {{ $data->{'attr_'.$column['key']} == $pkey ? 'selected' : '' }}
+                                                                >
+                                                                    {{ $pvalue }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                  
+                                                     @elseif ($column['key'] == 'sofer' && $tileFence == 1)
+                                                        <select
+                                                            class="custom-table-select form-control"
+                                                            onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'attr_{{ $column['key'] }}')"
+                                                        >
+                                                            <option value=""> - </option>
+                                                            @foreach ($drivers as $driver)
+                                                                <option
+                                                                    value="{{ $driver->id }}"
+                                                                    {{ $data->{'attr_'.$column['key']} == $driver->id ? 'selected' : '' }}
+                                                                >
+                                                                    {{ $driver->title }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                     @elseif ($column['key'] == 'masina' && $tileFence == 1)
+                                                        <select
+                                                            class="custom-table-select form-control"
+                                                            onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'attr_{{ $column['key'] }}')"
+                                                        >
+                                                            <option value=""> - </option>
+                                                            @foreach ($cars as $car)
+                                                                <option
+                                                                    value="{{ $car->id }}"
+                                                                    {{ $data->{'attr_'.$column['key']} == $car->id ? 'selected' : '' }}
+                                                                >
+                                                                    {{ $car->title }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
                                                     
                                                     @elseif ($column['key'] == 'awb')
                                                         {{ $data->awb_id }}
                                                     
                                                     @elseif ($column['key'] == 'data_expediere')
-                                                        {{ $data->delivery_date }}
+                                                        {{ \Carbon\Carbon::parse($data->delivery_date)->format('d M') }}
                                                     
                                                     @elseif ($column['key'] == 'agent')
                                                         {{ $data->agent ? $data->agent->name : '-' }}
@@ -468,6 +593,9 @@
                                                         {{ $data->intarziere ?: '-' }}
                                                     
                                                     @elseif ($column['key'] == 'judet')
+                                                        {{ $data->delivery_address ? $data->delivery_address->state_name() : '-' }}
+                                                  
+                                                    @elseif ($column['key'] == 'oras')
                                                         {{ $data->delivery_address ? $data->delivery_address->city_name() : '-' }}
                                                     
                                                     @elseif ($column['key'] == 'telefon')

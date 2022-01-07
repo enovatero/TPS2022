@@ -29,7 +29,7 @@ $iconUrl = $dataType->icon;
 @stop
 
 @section('content')
-    <div class="page-content edit-add container-fluid {{$edit && $dataTypeContent->status != 1 ? 'comanda-productie' : ''}}">
+    <div class="page-content edit-add container-fluid {{$edit && $dataTypeContent->numar_comanda != null ? 'comanda-productie' : ''}}">
         <div class="row">
             @if($edit)
               <div class="col-md-12">
@@ -199,7 +199,6 @@ $iconUrl = $dataType->icon;
           class="custom-table-select form-control"
           name="payment_type"
       >
-          <option value=""> - </option>
           @foreach (App\Offer::$payment_types as $pkey => $payment_type)
               <option
                   value="{{ $pkey }}"
@@ -1446,7 +1445,25 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             
           });
           $("select[name=price_grid_id]").select2();
+          $("select[name=payment_type]").select2();
           $("select[name=delivery_address_user]").select2();
+          if(isEdit){
+            $("input[name=delivery_date]").parent().append("<input type='text' class='form-control trick-datepicker datepicker-here'/>");
+            $("input[name=delivery_date]").hide();
+            $(".trick-datepicker").datepicker({
+              language: 'ro', 
+              dateFormat: 'dd M',
+              onSelect: function (fd, d, picker) {
+                if (!d) return;
+                var day = d.getDate();
+                var month = d.getMonth();
+                var year = d.getFullYear();
+                var fullDate = day+'-'+month+'-'+year;
+                $("input[name=delivery_date]").val(fullDate);
+                saveNewDataToDb(false);
+              }
+            }).data('datepicker').selectDate(new Date("{{\Carbon\Carbon::parse($dataTypeContent->delivery_date)->format('Y')}}", "{{\Carbon\Carbon::parse($dataTypeContent->delivery_date)->format('m')}}", "{{\Carbon\Carbon::parse($dataTypeContent->delivery_date)->format('d')}}"));
+          }
           completeWithAddresses = function(addresses, selectedAddr = null){
             var html_user_addresses = `
                         <option value="-1" selected disabled>Alege adresa de livrare</option>
@@ -1589,7 +1606,11 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                    if((typeof $(vthis).attr('name') !== 'undefined' && $(vthis).attr('name') !== false && $(vthis).attr('name') == 'price_grid_id')){
                     saveNewDataToDb(true, false);
                   } else{
-                    saveNewDataToDb(false);
+                    if((typeof $(vthis).attr('name') !== 'undefined' && $(vthis).attr('name') !== false && $(vthis).attr('name') == 'client_id') && $(vthis).val() == -1){
+                      return false;
+                    } else{
+                      saveNewDataToDb(false);
+                    }
                   }
                 }
               }, 1000);
@@ -1645,7 +1666,8 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               }).done(function(res) {
                  if(res.success){
                    $('#create_new_client').modal('hide');
-                   $(".modal-alert-container-client").html('').hide();
+                   $(".modal-alert-container-client").removeClass('show-errors-popup');
+                   $(".modal-alert-container-client").html('');
                    $("#create_new_client>.modal-dialog .modal-body").html('');
                    var newOption = new Option(res.client_name, res.client_id, false, false);
                    $("select[name=client_id]").append(newOption).val(res.client_id).trigger('change');
@@ -1656,7 +1678,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                    console.log(res.msg[i]);
                      html_err += `<li>${res.msg[i]}</li>`;
                    }
-                   $(".modal-alert-container-client").html(html_err).show();
+                   $(".modal-alert-container-client").html(html_err).addClass('show-errors-popup');
                  }
               })
               .fail(function(xhr, status, error) {
@@ -1994,7 +2016,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                   if(resp.success){
                     $(vthis).remove();
                     var html_append = '';
-                    if(resp.status == 'productie'){
+                    if(resp.status == 'noua'){
                       $(".page-content.edit-add.container-fluid").addClass("comanda-productie");
                       $("body .comanda-productie .selectAttribute").prop("disabled", true).css("cursor", "no-drop");
                       $("body .comanda-productie input[name=curs_eur]").prop("disabled", true).css("cursor", "no-drop");
@@ -2005,6 +2027,9 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                         `
                            <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank" href="/admin/generatePDFFisa/${order_id}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                 <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
+                            </a> 
+                            <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="${order_id}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                                <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
                             </a> 
                         `;
                     }

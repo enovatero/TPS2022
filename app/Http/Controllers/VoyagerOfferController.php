@@ -40,6 +40,8 @@ use App\OfferSerial;
 use App\OfferAttribute;
 use App\OffertypePreselectedColor;
 use App\Attribute;
+use App\Driver;
+use App\Car;
 use PDF;
 use GuzzleHttp\Client as GuzzleClient;
 
@@ -131,7 +133,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 });
               });
             }
-
+            $query->where('numar_comanda', '=', null);
+          
             $row = $dataType->rows->where('field', $orderBy)->firstWhere('type', 'relationship');
             if ($orderBy && (in_array($orderBy, $dataType->fields()) || !empty($row))) {
                 $querySortOrder = (!empty($sortOrder)) ? $sortOrder : 'desc';
@@ -312,6 +315,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'width' => '90px',
             ],
             [
+                'key' => 'oras',
+                'order_by' => null,
+                'label' => 'Oras',
+                'width' => '90px',
+            ],
+            [
                 'key' => 'data_expediere',
                 'order_by' => 'delivery_date',
                 'label' => 'Data Expediere',
@@ -342,10 +351,34 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'width' => '100px',
             ],
             [
+                'key' => 'ptabla',
+                'order_by' => 'attr_ptabla',
+                'label' => 'P. Tabla',
+                'width' => '100px',
+            ],
+            [
+                'key' => 'pacc',
+                'order_by' => 'attr_pacc',
+                'label' => 'P. Acc.',
+                'width' => '100px',
+            ],
+            [
                 'key' => 'intarziere',
                 'order_by' => null,
                 'label' => 'Intarziere',
                 'width' => '80px',
+            ],
+            [
+                'key' => 'sofer',
+                'order_by' => null,
+                'label' => 'Sofer',
+                'width' => '100px',
+            ],
+            [
+                'key' => 'masina',
+                'order_by' => null,
+                'label' => 'Masina',
+                'width' => '100px',
             ],
             [
                 'key' => 'culoare',
@@ -365,12 +398,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'label' => 'Contabilitate',
                 'width' => '155px',
             ],
-            [
-                'key' => 'comanda_distribuitor',
-                'order_by' => 'distribuitor_order',
-                'label' => 'Comanda Distribuitor',
-                'width' => '100px',
-            ],
+//             [
+//                 'key' => 'comanda_distribuitor',
+//                 'order_by' => 'distribuitor_order',
+//                 'label' => 'Comanda Distribuitor',
+//                 'width' => '100px',
+//             ],
             [
                 'key' => 'fisiere',
                 'order_by' => null,
@@ -426,6 +459,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $qr->where('tile_fence', $tileFence);
         });
         $query->with([
+            'attrs',
             'client',
             'agent',
             'products.getParent',
@@ -526,7 +560,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ];
         }
         $orderGroups = collect($orderGroups)->sortByDesc('date');
-
+        $drivers = Driver::get();
+        $cars = Car::get();
+      
         return view('voyager::offers.lista', [
             'title'       => $title,
             'model'       => $model,
@@ -534,6 +570,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'orderColumn' => $orderColumn,
             'columns'     => $columns,
             'orders'      => $orders,
+            'tileFence'   => $tileFence,
+            'drivers'     => $drivers,
+            'cars'        => $cars,
             'orderGroups' => $orderGroups->values()->all(),
         ]);
     }
@@ -551,8 +590,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         'billing_status',
         'payment_type',
         'attr_p',
+        'attr_p',
         'attr_pjal',
         'attr_pu',
+        'attr_ptabla',
+        'attr_pacc',
+        'attr_masina',
+        'attr_sofer',
       ];
       if (in_array($request->field, $allowedFields)) {
         $offer->{$request->field} = $request->value;
@@ -667,6 +711,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         // iau oferta creata cu insertUpdateData si-i modific datele de mai jos
         $offer = Offer::find($data->id);
         $offer->status = '1';
+        $offer->payment_type = 1;
+        $offer->billing_status = 2;
         $offer->serie = $serieDefault && $serieDefault->id ? $serieDefault->id : null;
         $offer->distribuitor_id = $request->input('distribuitor_id');
         $offer->agent_id = Auth::user()->id;
@@ -1432,6 +1478,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->external_number = $request->input('external_number');
     $offer->custom_off_type = $request->input('custom_off_type');
     $offer->delivery_date = $request->input('delivery_date');
+    $offer->delivery_date = Carbon::parse($request->input('delivery_date'))->format('Y-m-d');
     $offer->observations = $request->input('observations');
     $offer->created_at = $request->input('created_at');
     $offer->updated_at = $request->input('updated_at');
@@ -1479,19 +1526,21 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $fromValue = 'empty';
     $toValue = 'empty';
     $changedField = '';
-    // am facut o functie care verifica ce camp s-a modificat si care sunt valorile modificate, din ce valoare in ce valoare s-a trecut
-    $retrievedFieldWithData = (new self())->getFieldTranslatedName($offerDb, $offer);
-    if($retrievedFieldWithData != null){
-      // iau diferenta intre ce aveam in db si ce am modificat
-      $fromValue = $retrievedFieldWithData['fromValue'] == '' ? 'empty' : $retrievedFieldWithData['fromValue'];
-      $toValue = $retrievedFieldWithData['toValue'] == '' ? 'empty' : $retrievedFieldWithData['toValue'];
-      $resultField = $retrievedFieldWithData['resultField'];
-      $changedField = $retrievedFieldWithData['changedField'];
-      $message = ' a modificat <strong>'.$resultField.'</strong> din <strong>'.$fromValue.'</strong> in <strong>'. $toValue.'</strong>';
-    }
-    // pentru ca am reducere trecut default 0 in baza de date, imi returneaza de fiecare data ca l-am modificat. Verific aici daca l-am modificat cu adevarat sau nu
-    if($changedField != 'reducere' || ($fromValue != 'empty' && $toValue != '0.00')){
-      (new self())->createEvent($offer, $message);
+    if($request->input('client_id') != -1){
+      // am facut o functie care verifica ce camp s-a modificat si care sunt valorile modificate, din ce valoare in ce valoare s-a trecut
+      $retrievedFieldWithData = (new self())->getFieldTranslatedName($offerDb, $offer);
+      if($retrievedFieldWithData != null){
+        // iau diferenta intre ce aveam in db si ce am modificat
+        $fromValue = $retrievedFieldWithData['fromValue'] == '' ? 'empty' : $retrievedFieldWithData['fromValue'];
+        $toValue = $retrievedFieldWithData['toValue'] == '' ? 'empty' : $retrievedFieldWithData['toValue'];
+        $resultField = $retrievedFieldWithData['resultField'];
+        $changedField = $retrievedFieldWithData['changedField'];
+        $message = ' a modificat <strong>'.$resultField.'</strong> din <strong>'.$fromValue.'</strong> in <strong>'. $toValue.'</strong>';
+      }
+      // pentru ca am reducere trecut default 0 in baza de date, imi returneaza de fiecare data ca l-am modificat. Verific aici daca l-am modificat cu adevarat sau nu
+      if($changedField != 'reducere' || ($fromValue != 'empty' && $toValue != '0.00')){
+        (new self())->createEvent($offer, $message);
+      }
     }
     $modifyOfferProductsPrices = $request->input('modifyOfferProductsPrices') == "true" ? true : false;
     if($request->input('getPrices') && !$modifyOfferProductsPrices){
@@ -1532,17 +1581,19 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       if($offerProducts && count($offerProducts) > 0){
         $newPrices = [];
         foreach($offerProducts as &$offProd){
-          $checkRule = $offProd->prices->filter(function($item) use($offer){
-              return $item->rule_id == $offer->price_grid_id;
-          })->first();
-          $offProd->selectedPrices = $checkRule;
-          array_push($newPrices, [
-            'dimension' => $offProd->getParent->dimension,
-            'parent' => $offProd->getParent,
-            'qty' => $offProd->qty,
-          ]);
-          $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
-          $totalQty += $offProd->qty;
+          if($offProd->qty > 0){
+            $checkRule = $offProd->prices->filter(function($item) use($offer){
+                return $item->rule_id == $offer->price_grid_id;
+            })->first();
+            $offProd->selectedPrices = $checkRule;
+            array_push($newPrices, [
+              'dimension' => $offProd->getParent->dimension,
+              'parent' => $offProd->getParent,
+              'qty' => $offProd->qty,
+            ]);
+            $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
+            $totalQty += $offProd->qty;
+          }
         }
         $boxes = intval(ceil($totalQty/25)); // rotunjire la urmatoarea valoare
         $offer->prices = $newPrices;
@@ -1576,17 +1627,19 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       if($offerProducts && count($offerProducts) > 0){
         $newPrices = [];
         foreach($offerProducts as &$offProd){
-          $checkRule = $offProd->prices->filter(function($item) use($offer){
-              return $item->rule_id == $offer->price_grid_id;
-          })->first();
-          $offProd->selectedPrices = $checkRule;
-          array_push($newPrices, [
-            'dimension' => $offProd->getParent->dimension,
-            'parent' => $offProd->getParent,
-            'qty' => $offProd->qty,
-          ]);
-          $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
-          $totalQty += $offProd->qty;
+          if($offProd->qty > 0){
+            $checkRule = $offProd->prices->filter(function($item) use($offer){
+                return $item->rule_id == $offer->price_grid_id;
+            })->first();
+            $offProd->selectedPrices = $checkRule;
+            array_push($newPrices, [
+              'dimension' => $offProd->getParent->dimension,
+              'parent' => $offProd->getParent,
+              'qty' => $offProd->qty,
+            ]);
+            $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
+            $totalQty += $offProd->qty;
+          }
         }
         $boxes = intval(ceil($totalQty/25)); // rotunjire la urmatoarea valoare
 
@@ -1646,8 +1699,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
     try{
       $offer = Offer::find($request->input('order_id'));
+      if($offer->payment_type == 1){
+        return ['succes' => false, 'msg' => 'Comanda nu a putut fi lansata pentru ca este NEACHITATA!'];
+      }
       $lastStatus = $offer->status;
-      $offer->status = 6; // comanda lansata in productie
+      $offer->status = 1; // comanda lansata in productie
       // generez un numar de comanda pe baza comenzilor create anterior. Ex: count(comenzi) + 1
       $nextOrderNumber = Offer::where('numar_comanda', '!=', null)->where('serie', $offer->serie)->max('numar_comanda');
       if($nextOrderNumber == 0){
@@ -1709,6 +1765,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $changedField = 'serie';
         break;
       case $newObj->wasChanged('client_id'):
+//         dd($newObj);
         $fromValue = $oldObj->client->name;
         $toValue = $newObj->client->name;
         $resultField = 'Client';
@@ -1791,6 +1848,18 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $toValue = $newObj->reducere;
         $resultField = 'Reducere';
         $changedField = 'reducere';
+        break;
+      case $newObj->wasChanged('payment_type'):
+        $fromValue = $oldObj->payment_type;
+        $toValue = $newObj->payment_type;
+        $resultField = 'Metoda de plata';
+        $changedField = 'payment_type';
+        break;
+      case $newObj->wasChanged('external_number'):
+        $fromValue = $oldObj->external_number;
+        $toValue = $newObj->external_number;
+        $resultField = 'Numar comanda distribuitor';
+        $changedField = 'external_number';
         break;
       case $newObj->wasChanged('delivery_address_user'):
         $fromValue = $oldObj->delivery_address->address.', '.$oldObj->delivery_address->city_name.', '.$oldObj->delivery_address->state_name.', '.$oldObj->delivery_address->country.', '.$oldObj->delivery_address->delivery_phone.', '.$oldObj->delivery_address->delivery_contact;

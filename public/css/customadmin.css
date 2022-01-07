@@ -2057,3 +2057,6 @@ textarea {
 input[readonly] {
   cursor: not-allowed;
 }
+.show-errors-popup{
+  display: block !important;
+}
