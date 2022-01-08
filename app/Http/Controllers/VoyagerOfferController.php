@@ -550,12 +550,15 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             foreach ($dayOrders->all() as $order) {
                 $order->prod_ml = 0;
                 foreach ($order->products as $prod) {
-                    if ($prod->qty > 0 && $prod->getParent->um == 8) {
-                        $order->prod_ml += $prod->qty;
-                    }
-                    if ($prod->qty > 0 && $prod->getParent->um == 1 && $prod->getParent->dimension > 0) {
-                        $order->prod_ml += $prod->qty * $prod->getParent->dimension;
-                    }
+//                    if ($prod->qty > 0 && $prod->getParent->um == 8) {
+//                        $order->prod_ml += $prod->qty;
+//                    }
+//                    if ($prod->qty > 0 && $prod->getParent->um == 1 && $prod->getParent->dimension > 0) {
+//                        $order->prod_ml += $prod->qty * $prod->getParent->dimension;
+//                    }
+                    if ($prod->qty > 0 && $prod->getParent->dimension > 0) {
+                       $order->prod_ml += $prod->qty * $prod->getParent->dimension;
+                   }
                 }
                 $updateOrder = $order->fresh();
                 $updateOrder->prod_ml = $order->prod_ml;
@@ -1603,13 +1606,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
               'qty' => $offProd->qty,
             ]);
 
-            if($offProd->getParent->um == 8){
-              $dimension += $offProd->qty;
-            }
-            if($offProd->getParent->um == 1 && $offProd->getParent->dimension > 0){
-              $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
-            }
-//               $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
+//            if($offProd->getParent->um == 8){
+//              $dimension += $offProd->qty;
+//            }
+//            if($offProd->getParent->um == 1 && $offProd->getParent->dimension > 0){
+//              $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
+//            }
+            $dimension += $offProd->getParent->dimension > 0 ? $offProd->getParent->dimension*$offProd->qty : 0;
             $totalQty += $offProd->qty;
           }
         }
