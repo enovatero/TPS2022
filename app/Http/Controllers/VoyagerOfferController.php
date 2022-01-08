@@ -538,7 +538,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         foreach ($orders->groupBy('delivery_date') as $day => $dayOrders) {
             $subtotalPrice = 0;
             $subtotalMl = 0;
-            $subtotalPrice = round(Offer::where('delivery_date', $day)->sum('total_final'), 2);
+            $subtotalPrice = round(Offer::where('delivery_date', $day)->where('numar_comanda', '!=', null)->sum('total_final'), 2);
             foreach ($dayOrders->all() as $order) {
                 $order->prod_ml = 0;
                 foreach ($order->products as $prod) {
