@@ -541,7 +541,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $subtotalPrice = round(
                 Offer::where('delivery_date', $day)
                     ->where('numar_comanda', '!=', null)
-                    ->where('tile_fence', $tileFence)
+                    ->whereHas('offerType', function (Builder $qr) use($tileFence){
+                        $qr->where('tile_fence', $tileFence);
+                    })
                     ->sum('total_final')
                 , 2
             );
