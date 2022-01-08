@@ -848,7 +848,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     $usrAddressList = [
       'Denumire' => $usrAddress->address,
       'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
-      'TipSediu' => 'S',
+      'TipSediu' => 'SFL',
       'Strada' => $usrAddress->address,
       'Numar' => '',
       'Bloc' => '',
