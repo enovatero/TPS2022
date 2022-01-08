@@ -134,6 +134,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
               });
             }
             $query->where('numar_comanda', '=', null);
+            $query->orderBy('offer_date', 'desc');
+            $query->orderBy('id', 'desc');
           
             $row = $dataType->rows->where('field', $orderBy)->firstWhere('type', 'relationship');
             if ($orderBy && (in_array($orderBy, $dataType->fields()) || !empty($row))) {
@@ -493,12 +495,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
 
         // order by date, and user selectable column
-        $orderColumn = ['delivery_date', 'desc'];
+        $orderColumn = ['offer_date', 'desc'];
         $query->orderBy($orderColumn[0], $orderColumn[1]);
         if ($request->order_by) {
             $query->orderBy($request->order_by, $request->sort_order);
             $orderColumn = [$request->order_by, $request->sort_order];
         }
+        $query->orderBy('numar_comanda', 'desc');
 
         // paginate and make query
         $orders = $query->paginate($request->get('per_page', 10));
@@ -532,10 +535,10 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 
         // group by date, and calculate day stats
         $orderGroups = [];
-        foreach ($orders->groupBy('offer_date') as $day => $dayOrders) {
+        foreach ($orders->groupBy('delivery_date') as $day => $dayOrders) {
             $subtotalPrice = 0;
             $subtotalMl = 0;
-            $subtotalPrice = round(Offer::where('offer_date', $day)->sum('total_final'), 2);
+            $subtotalPrice = round(Offer::where('delivery_date', $day)->sum('total_final'), 2);
             foreach ($dayOrders->all() as $order) {
                 $order->prod_ml = 0;
                 foreach ($order->products as $prod) {
