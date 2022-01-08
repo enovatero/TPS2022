@@ -257,7 +257,11 @@
                                                         @else
                                                         {{ $column['label'] }}
                                                         @endif
-                                                        
+
+                                                        @if($column['label'] == 'Metri liniari')
+                                                            @if($tileFence == 1) ML @else MP @endif
+                                                        @endif
+
                                                         @if ($orderColumn[0] == $column['order_by'])
                                                             @if ($orderColumn[1] == 'asc')
                                                                 <i class="voyager-angle-up pull-right"></i>
