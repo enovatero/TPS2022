@@ -15,7 +15,7 @@
             </div>
         </form>
         <h1 class="page-title">{{ $title }}</h1>
-        @can('add', app($model)) 
+        @can('add', app($model))
             <a href="{{ route('voyager.'.$slug.'.create') }}" class="btn btn-success btn-add-new">
                 <i class="voyager-plus"></i> <span>{{ __('voyager::generic.add_new') }}</span>
             </a>
@@ -33,7 +33,7 @@
             <div class="col-md-12">
                 <div class="panel panel-bordered">
                     <div class="panel-body">
-                        
+
                         <div class="custom-table-filters overflow__list-1" >
                             @foreach ($columns as $column)
                                 @if ($column['key'] == 'plata')
@@ -58,7 +58,7 @@
                                             </select>
                                         </label>
                                     </div>
-                                
+
                                 @elseif (($column['key'] == 'p' || $column['key'] == 'pjal' || $column['key'] == 'pu') && $tileFence == 0)
                                     <div class="filter-item">
                                         <label>
@@ -81,7 +81,7 @@
                                             </select>
                                         </label>
                                     </div>
-                          
+
                                 @elseif (($column['key'] == 'ptabla' || $column['key'] == 'pacc') && $tileFence == 1)
                                     <div class="filter-item">
                                         <label>
@@ -104,7 +104,7 @@
                                             </select>
                                         </label>
                                     </div>
-                                
+
                                 @elseif ($column['key'] == 'status')
                                     <div class="filter-item">
                                         <label>
@@ -127,9 +127,9 @@
                                             </select>
                                         </label>
                                     </div>
-                                
+
                                 @elseif ($column['key'] == 'contabilitate')
-                                    
+
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
@@ -151,7 +151,7 @@
                                             </select>
                                         </label>
                                     </div>
-                                
+
                                 @elseif ($column['key'] == 'livrare')
                                     <div class="filter-item">
                                         <label>
@@ -174,7 +174,7 @@
                                             </select>
                                         </label>
                                     </div>
-                                
+
                                 @elseif ($column['key'] == 'sursa')
                                     <div class="filter-item">
                                         <label>
@@ -197,29 +197,29 @@
                                             </select>
                                         </label>
                                     </div>
-                                
+
                                 @elseif ($column['key'] == '')
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
                                         </label>
                                     </div>
-                                
+
                                 @endif
                             @endforeach
                         </div>
-                        
+
                         <div class="table-responsive-start">
                             {{-- acest div este folosit ca sa activez/dezactivez modul sticky --}}
                         </div>
                         <div class="table-responsive-fake" style="display:none">
                             {{-- acest div este un placeholder pentru tabel, ca sa pastrez inaltimea paginii cand intru in modul sticky --}}
                         </div>
-                        
+
                         {{-- @php (dump($columns)) @endphp --}}
                         {{-- @php (dump($orders)) @endphp --}}
                         {{-- @php (dump($orderGroups)) @endphp --}}
-                        
+
                         <div class="table-responsive">
                             @foreach ($orderGroups as $day)
                             <div class="table-day">
@@ -288,7 +288,7 @@
                                                   @continue
                                                 @endif
                                                 <td class="overflow__list-1 @if($column['key'] == 'status') statusTd @endif" class="column_{{ $column['key'] }}">
-                                                    
+
 
                                                     @if ($column['key'] == 'nr_com')
                                                         <a href="/admin/offers/{{ $data->id }}/edit">
@@ -304,7 +304,7 @@
                                                                 </div>
                                                             </span>
                                                         @endif
-                                                        
+
                                                     @elseif ($column['key'] == 'culoare')
                                                         @php
                                                             $attributes = $data->attrs;
@@ -340,19 +340,19 @@
                                                         @else
                                                             <div>-</div>
                                                         @endif
-                                                        
+
                                                     @elseif ($column['key'] == 'valoare')
                                                         {{ $data->total_final }}
-                                                  
+
                                                     @elseif ($column['key'] == 'tip_comanda')
                                                         {{ $data->offerType->short_title }}
-                                                        
+
                                                     @elseif ($column['key'] == 'sursa')
                                                         {{ $data->distribuitor ? $data->distribuitor->title : '-' }}
-                                                        
+
                                                     @elseif ($column['key'] == 'ml')
                                                         {{ $data->prod_ml }}
-                                                        
+
                                                     @elseif ($column['key'] == 'status')
                                                         @php
                                                             $statusClass = '';
@@ -402,10 +402,10 @@
                                                     @elseif ($column['key'] == 'livrare')
                                                         @if (isset(App\Offer::$delivery_types[$data->delivery_type]))
                                                             @if( App\Offer::$delivery_types[$data->delivery_type] == 'Fan Courier')
-                                                                    Fan 
+                                                                    Fan
 
-                                                            @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Nemo Express')  
-                                                             Nemo      
+                                                            @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Nemo Express')
+                                                             Nemo
                                                             @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Livrare TPS' )
                                                             TPS
                                                             @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Ridicare personala' )
@@ -416,13 +416,13 @@
                                                         @else
                                                             -
                                                         @endif
-                                                        
+
                                                     @elseif ($column['key'] == 'tip_comanda')
                                                         {{ $data->offerType ? $data->offerType->title : '-' }}
-                                                        
+
                                                     @elseif ($column['key'] == 'client')
                                                         {{ $data->client ? $data->client->name : '-' }}
-                                                        
+
                                                     @elseif ($column['key'] == 'print_awb')
                                                         <input
                                                             type="checkbox"
@@ -430,7 +430,7 @@
                                                             onchange="window.tableChangeCheckboxField(this, {{ $data->id }}, 'print_awb')"
                                                             {{ $data->print_awb ? 'checked' : '' }}
                                                         />
-                                                    
+
                                                     @elseif ($column['key'] == 'accesorii')
                                                         <input
                                                             type="checkbox"
@@ -438,7 +438,7 @@
                                                             onchange="window.tableChangeCheckboxField(this, {{ $data->id }}, 'accesories')"
                                                             {{ $data->accesories ? 'checked' : '' }}
                                                         />
-                                                    
+
                                                     @elseif ($column['key'] == 'print_comanda')
                                                         <input
                                                             type="checkbox"
@@ -446,7 +446,7 @@
                                                             onchange="window.tableChangeCheckboxField(this, {{ $data->id }}, 'listed')"
                                                             {{ $data->listed ? 'checked' : '' }}
                                                         />
-                                                    
+
                                                     @elseif ($column['key'] == 'plata')
                                                         <select
                                                             class="custom-table-select form-control"
@@ -462,7 +462,7 @@
                                                                 </option>
                                                             @endforeach
                                                         </select>
-                                                    
+
                                                     @elseif ($column['key'] == 'contabilitate')
                                                         <select
                                                             class="custom-table-select form-control"
@@ -478,7 +478,7 @@
                                                                 </option>
                                                             @endforeach
                                                         </select>
-                                                    
+
                                                     @elseif (($column['key'] == 'p' || $column['key'] == 'pjal' || $column['key'] == 'pu') && $tileFence == 0)
                                                         <select
                                                             class="custom-table-select form-control"
@@ -509,7 +509,7 @@
                                                                 </option>
                                                             @endforeach
                                                         </select>
-                                                  
+
                                                      @elseif ($column['key'] == 'sofer' && $tileFence == 1)
                                                         <select
                                                             class="custom-table-select form-control"
@@ -540,31 +540,31 @@
                                                                 </option>
                                                             @endforeach
                                                         </select>
-                                                    
+
                                                     @elseif ($column['key'] == 'awb')
                                                         {{ $data->awb_id }}
-                                                    
+
                                                     @elseif ($column['key'] == 'data_expediere')
                                                         {{ \Carbon\Carbon::parse($data->delivery_date)->format('d M') }}
-                                                    
+
                                                     @elseif ($column['key'] == 'agent')
                                                         {{ $data->agent ? $data->agent->name : '-' }}
-                                                    
+
                                                     @elseif ($column['key'] == 'comanda_distribuitor')
                                                         {{ $data->distribuitor_order }}
-                                                    
+
                                                     @elseif ($column['key'] == 'intarziere')
                                                         {{ $data->intarziere ?: '-' }}
-                                                    
+
                                                     @elseif ($column['key'] == 'judet')
                                                         {{ $data->delivery_address ? $data->delivery_address->state_name() : '-' }}
-                                                  
+
                                                     @elseif ($column['key'] == 'oras')
                                                         {{ $data->delivery_address ? $data->delivery_address->city_name() : '-' }}
-                                                    
+
                                                     @elseif ($column['key'] == 'telefon')
                                                         {{ $data->delivery_address ? $data->delivery_address->delivery_phone : '-' }}
-                                                    
+
                                                     @elseif ($column['key'] == 'fisiere')
                                                         @php
                                                             $htmlButtonFiles = "
@@ -611,14 +611,14 @@
                                                                     <i class='voyager-plus' style='margin-right: 10px;'></i>
                                                                     <span class='table-files-name'>Incarca fisiere</span>
                                                                 </a>
-                                                                
+
                                                             </div>
                                                         ">
                                                             Fisiere
                                                         </button>
-                                                    
+
                                                     @elseif ($column['key'] == '')
-                                                    
+
                                                     @endif
                                                 </td>
                                             @endforeach
@@ -631,13 +631,13 @@
                                                 @endcan
                                                 @if ($data->numar_comanda != null)
                                                 <a style="border: none !important;border-left: none !important;min-width: 1rem !important;max-width: 1rem !important;" title="Trimite SMS" class="btnSendSms toolTipMsg btn__display--none tooltip__msg-list-1" order_id="{{$data->id}}">
-                                                    <i class="voyager-telephone"></i> 
+                                                    <i class="voyager-telephone"></i>
                                                         <div class="tooltip_description" style="display:none" title="Mesaje comanda">
                                                         </div>
                                                 </a>
                                                 @endif
                                             </td>
-                                            
+
                                         </tr>
                                         @endforeach
                                     </tbody>
@@ -645,7 +645,7 @@
                             </div>
                             @endforeach
                         </div>
-                        
+
                         <div class="browse-footer-table" style="margin-top: 20px;">
                             <div class="pull-left">
                                 <div role="status" class="show-res" aria-live="polite">
@@ -676,7 +676,7 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
@@ -701,7 +701,7 @@
             max-width: none !important;
             min-width: 100%;
         }
-        
+
         .custom-table-filters {
             display: flex;
             flex-direction: row;
@@ -710,7 +710,7 @@
         .custom-table-filters .filter-item {
             margin-right: 10px;
         }
-        
+
         /* header tabel sticky ! :D */
         .table-responsive-fake {
             height: 100vh;
@@ -760,7 +760,7 @@
             display: block;
             background: #fff;
         }
-        
+
         .table-group-details {
             width: 100%;
             text-align: left;
@@ -790,7 +790,7 @@
         .table-files-container .table-files-link {
             display: block;
         }
-        
+
         .voyager .table {
             border-top: 1px solid #ddd !important;
             border-bottom: 1px solid #ddd !important;
@@ -843,7 +843,7 @@
     <script src="{{ asset('/js/jquery.tooltip.js') }}"></script>
     <script>
         $(document).ready(function() {
-       
+
             $(".tooltipMessage").tooltip();
 
 
@@ -853,7 +853,7 @@
                 container: 'body',
                 html: true,
             });
-          
+
           $(document).on("click", ".btnUploadFiles", function(){
             var offer_id = $(this).find(".trick-offer-id").text();
             $(".upload-order-files").find("input[name=offer_id]").val(offer_id);
@@ -920,7 +920,7 @@
               }
               var statusClass = $(state.element).attr('statusclass');
               var statusTitle = $(state.element).attr('statustitle');
-            
+
               var $state = $(
                 `
                 <span style="text-transform: capitalize;" class="${statusClass}">
@@ -997,7 +997,7 @@
           });
         });
     </script>
-    
+
     <script>
         window.tableChangeCheckboxField = function (el, id, field) {
             $.ajax({
@@ -1038,7 +1038,7 @@
             });
         };
         $(document).ready(function () {
-            
+
             // table header sticky
             // $(document).on('scroll', function () {
             //     var isFixed = $('.table-responsive').hasClass('table-fixed-header');
@@ -1055,7 +1055,7 @@
             //         $('.table-responsive-fake').hide(); // placeholder ca sa pastrez inaltimea paginii
             //     }
             // });
-            
+
         });
     </script>
 @stop
