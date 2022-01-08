@@ -1286,8 +1286,8 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
           var isEdit = {!! $edit != "" ? 'true' : 'false' !!};
           if(!isEdit){
             var now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            $("input[name=offer_date]").val(now.toISOString().slice(0,10));
+            //now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            $("input[name=offer_date]").val(now.toLocaleDateString('en-CA'));
           }
           var isNewClient = {!! $isNewClient != "" && $isNewClient == true ? 'true' : 'false' !!};
           console.log(isNewClient);
@@ -1453,19 +1453,21 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
           if(isEdit){
             $("input[name=delivery_date]").parent().append("<input type='text' class='form-control trick-datepicker datepicker-here'/>");
             $("input[name=delivery_date]").hide();
+            var savedData = "{{$dataTypeContent->delivery_date ? \Carbon\Carbon::parse($dataTypeContent->delivery_date)->format('Y-m-d') : null}}";
             $(".trick-datepicker").datepicker({
-              language: 'ro',
-              dateFormat: 'dd M',
-              onSelect: function (fd, d, picker) {
-                if (!d) return;
-                var day = d.getDate();
-                var month = d.getMonth();
-                var year = d.getFullYear();
-                var fullDate = day+'-'+month+'-'+year;
-                $("input[name=delivery_date]").val(fullDate);
-                saveNewDataToDb(false);
-              }
-            }).data('datepicker').selectDate(new Date("{{\Carbon\Carbon::parse($dataTypeContent->delivery_date)->format('Y')}}", "{{\Carbon\Carbon::parse($dataTypeContent->delivery_date)->format('m')}}", "{{\Carbon\Carbon::parse($dataTypeContent->delivery_date)->format('d')}}"));
+                language: 'ro',
+                dateFormat: 'dd M',
+                onSelect: function (fd, d, picker) {
+                    if (!d) return;
+                    var day = d.getDate();
+                    var month = d.getMonth() + 1;
+                    var year = d.getFullYear();
+                    var fullDate = day+'-'+month+'-'+year;
+                    console.log([d, day+'-'+month+'-'+year]);
+                    $("input[name=delivery_date]").val(fullDate);
+                    saveNewDataToDb(false);
+                }
+            }).data('datepicker').selectDate(savedData ? new Date(savedData) : null);
           }
           completeWithAddresses = function(addresses, selectedAddr = null){
             var html_user_addresses = `
