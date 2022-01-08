@@ -254,12 +254,10 @@
                                                     @endif
                                                         @if($column['label'] == 'Nr Comanda')
                                                             #Comanda
+                                                        @elseif($column['label'] == 'Metri liniari')
+                                                            @if($tileFence == 1) ML @else MP @endif
                                                         @else
                                                         {{ $column['label'] }}
-                                                        @endif
-
-                                                        @if($column['label'] == 'Metri liniari')
-                                                            @if($tileFence == 1) ML @else MP @endif
                                                         @endif
 
                                                         @if ($orderColumn[0] == $column['order_by'])
