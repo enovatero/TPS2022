@@ -46,40 +46,40 @@ $iconUrl = $dataType->icon;
                 <div class="col-md-12 butoane-oferta" test="{{$dataTypeContent->status_name->title}}">
                   <a target="_blank" class="btn btn-success btn-add-new" href="/admin/generatePDF/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                       <i class="voyager-download" style="margin-right: 10px;"></i> <span> Descarca oferta PDF</span>
-                  </a> 
+                  </a>
                   @if($dataTypeContent->delivery_type == 'fan' && $dataTypeContent->fanData && $dataTypeContent->fanData->cont_id != null && $dataTypeContent->fanData->awb != null)
                     <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbFan" href="/admin/printAwb/{{$dataTypeContent->fanData->awb}}/{{$dataTypeContent->fanData->cont_id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                         <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
-                    </a> 
+                    </a>
                   @endif
                    @if($dataTypeContent->delivery_type == 'nemo' && $dataTypeContent->nemoData && $dataTypeContent->nemoData->cont_id != null && $dataTypeContent->nemoData->awb != null)
                     <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbNemo" href="/admin/printAwbNemo/{{$dataTypeContent->nemoData->awb}}/{{$dataTypeContent->nemoData->cont_id}}/{{$dataTypeContent->nemoData->hash}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                         <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
-                    </a> 
+                    </a>
                   @endif
                   @if($dataTypeContent->numar_comanda == null)
                     <a class="btn btn-success btn-add-new btnAcceptOffer" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;" order_id="{{$dataTypeContent->id}}">
                         <i class="voyager-pen" style="margin-right: 10px;"></i> <span>Oferta acceptata - lanseaza comanda</span>
-                    </a>  
+                    </a>
                   @endif
                   @if($dataTypeContent->numar_comanda != null)
                     <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank" href="/admin/generatePDFFisa/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                         <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
-                    </a> 
+                    </a>
                     @if($dataTypeContent->status_name->title == 'noua' || $dataTypeContent->status_name->title == 'anulata' || $dataTypeContent->status_name->title == 'modificata' || $dataTypeContent->status_name->title == 'productie')
                       <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                           <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
-                      </a> 
+                      </a>
                     @endif
                     @if($dataTypeContent->status_name->title == 'expediata')
                       <a class="btn btn-success btn-add-new btnSchimbaStatus" status="livrata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                           <i class="voyager-truck" style="margin-right: 10px;"></i> <span>Comanda livrata</span>
-                      </a> 
+                      </a>
                     @endif
                     @if($dataTypeContent->status_name->title == 'livrata' || $dataTypeContent->status_name->title == 'expediata')
                       <a class="btn btn-success btn-add-new btnSchimbaStatus" status="retur" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                           <i class="voyager-warning" style="margin-right: 10px;"></i> <span>Comanda retur</span>
-                      </a> 
+                      </a>
                     @endif
                   @endif
                 </div>
@@ -129,20 +129,27 @@ $iconUrl = $dataType->icon;
 
 <!-- || $row->display_name == 'Client' -->
 @foreach($dataTypeRows as $row)
-     @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' || $row->display_name == 'Grila pret' || $row->display_name == 'Tip oferta custom' )
+     @if(
+        $row->display_name == 'Serie'
+        || $row->display_name == 'Tip oferta'
+        || $row->display_name == 'Data oferta'
+        || $row->display_name == 'Sursa'
+        || $row->display_name == 'Curs EURO'
+        || $row->display_name == 'Agent'
+        || $row->display_name == 'Grila pret'
+        || ($row->display_name == 'Tip oferta custom' && $offerType->tile_fence == 1)
+        )
+         @php
+             $display_options = $row->details->display ?? NULL;
+             if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
+                 $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
+             }
+         @endphp
+         @if (isset($row->details->legend) && isset($row->details->legend->text))
+             <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
+         @endif
 
-
-     @php
-         $display_options = $row->details->display ?? NULL;
-         if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
-             $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
-         }
-     @endphp
-     @if (isset($row->details->legend) && isset($row->details->legend->text))
-         <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
-     @endif 
-
-    <div @if($row->display_name == 'Tip oferta' || $row->display_name == 'Tip oferta custom') style="width: 100% !important;" @endif class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
+        <div @if($row->display_name == 'Tip oferta' || $row->display_name == 'Tip oferta custom') style="width: 100% !important;" @endif class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
          {{ $row->slugify }}
          @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
            <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
@@ -177,20 +184,19 @@ $iconUrl = $dataType->icon;
              @endforeach
          @endif
      </div>
-      @if($row->display_name == 'Serie')
-        @php
-          $isOrder = $dataTypeContent->numar_comanda != null ? true : false;
-        @endphp
-        <div class="form-group col-md-12">
-         <label class="control-label" for="name">
-          @if($isOrder) Numar comanda @else Numar oferta @endif
-         </label>
-         <input type="text" class="form-control" @if($isOrder != null) value="{{$dataTypeContent->numar_comanda}}" @else value="{{$dataTypeContent->id}}" @endif disabled="disabled">
-        </div>
-      @endif
+        @if($row->display_name == 'Serie')
+            @php
+              $isOrder = $dataTypeContent->numar_comanda != null ? true : false;
+            @endphp
+            <div class="form-group col-md-12">
+                 <label class="control-label" for="name">
+                  @if($isOrder) Numar comanda @else Numar oferta @endif
+                 </label>
+                 <input type="text" class="form-control" @if($isOrder != null) value="{{$dataTypeContent->numar_comanda}}" @else value="{{$dataTypeContent->id}}" @endif disabled="disabled">
+            </div>
+        @endif
     @endif
-
-   @endforeach
+@endforeach
    <div class="form-group col-md-12" style="width: 100% !important;">
      <label class="control-label" for="name">
       Metoda de plata
@@ -225,7 +231,7 @@ $iconUrl = $dataType->icon;
                                     <button style="float: right;" type="button" class="btn btn-primary save btnSaveMention" order_id="{{$dataTypeContent->id}}">Salveaza mesaj</button>
                                     <div class="form-group col-md-12 mesaj-intern-container">
                                         <div class="log-evenimente-list log-mesaje">
-                                          @include('vendor.voyager.partials.log_messages', ['offerMessages' => $offerMessages]) 
+                                          @include('vendor.voyager.partials.log_messages', ['offerMessages' => $offerMessages])
                                         </div>
                                     </div>
                                   </div>
@@ -285,12 +291,12 @@ $iconUrl = $dataType->icon;
                                 @endphp
                                 @if (isset($row->details->legend) && isset($row->details->legend->text))
                                     <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
-                                @endif 
+                                @endif
 
-                                @if($row->display_name == 'Observatii') 
+                                @if($row->display_name == 'Observatii')
                                 <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
                                     {{ $row->slugify }}
-                                    
+
                                     @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
                                       <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
                                     @endif
@@ -302,13 +308,13 @@ $iconUrl = $dataType->icon;
                                   </div>
 
                                 @endif
-                                 
-                                
+
+
                             @endforeach
-                           
+
                             </div>
                             @if($edit)
-                              
+
                               <div class="form-group col-md-12 mesaj-intern-container log-evenimente flex__box1 height__1">
                                   <label class="control-label">Log evenimente</label>
                                   <div class="show-hide-log hide-log">
@@ -316,7 +322,7 @@ $iconUrl = $dataType->icon;
                                     <span class="icon voyager-double-up"></span>
                                   </div>
                                   <div class="log-evenimente-list">
-                                    @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents]) 
+                                    @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents])
                                   </div>
                               </div>
                             @endif
@@ -326,31 +332,26 @@ $iconUrl = $dataType->icon;
 
 
 
-
-
-
                             <div class="flex__box third-box">
-                           @foreach($dataTypeRows as $row)
-                                    @if($row->display_name == 'Observatii') 
+                            @foreach($dataTypeRows as $row)
+                                @if($row->display_name == 'Observatii' || (($row->display_name == 'Ambalare' || $row->display_name == 'Banda transparenta') && $offerType->tile_fence == 1) )
 
-                                  
+                                @else
 
-                                    @else
-
-                                @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' || $row->display_name == 'Grila pret' || $row->display_name == 'External Number' || $row->display_name == 'Tip oferta custom' ) 
+                                    @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' || $row->display_name == 'Grila pret' || $row->display_name == 'External Number' || $row->display_name == 'Tip oferta custom' )
 
                                     @else
-                                @php
-                                    $display_options = $row->details->display ?? NULL;
-                                    if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
-                                        $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
-                                    }
-                                @endphp
-                                @if (isset($row->details->legend) && isset($row->details->legend->text))
-                                    <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
-                                @endif 
+                                        @php
+                                            $display_options = $row->details->display ?? NULL;
+                                            if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
+                                                $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
+                                            }
+                                        @endphp
+                                        @if (isset($row->details->legend) && isset($row->details->legend->text))
+                                            <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
+                                        @endif
 
-                               <div @if($row->display_name == 'Ambalare' || $row->display_name == 'Banda transparenta') style="width: 49% !important;" @endif class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
+                                        <div @if($row->display_name == 'Ambalare' || $row->display_name == 'Banda transparenta') style="width: 49% !important;" @endif class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
                                     {{ $row->slugify }}
                                     @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
                                       <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
@@ -385,33 +386,33 @@ $iconUrl = $dataType->icon;
                                         @endforeach
                                     @endif
                                 </div>
-                              
-                                      @if($row->display_name == 'Client' && $edit)
-                                        <div class="form-group  col-md-12" >
-                                        <label class="control-label">Adresa livrare</label>
-                                        <select name="delivery_address_user" class="form-control">
-                                          <option value="-1" selected disabled>Alege adresa de livrare</option>
-                                          <option value="-2">Adauga adresa noua</option>
-                                          @if(count($userAddresses) > 0)
-                                            @foreach($userAddresses as $address)
-                                              @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
-                                                @php
-                                                  $address = $selectedAddress;
-                                                @endphp
-                                                <option selected value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name}}" city_id="{{$address->city}}" city_name="{{$address->city_name}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name}}, {{$address->state_name}}</option>
-                                              @else
-                                                <option value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name()}}" city_id="{{$address->city}}" city_name="{{$address->city_name()}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name()}}, {{$address->state_name()}}</option>
-                                              @endif
-                                            @endforeach
-                                          @endif
-                                        </select>
-                                      </div>
-                                      <div class="form-group  col-md-12 container-elements-addresses" style="width: 100%; display: none;">
+
+                                        @if($row->display_name == 'Client' && $edit)
+                                            <div class="form-group  col-md-12" >
+                                                <label class="control-label">Adresa livrare</label>
+                                                <select name="delivery_address_user" class="form-control">
+                                                    <option value="-1" selected disabled>Alege adresa de livrare</option>
+                                                    <option value="-2">Adauga adresa noua</option>
+                                                    @if(count($userAddresses) > 0)
+                                                        @foreach($userAddresses as $address)
+                                                            @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
+                                                                @php
+                                                                  $address = $selectedAddress;
+                                                                @endphp
+                                                                <option selected value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name}}" city_id="{{$address->city}}" city_name="{{$address->city_name}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name}}, {{$address->state_name}}</option>
+                                                            @else
+                                                                <option value="{{$address->id}}" country="{{$address->country}}" state_code="{{$address->state}}" state_name="{{$address->state_name()}}" city_id="{{$address->city}}" city_name="{{$address->city_name()}}" address="{{$address->address}}" phone="{{$address->phone}}" contact="{{$address->name}}">{{$address->address}}, {{$address->city_name()}}, {{$address->state_name()}}</option>
+                                                            @endif
+                                                        @endforeach
+                                                    @endif
+                                                </select>
+                                            </div>
+                                            <div class="form-group  col-md-12 container-elements-addresses" style="width: 100%; display: none;">
                                           <div class="panel-body container-box-adresa">
                                             <input class="trick-addr-id" value="" type="hidden"/>
                                             <div class="form-group col-md-12 column-element-address" style="width: 100%">
                                                <label class="control-label">Tara</label>
-                                               @include('vendor.voyager.formfields.countries', ['selected' => null])                       
+                                               @include('vendor.voyager.formfields.countries', ['selected' => null])
                                             </div>
                                             <div class="form-group col-md-12 column-element-address">
                                                <label class="control-label" for="state">Judet/Regiune</label>
@@ -419,11 +420,11 @@ $iconUrl = $dataType->icon;
                                             </div>
                                             <div class="form-group col-md-12 column-element-address">
                                                <label class="control-label">Oras/Localitate/Sector</label>
-                                               <select name="city" class="form-control select-city"></select>        
+                                               <select name="city" class="form-control select-city"></select>
                                             </div>
                                             <div class="form-group col-md-12 column-element-address" style="width: 100%;">
                                                <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
-                                               <input class="control-label" type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>                          
+                                               <input class="control-label" type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>
                                             </div>
                                             <div class="form-group col-md-12 column-element-address">
                                                <label class="control-label" for="state">Telefon</label>
@@ -431,19 +432,19 @@ $iconUrl = $dataType->icon;
                                             </div>
                                             <div class="form-group col-md-12 column-element-address">
                                                <label class="control-label">Persoana de contact</label>
-                                               <input name="delivery_contact" type="text" style="padding: 5px;"/>        
+                                               <input name="delivery_contact" type="text" style="padding: 5px;"/>
                                             </div>
                                           </div>
                                           <div class="col-md-12 panel-footer" style="    justify-content: flex-end;display: flex;width: 100%;">
                                             <button type="button" class="btn btn-primary btnGreenNew btnSalveazaAdresa">Salveaza adresa noua</button>
                                           </div>
                                       </div>
-                                      @endif
+                                        @endif
                                     @endif
-                                    @endif
-                              @endforeach
+                                @endif
+                            @endforeach
                             </div>
-                         
+
 
                                       <!-- ADD SECTION -->
 
@@ -483,7 +484,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
 @endphp
 @if (isset($row->details->legend) && isset($row->details->legend->text))
 <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
-@endif 
+@endif
 
 <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
 {{ $row->slugify }}
@@ -533,7 +534,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
         <button style="float: right;" type="button" class="btn btn-primary save btnSaveMention" order_id="{{$dataTypeContent->id}}">Salveaza mesaj</button>
         <div class="form-group col-md-12 mesaj-intern-container">
             <div class="log-evenimente-list log-mesaje">
-              @include('vendor.voyager.partials.log_messages', ['offerMessages' => $offerMessages]) 
+              @include('vendor.voyager.partials.log_messages', ['offerMessages' => $offerMessages])
             </div>
         </div>
       </div>
@@ -598,12 +599,12 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
     @endphp
     @if (isset($row->details->legend) && isset($row->details->legend->text))
         <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
-    @endif 
+    @endif
 
-    @if($row->display_name == 'Observatii') 
+    @if($row->display_name == 'Observatii')
     <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
         {{ $row->slugify }}
-        
+
         @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
           <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
         @endif
@@ -615,13 +616,13 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
       </div>
 
     @endif
-     
-    
+
+
 @endforeach
 
 </div>
 @if($edit)
-  
+
   <div class="form-group col-md-12 mesaj-intern-container log-evenimente flex__box1 height__1">
     <label class="control-label">Log evenimente</label>
     <div class="show-hide-log hide-log">
@@ -629,7 +630,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
       <span class="icon voyager-double-down"></span>
     </div>
     <div class="log-evenimente-list test123">
-      @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents]) 
+      @include('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents])
     </div>
   </div>
 @endif
@@ -645,13 +646,13 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
 <div style="width: 70%;margin: 0;" class="flex__box">
 @foreach($dataTypeRows as $row)
 
-        @if($row->display_name == 'Observatii') 
+        @if($row->display_name == 'Observatii')
 
-      
+
 
         @else
 
-    @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' ) 
+    @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' )
 
         @else
     @php
@@ -662,7 +663,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
     @endphp
     @if (isset($row->details->legend) && isset($row->details->legend->text))
         <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
-    @endif 
+    @endif
 
    <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
         {{ $row->slugify }}
@@ -724,7 +725,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                 <input class="trick-addr-id" value="" type="hidden"/>
                 <div class="form-group col-md-12 column-element-address" style="width: 100%">
                    <label class="control-label">Tara</label>
-                   @include('vendor.voyager.formfields.countries', ['selected' => null])                       
+                   @include('vendor.voyager.formfields.countries', ['selected' => null])
                 </div>
                 <div class="form-group col-md-12 column-element-address">
                    <label class="control-label" for="state">Judet/Regiune</label>
@@ -732,11 +733,11 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                 </div>
                 <div class="form-group col-md-12 column-element-address">
                    <label class="control-label">Oras/Localitate/Sector</label>
-                   <select name="city" class="form-control select-city"></select>        
+                   <select name="city" class="form-control select-city"></select>
                 </div>
                 <div class="form-group col-md-12 column-element-address" style="width: 100%;">
                    <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
-                   <input class="control-label" type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>                          
+                   <input class="control-label" type="text" name="delivery_address" data-google-address autocomplete="off" style="padding: 5px;"/>
                 </div>
                 <div class="form-group col-md-12 column-element-address">
                    <label class="control-label" for="state">Telefon</label>
@@ -744,7 +745,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                 </div>
                 <div class="form-group col-md-12 column-element-address">
                    <label class="control-label">Persoana de contact</label>
-                   <input name="delivery_contact" type="text" style="padding: 5px;"/>        
+                   <input name="delivery_contact" type="text" style="padding: 5px;"/>
                 </div>
               </div>
               <div class="col-md-12 panel-footer" style="    justify-content: flex-end;display: flex;width: 100%;">
@@ -766,21 +767,21 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
 
 
 
-                            
 
-                        
 
-                            
-                            
-                            
+
+
+
+
+
                         </div>
                           <div class="panel-body container-doua-col-right" @if (count($errors) > 0 && array_key_exists('address', $errors->toArray())) style="display: block !important;" @endif>
                             {{csrf_field()}}
                             @if($edit)
                               <input name="offer_id" type="hidden"/>
                             @endif
-                            <div class="form-group  col-md-12 ">     
-                               <h4 class="control-label font-weight-bold" for="name">Adaugare client</h4>     
+                            <div class="form-group  col-md-12 ">
+                               <h4 class="control-label font-weight-bold" for="name">Adaugare client</h4>
                             </div>
                             <div class="form-group  col-md-12 tip-client-container">
                                <label class="control-label" for="name">Tip client</label>
@@ -799,27 +800,27 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                             </div>
                               <div class="form-group col-md-12">
                                <label class="control-label" for="name">Nume</label>
-                               <input class="form-control" type="text" name="name" autocomplete="off" value="{{ old('name', $dataTypeContent->name ?? '') != '' ? old('name', $dataTypeContent->name) : ''}}"/>                          
+                               <input class="form-control" type="text" name="name" autocomplete="off" value="{{ old('name', $dataTypeContent->name ?? '') != '' ? old('name', $dataTypeContent->name) : ''}}"/>
                               </div>
                               <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
                                <label class="control-label" for="name">CUI</label>
-                               <input class="form-control" type="text" name="cui" autocomplete="off" value="{{ old('cui', $dataTypeContent->cui ?? '') != '' ? old('cui', $dataTypeContent->cui) : ''}}"/>                          
+                               <input class="form-control" type="text" name="cui" autocomplete="off" value="{{ old('cui', $dataTypeContent->cui ?? '') != '' ? old('cui', $dataTypeContent->cui) : ''}}"/>
                               </div>
                               <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
                                <label class="control-label" for="name">Reg. Com.</label>
-                               <input class="form-control" type="text" name="reg_com" autocomplete="off" value="{{ old('reg_com', $dataTypeContent->reg_com ?? '') != '' ? old('reg_com', $dataTypeContent->reg_com) : ''}}"/>                          
+                               <input class="form-control" type="text" name="reg_com" autocomplete="off" value="{{ old('reg_com', $dataTypeContent->reg_com ?? '') != '' ? old('reg_com', $dataTypeContent->reg_com) : ''}}"/>
                               </div>
                               <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
                                <label class="control-label" for="name">Banca</label>
-                               <input class="form-control" type="text" name="banca" autocomplete="off"value="{{ old('banca', $dataTypeContent->banca ?? '') != '' ? old('banca', $dataTypeContent->banca) : ''}}" />                          
+                               <input class="form-control" type="text" name="banca" autocomplete="off"value="{{ old('banca', $dataTypeContent->banca ?? '') != '' ? old('banca', $dataTypeContent->banca) : ''}}" />
                               </div>
                               <div class="form-group col-md-12 container-inputs-juridica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
                                <label class="control-label" for="name">IBAN</label>
-                               <input class="form-control" type="text" name="iban" autocomplete="off"value="{{ old('iban', $dataTypeContent->iban ?? '') != '' ? old('iban', $dataTypeContent->iban) : ''}}" />                          
+                               <input class="form-control" type="text" name="iban" autocomplete="off"value="{{ old('iban', $dataTypeContent->iban ?? '') != '' ? old('iban', $dataTypeContent->iban) : ''}}" />
                               </div>
                               <div class="form-group col-md-12 container-inputs-fizica" @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: none" @endif>
                                <label class="control-label" for="name">CNP</label>
-                               <input class="form-control" type="text" name="cnp" autocomplete="off" value="{{ old('cnp', $dataTypeContent->cnp ?? '') != '' ? old('cnp', $dataTypeContent->cnp) : ''}}"/>                          
+                               <input class="form-control" type="text" name="cnp" autocomplete="off" value="{{ old('cnp', $dataTypeContent->cnp ?? '') != '' ? old('cnp', $dataTypeContent->cnp) : ''}}"/>
                               </div>
                               <div class="form-group  col-md-12 " >
                                   <label class="control-label" for="name">Email</label>
@@ -832,11 +833,11 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                             <div>
                               <div class="form-group col-md-12 column-element-address">
                                  <label class="control-label">Introdu adresa(strada, nr, bloc, etaj, ap)</label>
-                                 <input class="form-control" type="text" name="address[]" value="{{ old('address', $dataTypeContent->address ?? '') != '' ? old('address', $dataTypeContent->address)[0] : ''}}"/>                          
+                                 <input class="form-control" type="text" name="address[]" value="{{ old('address', $dataTypeContent->address ?? '') != '' ? old('address', $dataTypeContent->address)[0] : ''}}"/>
                               </div>
                               <div class="form-group col-md-12 column-element-address">
                                  <label class="control-label">Tara</label>
-                                 @include('vendor.voyager.formfields.countries', ['selected' => null]) 
+                                 @include('vendor.voyager.formfields.countries', ['selected' => null])
                               </div>
                               <div class="form-group col-md-12 column-element-address">
                                  <label class="control-label" for="state">Judet/Regiune</label>
@@ -844,7 +845,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                               </div>
                               <div class="form-group col-md-12 column-element-address">
                                  <label class="control-label">Oras/Localitate/Sector</label>
-                                 <select name="city[]" class="form-control select-city"></select>        
+                                 <select name="city[]" class="form-control select-city"></select>
                               </div>
                             </div>
                           </div>
@@ -859,40 +860,40 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                           <div class="col-md-12 butoane-oferta" test="{{$dataTypeContent->status_name->title}}">
                             <a target="_blank" class="btn btn-success btn-add-new" href="/admin/generatePDF/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                 <i class="voyager-download" style="margin-right: 10px;"></i> <span> Descarca oferta PDF</span>
-                            </a> 
+                            </a>
                             @if($dataTypeContent->delivery_type == 'fan' && $dataTypeContent->fanData && $dataTypeContent->fanData->cont_id != null && $dataTypeContent->fanData->awb != null)
                               <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbFan" href="/admin/printAwb/{{$dataTypeContent->fanData->awb}}/{{$dataTypeContent->fanData->cont_id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                   <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
-                              </a> 
+                              </a>
                             @endif
                             @if($dataTypeContent->delivery_type == 'nemo' && $dataTypeContent->nemoData && $dataTypeContent->nemoData->cont_id != null && $dataTypeContent->nemoData->awb != null)
                               <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbNemo" href="/admin/printAwbNemo/{{$dataTypeContent->nemoData->awb}}/{{$dataTypeContent->nemoData->cont_id}}/{{$dataTypeContent->nemoData->hash}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                   <i class="voyager-eye" style="margin-right: 10px;"></i> <span> Descarca AWB PDF</span>
-                              </a> 
+                              </a>
                             @endif
                             @if($dataTypeContent->numar_comanda == null)
                               <a class="btn btn-success btn-add-new btnAcceptOffer" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;" order_id="{{$dataTypeContent->id}}">
                                   <i class="voyager-pen" style="margin-right: 10px;"></i> <span>Oferta acceptata - lanseaza comanda</span>
-                              </a>  
+                              </a>
                             @endif
                             @if($dataTypeContent->numar_comanda != null)
                               <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank" href="/admin/generatePDFFisa/{{$dataTypeContent->id}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                   <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
-                              </a> 
+                              </a>
                               @if($dataTypeContent->status_name->title == 'noua' || $dataTypeContent->status_name->title == 'anulata' || $dataTypeContent->status_name->title == 'modificata' || $dataTypeContent->status_name->title == 'productie')
                                 <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                     <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
-                                </a> 
+                                </a>
                               @endif
                               @if($dataTypeContent->status_name->title == 'expediata')
                                 <a class="btn btn-success btn-add-new btnSchimbaStatus" status="livrata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                     <i class="voyager-truck" style="margin-right: 10px;"></i> <span>Comanda livrata</span>
-                                </a> 
+                                </a>
                               @endif
                               @if($dataTypeContent->status_name->title == 'livrata' || $dataTypeContent->status_name->title == 'expediata')
                                 <a class="btn btn-success btn-add-new btnSchimbaStatus" status="retur" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                     <i class="voyager-warning" style="margin-right: 10px;"></i> <span>Comanda retur</span>
-                                </a> 
+                                </a>
                               @endif
                             @endif
                           </div>
@@ -1011,9 +1012,9 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                     @if($userAddresses != null && count($userAddresses) > 0)
                       @foreach($userAddresses as $address)
                         <option value="{{$address->id}}" @if($edit && $dataTypeContent && $dataTypeContent->fanData && $dataTypeContent->fanData->adresa_livrare_id == $address->id) selected @endif>
-                            {{$address->name}} - 
-                            {{$address->address}}, 
-                            {{$address->city_name}}, 
+                            {{$address->name}} -
+                            {{$address->address}},
+                            {{$address->city_name}},
                             {{$address->state_name}},
                             {{$address->phone}}
                         </option>
@@ -1112,9 +1113,9 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                     @if($userAddresses != null && count($userAddresses) > 0)
                       @foreach($userAddresses as $address)
                         <option value="{{$address->id}}" @if($edit && $dataTypeContent && $dataTypeContent->nemoData && $dataTypeContent->nemoData->adresa_livrare_id == $address->id) selected @endif>
-                            {{$address->name}} - 
-                            {{$address->address}}, 
-                            {{$address->city_name}}, 
+                            {{$address->name}} -
+                            {{$address->address}},
+                            {{$address->city_name}},
                             {{$address->state_name}},
                             {{$address->phone}}
                         </option>
@@ -1128,7 +1129,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               </form>
             </div>
           </div>
-    
+
     <div class="modal fade modal-danger" id="confirm_delete_modal">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -1163,7 +1164,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                     <ul></ul>
                 </div>
                 <form class="modal-body form-new-client">
-                    
+
                 </form>
 
                 <div class="modal-footer" style="display: flex;">
@@ -1172,7 +1173,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                 </div>
             </div>
         </div>
-      </div> 
+      </div>
     @endif
     <!-- End Delete File Modal -->
 @stop
@@ -1308,7 +1309,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             $("#data_oferta > input").css("cursor", "not-allowed !important");
             $("#tip_oferta .selection>span").css("cursor", "not-allowed !important");
             $("input[name=price_grid_id]").prop("type", "hidden");
-            
+
             var tip_oferta_label = $("#tip_oferta > label").html();
             $("#tip_oferta").html('');
             $("#tip_oferta").append(tip_oferta_label);
@@ -1407,7 +1408,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                   method: 'POST',
                   url: '/saveNewAddress',
                   data: {
-                    _token: $("meta[name=csrf-token]").attr("content"), 
+                    _token: $("meta[name=csrf-token]").attr("content"),
                     client_id: client_id,
                     offer_id: "{{$dataTypeContent->getKey()}}",
                     country: country,
@@ -1444,7 +1445,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                   }
               });
             return false;
-            
+
           });
           $("select[name=price_grid_id]").select2();
           $("select[name=payment_type]").select2();
@@ -1453,7 +1454,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             $("input[name=delivery_date]").parent().append("<input type='text' class='form-control trick-datepicker datepicker-here'/>");
             $("input[name=delivery_date]").hide();
             $(".trick-datepicker").datepicker({
-              language: 'ro', 
+              language: 'ro',
               dateFormat: 'dd M',
               onSelect: function (fd, d, picker) {
                 if (!d) return;
@@ -1478,43 +1479,43 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                 console.log(addresses[i].id == selectedAddr);
                 if(addresses[i].id == selectedAddr){
                   html_user_addresses += `
-                    <option 
+                    <option
                       selected
-                      value="${addresses[i].id}" 
-                      country="${addresses[i].country}" 
-                      state_code="${addresses[i].state}" 
-                      state_name="${addresses[i].state_name}" 
-                      city_id="${addresses[i].city}"  
-                      city_name="${addresses[i].city_name}"  
-                      address="${addresses[i].address}" 
-                      phone="${addresses[i].phone}" 
+                      value="${addresses[i].id}"
+                      country="${addresses[i].country}"
+                      state_code="${addresses[i].state}"
+                      state_name="${addresses[i].state_name}"
+                      city_id="${addresses[i].city}"
+                      city_name="${addresses[i].city_name}"
+                      address="${addresses[i].address}"
+                      phone="${addresses[i].phone}"
                       contact="${addresses[i].name}">
-                      ${addresses[i].address}, 
-                      ${addresses[i].city_name}, 
+                      ${addresses[i].address},
+                      ${addresses[i].city_name},
                       ${addresses[i].state_name}
                     </option>`;
                 } else{
                     html_user_addresses += `
-                      <option 
-                        value="${addresses[i].id}" 
-                        country="${addresses[i].country}" 
-                        state_code="${addresses[i].state}" 
-                        state_name="${addresses[i].state_name}" 
-                        city_id="${addresses[i].city}"  
-                        city_name="${addresses[i].city_name}"  
-                        address="${addresses[i].address}" 
-                        phone="${addresses[i].phone}" 
+                      <option
+                        value="${addresses[i].id}"
+                        country="${addresses[i].country}"
+                        state_code="${addresses[i].state}"
+                        state_name="${addresses[i].state_name}"
+                        city_id="${addresses[i].city}"
+                        city_name="${addresses[i].city_name}"
+                        address="${addresses[i].address}"
+                        phone="${addresses[i].phone}"
                         contact="${addresses[i].name}">
-                        ${addresses[i].address}, 
-                        ${addresses[i].city_name}, 
+                        ${addresses[i].address},
+                        ${addresses[i].city_name},
                         ${addresses[i].state_name}
                       </option>`;
                 }
                 html_awb_addresses += `
                                   <option value="${addresses[i].id}">
-                                      ${addresses[i].name} - 
-                                      ${addresses[i].address}, 
-                                      ${addresses[i].city_name}, 
+                                      ${addresses[i].name} -
+                                      ${addresses[i].address},
+                                      ${addresses[i].city_name},
                                       ${addresses[i].state_name},
                                       ${addresses[i].phone}
                                   </option>`;
@@ -1522,7 +1523,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             }
             return [html_user_addresses, html_awb_addresses];
           }
-            
+
             function formatState (state) {
               if (!state.id) {
                 return state.text;
@@ -1541,7 +1542,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                 return state.text;
               }
             };
-          
+
             if($(".selectDimension")[0]){
                $(".selectDimension").select2();
             }
@@ -1559,7 +1560,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             $(".reducereRon").text('0.00');
             $("input[name=reducere]").val('');
           });
-          
+
           $("select[name=type]").on('select2:select', function (e) {
             var vthis = this;
             var type_id = e.params.data.id;
@@ -1585,8 +1586,8 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             });
             return true;
           });
-          
-          
+
+
           var timeoutSelectAttribute = null;
           $("select").on('select2:select', function (e) {
             var vthis = this;
@@ -1601,7 +1602,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                 }, 1500);
               }
             } else{
-              setTimeout(function(){ 
+              setTimeout(function(){
                 if($(vthis).hasClass('selectAttribute')){
                   saveNewDataToDb(true);
                 } else{
@@ -1618,7 +1619,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               }, 1000);
             }
           });
-          
+
           function getPreselectedColorsAndUpdate(selectedColor){
             $.ajax({
                   method: 'POST',
@@ -1654,7 +1655,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               });
               return true;
           }
-          
+
           $(document).on("click", "#confirm_create_client", function(){
             var data = $(".form-new-client").serializeArray();
             $.ajax({
@@ -1691,7 +1692,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               });
               return true;
           });
-          
+
           var timeout = null;
 
           $(document).on("keyup", 'input', function() {
@@ -1705,7 +1706,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                 }
               }, 500);
           });
-          
+
           $('textarea').keyup(function() {
             if($(this).attr("name") != "mentions_textarea"){
               clearTimeout(timeout);
@@ -1714,20 +1715,20 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               }, 500);
             }
           });
-          
+
           $('input[type=date]').change(function() {
               timeout = setTimeout(function() {
                   saveNewDataToDb(false);
               }, 500);
           });
-          
+
           $('input[name=transparent_band]').change(function(){
             timeout = setTimeout(function() {
                   saveNewDataToDb(false);
               }, 500);
           });
-          
-  
+
+
           $("body .comanda-productie .selectAttribute").prop("disabled", true).css("cursor", "no-drop");
           $("body .comanda-productie input[name=curs_eur]").prop("disabled", true).css("cursor", "no-drop");
           $("body .comanda-productie .changeQty").prop("disabled", true).css("cursor", "no-drop");
@@ -1736,7 +1737,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
 
           $("#packing>textarea[name=packing]").attr("maxlength", 30);
           $("#delivery_details>textarea[name=delivery_details]").attr("maxlength", 100);
-          
+
           var mod_livrare_cloned = $("#mod_livrare").clone();
           mod_livrare_cloned.find("span").remove();
           mod_livrare_cloned.find("select")
@@ -1746,11 +1747,11 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             .removeAttr("tabindex")
             .removeAttr("aria-hidden")
             .select2();
-          
+
           $(".panel-delivery-method").prepend(mod_livrare_cloned[0]);
           $(".panel-delivery-method").find("#mod_livrare").attr("id", "mod_livrare_detaliu");
           $(".panel-delivery-method").find("#mod_livrare_detaliu").attr("name", "");
-          
+
           $(document).on('select2:select', '#mod_livrare_detaliu>select[name=delivery_type]', function (e) {
             var data = e.params.data;
             console.log(data);
@@ -1761,7 +1762,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                   saveNewDataToDb(false);
               }, 500);
           });
-          
+
           $("#mod_livrare>select[name=delivery_type]").on('select2:select', function (e) {
             var data = e.params.data;
             console.log(data);
@@ -1772,7 +1773,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                   saveNewDataToDb(false);
               }, 500);
           });
-          
+
           function saveNewDataToDb(getPrices = false, modifyOfferProductsPrices = false){
             if(isEdit){
               var data = $(".form-edit-add").serializeArray();
@@ -1805,7 +1806,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
               });
               return true;
             }
-            
+
           }
           $(document).on("input", ".totalHandled", function(){
             var totalHandled = $(this).val();
@@ -1817,8 +1818,8 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             $("input[name=totalFinal]").val(parseFloat(totalFinal).toFixed(2));
             $("span.totalFinalRon").text(parseFloat(totalFinal).toFixed(2));
           });
-          
-          
+
+
           $(document).on("click", ".btnGenerateAwb", function(){
             var vthis = this;
             var order_id = "{!! $dataTypeContent && $dataTypeContent->id ? $dataTypeContent->id : 'null' !!}";
@@ -1827,7 +1828,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             if(already_generated == 1){
               if(confirm("AWB-ul a fost deja generat. Doriti regenerarea AWB-ului?")){
                 next_step = true;
-              } else{ 
+              } else{
                 next_step = false;
               }
             }
@@ -1845,7 +1846,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                     $(".btnDownloadAwb").attr("href", "/admin/printAwb/" + resp.awb + "/" + resp.client_id);
                     window.open(
                       "/admin/printAwb/" + resp.awb + "/" + resp.client_id,
-                      '_blank' 
+                      '_blank'
                     );
                     toastr.success(resp.msg);
                     $(".log-evenimente .log-evenimente-list").html(resp.html_log);
@@ -1873,7 +1874,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             if(already_generated == 1){
               if(confirm("AWB-ul a fost deja generat. Doriti regenerarea AWB-ului?")){
                 next_step = true;
-              } else{ 
+              } else{
                 next_step = false;
               }
             }
@@ -1891,7 +1892,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                     $(".btnDownloadAwbNemo").attr("href", "/admin/printAwbNemo/" + resp.awb + "/" + resp.client_id + "/" + resp.hash);
                     window.open(
                       "/admin/printAwbNemo/" + resp.awb + "/" + resp.client_id + "/" + resp.hash,
-                      '_blank' 
+                      '_blank'
                     );
                     toastr.success(resp.msg);
                     $(".log-evenimente .log-evenimente-list").html(resp.html_log);
@@ -1907,7 +1908,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                       window.location.reload();
                   }
               });
-              return true;    
+              return true;
             }
             return false;
           });
@@ -1931,11 +1932,11 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                   $(vthis).remove();
                   var html_append = '';
                   if(status != 'livrata' && status != 'retur' && status != 'expediata'){
-                    html_append += 
+                    html_append +=
                       `
                          <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                             <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
-                        </a> 
+                        </a>
                       `;
                   }
                   if(status == 'expediata' && status != 'retur'){
@@ -1943,7 +1944,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                     `
                      <a class="btn btn-success btn-add-new btnSchimbaStatus" status="livrata" order_id="{{$dataTypeContent->getKey()}}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                           <i class="voyager-truck" style="margin-right: 10px;"></i> <span>Comanda livrata</span>
-                      </a> 
+                      </a>
                     `;
                   }
                   if((status == 'livrata' || status == 'expediata')){
@@ -1954,7 +1955,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                           <i class="voyager-warning" style="margin-right: 10px;"></i> <span>Comanda retur</span>
                       </a>
                     `;
-                    
+
                   }
                   if(status == 'retur'){
                     $(".butoane-oferta").find($(".btnSchimbaStatus[status=livrata]")).remove();
@@ -2025,14 +2026,14 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                       $("body .comanda-productie .changeQty").prop("disabled", true).css("cursor", "no-drop");
                       $("body .comanda-productie select[name=price_grid_id]").prop("disabled", true).css("cursor", "no-drop");
                       $("body .comanda-productie .totalHandled").prop("disabled", true).css("cursor", "no-drop");
-                      html_append += 
+                      html_append +=
                         `
                            <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank" href="/admin/generatePDFFisa/${order_id}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                 <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
-                            </a> 
+                            </a>
                             <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata" order_id="${order_id}" style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                                 <i class="voyager-bolt" style="margin-right: 10px;"></i> <span>Comanda expediata</span>
-                            </a> 
+                            </a>
                         `;
                     }
                     $(".butoane-oferta").append(html_append);
