@@ -255,7 +255,7 @@
                                                         @if($column['label'] == 'Nr Comanda')
                                                             #Comanda
                                                         @elseif($column['label'] == 'Metri liniari')
-                                                            @if($tileFence == 1) ML @else MP @endif
+                                                            @if($tileFence == 1) MP @else ML @endif
                                                         @else
                                                         {{ $column['label'] }}
                                                         @endif
