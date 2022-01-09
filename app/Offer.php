@@ -47,7 +47,7 @@ class Offer extends Model
     6 => '2O/1K',
     7 => 'N/A',
   ];
-  
+
     protected $casts = [];
     public function distribuitor(){
       return $this->belongsTo(Distribuitor::class)->orderBy('title', 'ASC');
@@ -69,6 +69,9 @@ class Offer extends Model
     }
     public function offerType(){
       return $this->hasOne(OfferType::class, 'id', 'type');
+    }
+    public function offerTypeCustom(){
+        return $this->hasOne(CofferType::class, 'id', 'custom_off_type');
     }
     public function rulePrice(){
       return $this->hasOne(RulesPrice::class, 'id', 'price_grid_id');

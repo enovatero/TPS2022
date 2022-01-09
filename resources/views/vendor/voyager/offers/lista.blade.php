@@ -345,8 +345,11 @@
                                                         {{ $data->total_final }}
 
                                                     @elseif ($column['key'] == 'tip_comanda')
-                                                        {{ $data->offerType->short_title }}
-
+                                                        @if ($tileFence == 1)
+                                                            {{$data->offerTypeCustom ? $data->offerTypeCustom->title : $data->offerType->title}}
+                                                        @else
+                                                            {{ $data->offerType->title}}
+                                                        @endif
                                                     @elseif ($column['key'] == 'sursa')
                                                         {{ $data->distribuitor ? $data->distribuitor->title : '-' }}
 

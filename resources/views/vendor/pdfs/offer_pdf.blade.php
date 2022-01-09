@@ -156,7 +156,7 @@
             })->first();
             $eurFaraTVA = $checkRule != null ? $checkRule->eur_fara_tva : 0;
             $ronCuTVA = $checkRule != null ? $checkRule->ron_cu_tva : 0;
-            $ronTotal = $ronCuTVA*$offerProduct->qty;
+            $ronTotal = round($ronCuTVA*$offerProduct->qty,2);
             $totalCalculat += $ronTotal;
             $totalCalculatPi += $checkRule != null ? $checkRule->base_price : 0;
           @endphp

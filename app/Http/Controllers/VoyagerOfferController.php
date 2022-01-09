@@ -466,6 +466,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'agent',
             'products.getParent',
             'offerType',
+            'offerTypeCustom',
             'status_name',
             'distribuitor',
             'delivery_address',
@@ -1420,7 +1421,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           })->first();
           $checkedParent->offerProducts = $offProd;
           $ronCuTVA = $checkedParent != null ? $checkedParent->ron_cu_tva : 0;
-          $ronTotal = $ronCuTVA*$checkedParent->offerProducts->qty;
+          $ronTotal = round($ronCuTVA*$checkedParent->offerProducts->qty,2);
           $totalCalculat += $ronTotal;
         }
       }
