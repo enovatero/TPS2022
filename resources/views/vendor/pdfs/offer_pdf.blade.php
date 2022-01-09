@@ -73,13 +73,13 @@
 			<p style="font-size: 8pt;"><br>
         @if($attributes && count($attributes)>0)
           @foreach($attributes as $attr)
-            {{$attr->attribute->title}}: 
+            {{$attr->attribute->title}}:
             @if($attr->attribute->type == 0)
               @php
                 $dim = \App\Dimension::find($attr->col_dim_id);
               @endphp
               <strong>{{strtoupper($dim->value)}}</strong><br>
-            @else 
+            @else
               @php
                 $col = \App\Color::find($attr->col_dim_id);
               @endphp
@@ -112,7 +112,7 @@
             Adresa: {{$offer->delivery_address ? $offer->delivery_address->address : ''}}, {{$offer->delivery_address ? $offer->delivery_address->city_name() : ''}}<br>
             Persoana de contact: {{$offer->client ? $offer->client->name : ''}}<br>
             Telefon: {{$offer->client ? $offer->client->phone : ''}}<br>
-			Data de livrare: {{\Carbon\Carbon::parse($offer->offer_date)->format('d-m-Y')}}
+			Data de livrare: {{\Carbon\Carbon::parse($offer->delivery_date)->format('d-m-Y')}}
 		</td>
 	</tr>
 </table>
@@ -138,7 +138,7 @@
 	</tr>
 	</thead>
 	<tbody>
-	
+
     @php
       $counter = 1;
       $reducere = $offer->reducere;
@@ -146,7 +146,7 @@
       $totalCalculat = 0;
       $totalCalculatPi = 0;
     @endphp
-    
+
   @if($offerProducts)
     @foreach($offerProducts as $offerProduct)
       @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
@@ -156,7 +156,7 @@
             })->first();
             $eurFaraTVA = $checkRule != null ? $checkRule->eur_fara_tva : 0;
             $ronCuTVA = $checkRule != null ? $checkRule->ron_cu_tva : 0;
-            $ronTotal = $ronCuTVA*$offerProduct->qty;
+            $ronTotal = round($ronCuTVA*$offerProduct->qty,2);
             $totalCalculat += $ronTotal;
             $totalCalculatPi += $checkRule != null ? $checkRule->base_price : 0;
           @endphp
@@ -172,7 +172,7 @@
       @endif
     @endforeach
   @endif
-    
+
 	<tr class="total">
 		<td colspan="6" class="totals"><b>Total general cu TVA inclus - RON -</b></td>
 		<td class="totals"><b>{{$totalCalculat}}</b></td>
@@ -191,7 +191,7 @@
 @if($offerType && $offerType->header_img != null)
       </td>
     </tr>
-  </table>   
+  </table>
 @endif
 <table width="100%">
 	<tr>

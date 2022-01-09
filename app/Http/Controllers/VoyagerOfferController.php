@@ -134,13 +134,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
               });
             }
             $query->where('numar_comanda', '=', null);
-<<<<<<< HEAD
-            $query->orderBy('offer_date', 'desc');
-            $query->orderBy('id', 'desc');
-          
-=======
-
->>>>>>> bc2829d2ddbdab39ccaae21bbc2b74c71e3484b8
             $row = $dataType->rows->where('field', $orderBy)->firstWhere('type', 'relationship');
             if ($orderBy && (in_array($orderBy, $dataType->fields()) || !empty($row))) {
                 $querySortOrder = (!empty($sortOrder)) ? $sortOrder : 'desc';
@@ -458,6 +451,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if($request->getPathInfo() == '/admin/lista-comenzi-sipca'){
           $tileFence = 0;
         }
+
         $query = Offer::query();
         $query->where('numar_comanda', '!=', null);
         $query->whereHas('offerType', function (Builder $qr) use($tileFence){
@@ -469,6 +463,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'agent',
             'products.getParent',
             'offerType',
+            'offerTypeCustom',
             'status_name',
             'distribuitor',
             'delivery_address',
@@ -500,7 +495,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         // order by date, and user selectable column
         $orderColumn = ['offer_date', 'desc'];
         $query->orderBy($orderColumn[0], $orderColumn[1]);
-        $query->orderBy('numar_comanda', 'desc');
         if ($request->order_by) {
             $query->orderBy($request->order_by, $request->sort_order);
             $orderColumn = [$request->order_by, $request->sort_order];
@@ -542,16 +536,27 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         foreach ($orders->groupBy('delivery_date') as $day => $dayOrders) {
             $subtotalPrice = 0;
             $subtotalMl = 0;
-            $subtotalPrice = round(Offer::where('delivery_date', $day)->sum('total_final'), 2);
+            $subtotalPrice = round(
+                Offer::where('delivery_date', $day)
+                    ->where('numar_comanda', '!=', null)
+                    ->whereHas('offerType', function (Builder $qr) use($tileFence){
+                        $qr->where('tile_fence', $tileFence);
+                    })
+                    ->sum('total_final')
+                , 2
+            );
             foreach ($dayOrders->all() as $order) {
                 $order->prod_ml = 0;
                 foreach ($order->products as $prod) {
-                    if ($prod->qty > 0 && $prod->getParent->um == 8) {
-                        $order->prod_ml += $prod->qty;
-                    }
-                    if ($prod->qty > 0 && $prod->getParent->um == 1 && $prod->getParent->dimension > 0) {
-                        $order->prod_ml += $prod->qty * $prod->getParent->dimension;
-                    }
+//                    if ($prod->qty > 0 && $prod->getParent->um == 8) {
+//                        $order->prod_ml += $prod->qty;
+//                    }
+//                    if ($prod->qty > 0 && $prod->getParent->um == 1 && $prod->getParent->dimension > 0) {
+//                        $order->prod_ml += $prod->qty * $prod->getParent->dimension;
+//                    }
+                    if ($prod->qty > 0 && $prod->getParent->dimension > 0) {
+                       $order->prod_ml += $prod->qty * $prod->getParent->dimension;
+                   }
                 }
                 $updateOrder = $order->fresh();
                 $updateOrder->prod_ml = $order->prod_ml;
@@ -1413,7 +1418,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           })->first();
           $checkedParent->offerProducts = $offProd;
           $ronCuTVA = $checkedParent != null ? $checkedParent->ron_cu_tva : 0;
-          $ronTotal = $ronCuTVA*$checkedParent->offerProducts->qty;
+          $ronTotal = round($ronCuTVA*$checkedParent->offerProducts->qty,2);
           $totalCalculat += $ronTotal;
         }
       }
@@ -1599,13 +1604,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
               'qty' => $offProd->qty,
             ]);
 
-            if($offProd->getParent->um == 8){
-              $dimension += $offProd->qty;
-            }
-            if($offProd->getParent->um == 1 && $offProd->getParent->dimension > 0){
-              $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
-            }
-//               $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
+//            if($offProd->getParent->um == 8){
+//              $dimension += $offProd->qty;
+//            }
+//            if($offProd->getParent->um == 1 && $offProd->getParent->dimension > 0){
+//              $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
+//            }
+            $dimension += $offProd->getParent->dimension > 0 ? $offProd->getParent->dimension*$offProd->qty : 0;
             $totalQty += $offProd->qty;
           }
         }

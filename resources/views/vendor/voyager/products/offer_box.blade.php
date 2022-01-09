@@ -30,7 +30,7 @@
             @php
               $parent->offerProducts = \App\OfferProduct::where('parent_id', $parent->id)->where('offer_id', $offer->id)->first();
             @endphp
-            @if($parent->offerProducts != null) 
+            @if($parent->offerProducts != null)
               <input type="hidden" name="offerProductIds[]" value="{{$parent->offerProducts->id}}"/>
             @endif
             @php
@@ -40,7 +40,7 @@
                 })->first();
                 $eurFaraTVA = $checkRule != null ? $checkRule->eur_fara_tva : 0;
                 $ronCuTVA = $checkRule != null ? $checkRule->ron_cu_tva : 0;
-                $ronTotal = $ronCuTVA*$parent->offerProducts->qty;
+                $ronTotal = round($ronCuTVA*$parent->offerProducts->qty,2);
                 $totalCalculat += $ronTotal;
                 $totalCalculatPi += $checkRule != null ? $checkRule->base_price : 0;
               } else{

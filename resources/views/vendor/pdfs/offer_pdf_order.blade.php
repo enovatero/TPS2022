@@ -101,9 +101,12 @@
 		</td>
 		<td width="40%" style="text-align: right; font-size: 24pt">
 			Comanda: <b>#{{$offer->numar_comanda}}</b>
-			<p style="text-align: left; font-size: 12pt">
-        <strong>Livrare:</strong> Ridicare personala
-      </p>
+            <p style="text-align: left; font-size: 12pt">
+                <strong>Data livrare:</strong> {{$offer->delivery_date}}
+            </p>
+            <p style="text-align: left; font-size: 12pt">
+                <strong>Tip livrare:</strong> {{$offer->delivery_type}}
+            </p>
 			<p style="text-align: left; font-size: 12pt">
         <strong>Detalii livrare:</strong> {{$offer->delivery_details != null ? $offer->delivery_details : '-'}}
       </p>
@@ -124,9 +127,6 @@
         </p>
       @endif
       <br>
-			<p style="text-align: left; font-size: 12pt">
-        <strong>Responsabil ambalare:</strong>
-      </p>
 		</td>
 	</tr>
 </table>
@@ -145,40 +145,65 @@
 <table width="100%">
 	<tr>
 		<td width="48%">
-			<p style="font-size: 14pt">
+			<p style="font-size: 12pt">
         @if($attributes && count($attributes)>0)
           @foreach($attributes as $attr)
-            {{$attr->attribute->title}}: 
-            @if($attr->attribute->type == 0)
-              @php
+              @if ($attr->attribute->title == 'Culoare produs' || $attr->attribute->title == 'Grosime produs')
+                {{$attr->attribute->title}}:
+                @if($attr->attribute->type == 0)
+                @php
                 $dim = \App\Dimension::find($attr->col_dim_id);
-              @endphp
-              <strong>{{strtoupper($dim->value)}}</strong><br>
-            @else 
-              @php
+                @endphp
+                <strong>{{strtoupper($dim->value)}}</strong><br>
+                @else
+                @php
                 $col = \App\Color::find($attr->col_dim_id);
-              @endphp
-              <strong>{{strtoupper($col->ral)}}</strong><br>
+                @endphp
+                <strong>{{strtoupper($col->ral)}}</strong><br>
+                @endif
             @endif
           @endforeach
         @endif
       </p>
 		</td>
+        <td width="48%">
+            <p style="font-size: 12pt">
+                @if($attributes && count($attributes)>0)
+                    @foreach($attributes as $attr)
+                        @if ($attr->attribute->title != 'Culoare produs' && $attr->attribute->title != 'Grosime produs')
+                        {{$attr->attribute->title}}:
+                        @if($attr->attribute->type == 0)
+                            @php
+                                $dim = \App\Dimension::find($attr->col_dim_id);
+                            @endphp
+                            <strong>{{strtoupper($dim->value)}}</strong><br>
+                        @else
+                            @php
+                                $col = \App\Color::find($attr->col_dim_id);
+                            @endphp
+                            <strong>{{strtoupper($col->ral)}}</strong><br>
+                        @endif
+                        @endif
+
+                    @endforeach
+                @endif
+            </p>
+        </td>
 	</tr>
 </table>
-  
+
 @if($twoColumns)
-   @php 
-    $newProducts = []; 
-    $newProductsLeft = []; 
-    $newProductsRight = []; 
+   @php
+    $newProducts = [];
+    $newProductsLeft = [];
+    $newProductsRight = [];
    @endphp
-  
+
    @if($offerProducts)
     @foreach($offerProducts as $offerProduct)
       @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
         @php
-          if($offerProduct->getParent->category->two_columns == 0){
+          if($offerProduct->getParent->category->two_columns == 1){
             array_push($newProductsLeft, [
               'parent' => $offerProduct->getParent,
               'product' => $offerProduct->product,
@@ -186,7 +211,7 @@
               'two_columns' => 0,
             ]);
           }
-          if($offerProduct->getParent->category->two_columns == 1){
+          else {
             array_push($newProductsRight, [
               'parent' => $offerProduct->getParent,
               'product' => $offerProduct->product,
@@ -199,17 +224,31 @@
     @endforeach
     @php
       if($newProductsLeft && count($newProductsLeft) > 0 && $newProductsRight && count($newProductsRight) > 0){
+    //dd([$newProductsLeft, $newProductsRight]);
           foreach($newProductsLeft as $key => $item){
             if(array_key_exists($key, $newProductsRight)){
               array_push($newProducts, $item);
               array_push($newProducts, $newProductsRight[$key]);
-            }else{
+            } else {
               array_push($newProducts, $item);
             }
           }
-        }else if($newProductsLeft && count($newProductsLeft) > 0){
+          if (count($newProductsRight) > count($newProductsLeft)) {
+              foreach($newProductsRight as $key => $item) {
+                if($key > (count($newProductsLeft) - 1)){
+                    $parentMock = new stdClass();
+                    $parentMock->title = "";
+                    $umMock = new stdClass();
+                    $umMock->title = "";
+                    $parentMock->um_title = $umMock;
+                  array_push($newProducts, ['two_columns' => 0, 'qty' => "", 'parent' => $parentMock]);
+                  array_push($newProducts, $item);
+                }
+              }
+            }
+        } else if($newProductsLeft && count($newProductsLeft) > 0){
           $newProducts = $newProductsLeft;
-        }else{
+        } else{
           $newProducts = $newProductsRight;
         }
         $counterLeft = 1;
@@ -239,7 +278,7 @@
             @if($item['two_columns'] == 1)
               continue;
             @else
-              @if($item['qty'] > 0)
+              @if($item['qty'] > 0 || $item['qty'] == "")
                 <tr class="items">
                   <td align="center">{{$counterLeft++}}</td>
                   <td>{{$item['parent']->title}}</td>
@@ -261,14 +300,14 @@
                 </tr>
               @endif
             @endif
-            
+
           @endforeach
         @endif
         </tbody>
       </table>
       </div>
   </div>
-  
+
 @else
   <table class="items" width="100%" cellpadding="1">
 	<thead>
@@ -280,7 +319,7 @@
 	</tr>
 	</thead>
 	<tbody>
-    
+
   @if($offerProducts)
     @foreach($offerProducts as $offerProduct)
        @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
@@ -299,10 +338,18 @@
 @endif
 <div class="row">
   <div class="column">
-      <table class="items" width="100%" cellpadding="1">
+      <table class="items" width="100%" cellpadding="1" style="border: none">
       <thead>
       <tr>
-        <p @if($twoColumns) style="font-size: 15pt; width: 100%;text-align:left;" @else style="font-size: 15pt; width: 100%;text-align:right;" @endif><b>Responsabil productie:</b></p>    
+          <td style="border: none; background: none">
+              <p style="text-align: left; font-size: 12pt">
+                <b>Responsabil productie:</b></p>
+          </td>
+          <td style="border: none; background: none">
+              <p style="text-align: right; font-size: 12pt">
+                  <strong>Responsabil incarcare:</strong>
+              </p>
+          </td>
         </tr>
         </thead>
       </table>
