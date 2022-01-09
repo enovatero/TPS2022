@@ -134,9 +134,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
               });
             }
             $query->where('numar_comanda', '=', null);
+<<<<<<< HEAD
             $query->orderBy('offer_date', 'desc');
             $query->orderBy('id', 'desc');
           
+=======
+
+>>>>>>> bc2829d2ddbdab39ccaae21bbc2b74c71e3484b8
             $row = $dataType->rows->where('field', $orderBy)->firstWhere('type', 'relationship');
             if ($orderBy && (in_array($orderBy, $dataType->fields()) || !empty($row))) {
                 $querySortOrder = (!empty($sortOrder)) ? $sortOrder : 'desc';
@@ -454,7 +458,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if($request->getPathInfo() == '/admin/lista-comenzi-sipca'){
           $tileFence = 0;
         }
-      
         $query = Offer::query();
         $query->where('numar_comanda', '!=', null);
         $query->whereHas('offerType', function (Builder $qr) use($tileFence){
@@ -497,6 +500,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         // order by date, and user selectable column
         $orderColumn = ['offer_date', 'desc'];
         $query->orderBy($orderColumn[0], $orderColumn[1]);
+        $query->orderBy('numar_comanda', 'desc');
         if ($request->order_by) {
             $query->orderBy($request->order_by, $request->sort_order);
             $orderColumn = [$request->order_by, $request->sort_order];
@@ -565,7 +569,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $orderGroups = collect($orderGroups)->sortByDesc('date');
         $drivers = Driver::get();
         $cars = Car::get();
-      
+
         return view('voyager::offers.lista', [
             'title'       => $title,
             'model'       => $model,
@@ -708,7 +712,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         event(new BreadDataAdded($dataType, $data));
-        
+
         $serieDefault = OfferSerial::where('default', 1)->first();
 //       dd($serieDefault);
         // iau oferta creata cu insertUpdateData si-i modific datele de mai jos
@@ -812,7 +816,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             return response()->json(['success' => true, 'data' => $data]);
         }
     }
-  
+
     public function createNewClient(Request $request){
         $addrErrs = 0;
         $errMessages = [];
@@ -875,7 +879,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if ($addrErrs > 0) {
           return ['success' => false, 'msg' => $errMessages];
         }
-      
+
         $client = new Client;
         $client->name = $request->input('name');
         $client->email = $request->input('email');
@@ -886,7 +890,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $client->updated_at = $currentDate;
         $client->save();
         $user_id = $client->id;
-        
+
         $offer = Offer::find($request->input('offer_id'));
         $offer->client_id = $user_id;
         $offer->save();
@@ -941,11 +945,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         } catch(\Exception $e){}
         return ['success' => true, 'client_id' => $client->id, 'client_name' => $client->name];
     }
-  
+
     public function retrievePreselectedColors(Request $request){
       return ['success' => true , 'colors' => (new self())->updateOfferAttributeForPreselectedColor($request->input('selectedColor'), $request->input('offerId'), $request->input('offerType'))];
     }
-  
+
     public static function updateOfferAttributeForPreselectedColor($selectedColor, $offerId, $offerType){
       $colors = [];
       if($selectedColor != null){
@@ -1594,7 +1598,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
               'parent' => $offProd->getParent,
               'qty' => $offProd->qty,
             ]);
-            
+
             if($offProd->getParent->um == 8){
               $dimension += $offProd->qty;
             }
@@ -2128,7 +2132,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
     return ['success' => true, 'html_colors' => $html_colors];
   }
-  
+
   public function changeOfferStatus(Request $request){
     $order = Offer::find($request->orderId);
     $statusId = $request->statusId;
