@@ -72,8 +72,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             });
         }
 
-        $orderBy = $request->get('order_by', $dataType->order_column) ?: 'id';
-        $sortOrder = $request->get('sort_order', $dataType->order_direction) ?: 'desc';
+        $orderBy = $request->get('order_by', $dataType->order_column);
+        $sortOrder = $request->get('sort_order', $dataType->order_direction);
         $usesSoftDeletes = false;
         $showSoftDeleted = false;
 
@@ -971,7 +971,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $editInsertAddress->phone = $editInsertAddress->delivery_phone != null ? $editInsertAddress->delivery_phone : $editInsertAddress->userData()->phone;
         $editInsertAddress->name = $editInsertAddress->delivery_contact != null ? $editInsertAddress->delivery_contact : $editInsertAddress->userData()->name;
         return ['success' => true, 'userAddresses' => [0 => $editInsertAddress], 'transparent_band' => 0, 'client_id' => $client->id, 'client_name' => $client->name];
-      
+
     }
 
     public function retrievePreselectedColors(Request $request){
@@ -1413,7 +1413,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             if(array_key_exists($currentkey, $dbOffProdsWithQty)){
               $currentQty = $dbOffProdsWithQty[$currentkey]['qty'];
             }
-            
+
             $offerProduct = new OfferProduct();
             $offerProduct->offer_id = $offer->id;
             $offerProduct->product_id = $product->id;
