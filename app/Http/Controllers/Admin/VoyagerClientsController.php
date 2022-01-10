@@ -871,23 +871,59 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     $persoanaFizica = 'DA';
     $usrAddresses = UserAddress::where('user_id', $client->id)->get();
     $usrAddressList = [];
-    if($usrAddresses && count($usrAddresses) > 0){
-      foreach($usrAddresses as $usrAddress){
+    if ($usrAddresses && count($usrAddresses) == 1) {
+        $usrAddress = $usrAddresses[0];
         array_push($usrAddressList, [
-          'Denumire' => $usrAddress->wme_name ?? "SEDIU-".$usrAddress->id,
-          'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
-          'TipSediu' => ($usrAddress->wme_name == 'SEDIU FIRMA' || count($usrAddresses) == 1) ? 'SFL' : 'FL',
-          'Strada' => $usrAddress->address,
-          'Numar' => '',
-          'Bloc' => '',
-          'Etaj' => '',
-          'Apartament' => '',
-          'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$usrAddress->state_name()] : $usrAddress->state_name(),
-          'Tara' => $usrAddress->country,
-          'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
-          'eMail' => $client->email
+            'Denumire' => $usrAddress->wme_name ?? "SEDIU-".$usrAddress->id,
+            'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
+            'TipSediu' => 'SFL',
+            'Strada' => $usrAddress->address,
+            'Numar' => '',
+            'Bloc' => '',
+            'Etaj' => '',
+            'Apartament' => '',
+            'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$usrAddress->state_name()] : $usrAddress->state_name(),
+            'Tara' => $usrAddress->country,
+            'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
+            'eMail' => $client->email
         ]);
-      }
+    } elseif($usrAddresses && count($usrAddresses) > 0) {
+        foreach ($usrAddresses as $usrAddress) {
+            if ($usrAddress->wme_name == 'SEDIU FIRMA') {
+                array_push($usrAddressList, [
+                    'Denumire' => $usrAddress->wme_name ?? "SEDIU-" . $usrAddress->id,
+                    'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
+                    'TipSediu' => 'SFL',
+                    'Strada' => $usrAddress->address,
+                    'Numar' => '',
+                    'Bloc' => '',
+                    'Etaj' => '',
+                    'Apartament' => '',
+                    'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$usrAddress->state_name()] : $usrAddress->state_name(),
+                    'Tara' => $usrAddress->country,
+                    'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
+                    'eMail' => $client->email
+                ]);
+            }
+        }
+        foreach ($usrAddresses as $usrAddress) {
+            if ($usrAddress->wme_name != 'SEDIU FIRMA') {
+                array_push($usrAddressList, [
+                    'Denumire' => $usrAddress->wme_name ?? "SEDIU-" . $usrAddress->id,
+                    'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
+                    'TipSediu' => 'FL',
+                    'Strada' => $usrAddress->address,
+                    'Numar' => '',
+                    'Bloc' => '',
+                    'Etaj' => '',
+                    'Apartament' => '',
+                    'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$usrAddress->state_name()] : $usrAddress->state_name(),
+                    'Tara' => $usrAddress->country,
+                    'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
+                    'eMail' => $client->email
+                ]);
+            }
+        }
     }
     if($client->type == 'fizica'){
       $individual = Individual::where('user_id', $client->id)->first();
