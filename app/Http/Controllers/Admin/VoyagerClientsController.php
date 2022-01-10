@@ -933,7 +933,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         'Nume' => $client->name,
         'PersoanaFizica' => $persoanaFizica,
         'Observatii' => 'Client sincronizat din TPS, manual',
-        'Sedii' => [$usrAddressList],
+        'Sedii' => $usrAddressList,
     ];
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
