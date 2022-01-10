@@ -21,6 +21,10 @@
              <label class="control-label">Oras/Localitate/Sector</label>
              <select name="city[]" class="form-control select-city" selectedValue="{{old('city', $dataTypeContent->city ?? '') != '' ? in_array($key, old('city', $dataTypeContent->city)) && old('city', $dataTypeContent->city)[$key] : ''}}" city_id="{{old('city', $dataTypeContent->city ?? '') != '' ? in_array($key, old('city', $dataTypeContent->city)) && old('city', $dataTypeContent->city)[$key] : ''}}" city_name="{{old('city_name', $dataTypeContent->city_name ?? '') != '' ? old('city_name', $dataTypeContent->city_name)[$key] : ''}}"></select>        
           </div>
+          <div class="form-group col-md-12 column-element-address" style="width: 100%;">
+             <label class="control-label">Denumire WME</label>
+             <input class="control-label" required type="text" name="wme_name[]" style="width: 100%;" value="{{ old('wme_name', $dataTypeContent->wme_name ?? '') != '' ? old('wme_name', $dataTypeContent->wme_name)[$key] : ''}}"/>                          
+          </div>
         </div>
       @endforeach
   @else
@@ -46,6 +50,10 @@
              <label class="control-label">Oras/Localitate/Sector</label>
              <select name="city[]" class="form-control select-city" selectedValue="{{old('city', $item->city ?? '') != '' ? old('city', $item->city) : ''}}" city_id="{{old('city', $item->city ?? '') != '' ? old('city', $item->city) : ''}}" city_name="{{$item->city_name}}"></select>        
           </div>
+          <div class="form-group col-md-12 column-element-address" style="width: 100%;">
+             <label class="control-label">Denumire WME</label>
+             <input class="control-label" required type="text" name="wme_name[]" style="width: 100%;" value="{{ old('wme_name', $item->wme_name ?? '') != '' ? old('wme_name', $item->wme_name): ''}}"/>                          
+          </div>
         </div>
       @endforeach
   @endif
@@ -69,6 +77,10 @@
     <div class="form-group col-md-12 column-element-address">
        <label class="control-label">Oras/Localitate/Sector</label>
        <select name="city[]" class="form-control select-city"></select>        
+    </div>
+    <div class="form-group col-md-12 column-element-address" style="width: 100%;">
+       <label class="control-label">Denumire WME</label>
+       <input class="control-label" required type="text" name="wme_name[]" style="width: 100%;"/>                          
     </div>
   </div>
 @endif

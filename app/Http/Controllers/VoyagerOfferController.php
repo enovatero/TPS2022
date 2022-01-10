@@ -645,6 +645,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           $countries = $request->input('country');
           $states = $request->input('state');
           $cities = $request->input('city');
+          $wme_name = $request->input('wme_name');
           // verific daca au fost completate toate adresele
           if($addresses == null || !array_key_exists(0, $addresses)){
             $addrErrs++;
@@ -656,6 +657,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $addrErrs++;
           }
           if($cities == null || !array_key_exists(0, $cities)){
+            $addrErrs++;
+          }
+          if($wme_name == null || !array_key_exists(0, $wme_name)){
             $addrErrs++;
           }
           if($addrErrs > 0){
@@ -752,6 +756,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           $countries = $request->input('country');
           $states = $request->input('state');
           $cities = $request->input('city');
+          $wme_name = $request->input('wme_name');
           $ids = $request->input('ids');
 
           if(array_key_exists(0, $addresses)){
@@ -766,6 +771,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           if($cities != null && array_key_exists(0, $cities)){
             $itemCity = $cities[0];
           }
+          if($wme_name != null && array_key_exists(0, $wme_name)){
+            $itemWmeName = $wme_name[0];
+          }
           // creez adresa user-ului adaugat
           $editInsertAddress = new UserAddress;
           $editInsertAddress->address = $address;
@@ -773,6 +781,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           $editInsertAddress->country = $itemCountry;
           $editInsertAddress->state = $itemState;
           $editInsertAddress->city = $itemCity;
+          $editInsertAddress->wme_name = $itemWmeName;
           $editInsertAddress->save();
           $offer->delivery_address_user = $editInsertAddress->id;
           $offer->save();
@@ -829,6 +838,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $countries = $request->input('country');
         $states = $request->input('state');
         $cities = $request->input('city');
+        $wme_name = $request->input('wme_name');
         // verific daca au fost completate toate adresele
         if($addresses == null || !array_key_exists(0, $addresses)){
           $addrErrs++;
@@ -840,6 +850,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
           $addrErrs++;
         }
         if($cities == null || !array_key_exists(0, $cities)){
+          $addrErrs++;
+        }
+        if($wme_name == null || !array_key_exists(0, $wme_name)){
           $addrErrs++;
         }
         if($addrErrs > 0){
@@ -905,6 +918,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $countries = $request->input('country');
         $states = $request->input('state');
         $cities = $request->input('city');
+        $wme_name = $request->input('wme_name');
         $ids = $request->input('ids');
 
         if(array_key_exists(0, $addresses)){
@@ -919,6 +933,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if($cities != null && array_key_exists(0, $cities)){
           $itemCity = $cities[0];
         }
+        if($wme_name != null && array_key_exists(0, $wme_name)){
+          $itemWmeName = $wme_name[0];
+        }
         // creez adresa user-ului adaugat
         $editInsertAddress = new UserAddress;
         $editInsertAddress->address = $address;
@@ -926,6 +943,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $editInsertAddress->country = $itemCountry;
         $editInsertAddress->state = $itemState;
         $editInsertAddress->city = $itemCity;
+        $editInsertAddress->wme_name = $itemWmeName;
         $editInsertAddress->save();
         $offer->delivery_address_user = $editInsertAddress->id;
         $offer->save();

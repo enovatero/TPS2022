@@ -18,4 +18,8 @@
        <label class="control-label">Oras/Localitate/Sector</label>
        <select name="city[]" class="form-control select-city"></select>        
     </div>
+    <div class="form-group col-md-12 column-element-address" style="width: 100%;">
+       <label class="control-label">Denumire WME</label>
+       <input class="control-label" required type="text" name="wme_name[]" style="width: 100%;"/>                          
+    </div>
   </div>

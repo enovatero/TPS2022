@@ -382,6 +382,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
           $countries = $request->input('country');
           $states = $request->input('state');
           $cities = $request->input('city');
+          $wme_name = $request->input('wme_name');
           $ids = $request->input('ids');
           $addrErrs = 0;
         // verific daca am mai multe adrese adaugate si trec prin fiecare, sa vad ce campuri nu a completat
@@ -396,6 +397,9 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
               $addrErrs++;
             }
             if($cities == null || !array_key_exists($key, $cities)){
+              $addrErrs++;
+            }
+            if($wme_name == null || !array_key_exists($key, $wme_name)){
               $addrErrs++;
             }
           }
@@ -458,6 +462,8 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
           $countries = $request->input('country');
           $states = $request->input('state');
           $cities = $request->input('city');
+          $cities = $request->input('city');
+          $wme_name = $request->input('wme_name');
           $ids = $request->input('ids');
 
           for($key = 0; $key < $addressesCounter; $key++){
@@ -473,6 +479,9 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             if($cities != null && array_key_exists($key, $cities)){
               $itemCity = $cities[$key];
             }
+            if($wme_name != null && array_key_exists($key, $wme_name)){
+              $itemWmeName = $wme_name[$key];
+            }
             if($ids != null && array_key_exists($key, $ids)){
               $itemId = $ids[$key];
               $editInsertAddress = UserAddress::find($itemId);
@@ -484,6 +493,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             $editInsertAddress->user_id = $user_id;
             $editInsertAddress->country = $itemCountry;
             $editInsertAddress->state = $itemState;
+            $editInsertAddress->wme_name = $itemWmeName;
             $editInsertAddress->city = $itemCity;
             $editInsertAddress->save();
           }
@@ -495,7 +505,10 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             $entity = LegalEntity::find($request->input('juridica_id'));
             $entity->delete();
           }
-          $individual = new Individual;
+          $individual = Individual::find($id);
+          if($individual == null){
+            $individual = new Individual;
+          }
           $individual->user_id = $user_id;
           $individual->cnp = $request->input('cnp');
           $individual->save();
@@ -505,7 +518,10 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             $individual = Individual::find($request->input('fizica_id'));
             $individual->delete();
           }
-          $entity = new LegalEntity;
+          $entity = LegalEntity::find($id);
+          if($entity == null){
+            $entity = new LegalEntity;
+          }
           $entity->user_id = $user_id;
           $entity->cui = $request->input('cui');
           $entity->reg_com = $request->input('reg_com');
@@ -551,6 +567,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
           $countries = $request->input('country');
           $states = $request->input('state');
           $cities = $request->input('city');
+          $wme_name = $request->input('wme_name');
           $ids = $request->input('ids');
           $addrErrs = 0;
           for($key = 0; $key < $addressesCounter; $key++){
@@ -566,9 +583,12 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             if($cities == null || !array_key_exists($key, $cities)){
               $addrErrs++;
             }
+            if($wme_name == null || !array_key_exists($key, $wme_name)){
+              $addrErrs++;
+            }
           }
           if($addrErrs > 0){
-            $errMessages['address'] = [0 => 'Pentru fiecare adresa adaugata, va rugam sa verificati campurile Adresa, Tara, Judet, Oras!'];
+            $errMessages['address'] = [0 => 'Pentru fiecare adresa adaugata, va rugam sa verificati campurile Adresa, Tara, Judet, Oras, Denumire WME!'];
           }
         }
         if($request->iban != null){
@@ -601,6 +621,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
           $countries = $request->input('country');
           $states = $request->input('state');
           $cities = $request->input('city');
+          $wme_name = $request->input('wme_name');
           $ids = $request->input('ids');
 
           for($key = 0; $key < $addressesCounter; $key++){
@@ -616,6 +637,9 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             if($cities != null && array_key_exists($key, $cities)){
               $itemCity = $cities[$key];
             }
+            if($wme_name != null && array_key_exists($key, $wme_name)){
+              $itemWmeName = $wme_name[$key];
+            }
             if($ids != null && array_key_exists($key, $ids)){
               $itemId = $ids[$key];
               $editInsertAddress = UserAddress::find($itemId);
@@ -628,6 +652,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             $editInsertAddress->country = $itemCountry;
             $editInsertAddress->state = $itemState;
             $editInsertAddress->city = $itemCity;
+            $editInsertAddress->wme_name = $itemWmeName;
             $editInsertAddress->save();
           }
         }
@@ -844,21 +869,26 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     $regCom = '';
     $codPartener = '';
     $persoanaFizica = 'DA';
-    $usrAddress = UserAddress::where('user_id', $client->id)->first();
-    $usrAddressList = [
-      'Denumire' => $usrAddress->address,
-      'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
-      'TipSediu' => 'SFL',
-      'Strada' => $usrAddress->address,
-      'Numar' => '',
-      'Bloc' => '',
-      'Etaj' => '',
-      'Apartament' => '',
-      'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$usrAddress->state_name()] : $usrAddress->state_name(),
-      'Tara' => $usrAddress->country,
-      'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
-      'eMail' => $client->email
-    ];
+    $usrAddresses = UserAddress::where('user_id', $client->id)->get();
+    $usrAddressList = [];
+    if($usrAddresses && count($usrAddresses) > 0){
+      foreach($usrAddresses as $usrAddress){
+        array_push($usrAddressList, [
+          'Denumire' => $usrAddress->wme_name,
+          'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
+          'TipSediu' => 'SFL',
+          'Strada' => $usrAddress->address,
+          'Numar' => '',
+          'Bloc' => '',
+          'Etaj' => '',
+          'Apartament' => '',
+          'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$usrAddress->state_name()] : $usrAddress->state_name(),
+          'Tara' => $usrAddress->country,
+          'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
+          'eMail' => $client->email
+        ]);
+      }
+    }
     if($client->type == 'fizica'){
       $individual = Individual::where('user_id', $client->id)->first();
       $cui = '';

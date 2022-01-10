@@ -836,6 +836,10 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                                  <input class="form-control" type="text" name="address[]" value="{{ old('address', $dataTypeContent->address ?? '') != '' ? old('address', $dataTypeContent->address)[0] : ''}}"/>
                               </div>
                               <div class="form-group col-md-12 column-element-address">
+                                 <label class="control-label">Denumire WME</label>
+                                 <input class="form-control" type="text" name="wme_name[]" value="{{ old('wme_name', $dataTypeContent->wme_name ?? '') != '' ? old('wme_name', $dataTypeContent->wme_name)[0] : ''}}"/>
+                              </div>
+                              <div class="form-group col-md-12 column-element-address">
                                  <label class="control-label">Tara</label>
                                  @include('vendor.voyager.formfields.countries', ['selected' => null])
                               </div>
