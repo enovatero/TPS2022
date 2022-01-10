@@ -960,6 +960,13 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         $codPartener = 'PJ-'.$usrAddress->country.'-'.$cui;
       }
     }
+    $wmeBankData = [];
+    if ($legalEntity) {
+        $wmeBankData = [
+            'NumarCont' => $legalEntity->iban,
+            'Sucursala'=> $legalEntity->banca,
+        ];
+    }
     $postData = [
         'TipOperatie' => 'A',
         'CUI' => $cui,
@@ -970,6 +977,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         'PersoanaFizica' => $persoanaFizica,
         'Observatii' => 'Client sincronizat din TPS, manual',
         'Sedii' => $usrAddressList,
+        'ConturiBancare' => $wmeBankData,
     ];
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
