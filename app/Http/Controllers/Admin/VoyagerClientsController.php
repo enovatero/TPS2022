@@ -874,9 +874,9 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     if($usrAddresses && count($usrAddresses) > 0){
       foreach($usrAddresses as $usrAddress){
         array_push($usrAddressList, [
-          'Denumire' => $usrAddress->wme_name,
+          'Denumire' => $usrAddress->wme_name ?? "SEDIU-".$usrAddress->id,
           'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
-          'TipSediu' => 'SFL',
+          'TipSediu' => $usrAddress->wme_name == 'SEDIU FIRMA' || count($usrAddresses) == 1 ? 'SFL' : 'FL',
           'Strada' => $usrAddress->address,
           'Numar' => '',
           'Bloc' => '',
