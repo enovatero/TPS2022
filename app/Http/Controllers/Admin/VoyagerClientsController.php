@@ -962,10 +962,10 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     }
     $wmeBankData = [];
     if ($legalEntity) {
-        $wmeBankData = [
+        $wmeBankData = [[
             'NumarCont' => $legalEntity->iban,
             'Sucursala'=> $legalEntity->banca,
-        ];
+        ]];
     }
     $postData = [
         'TipOperatie' => 'A',
