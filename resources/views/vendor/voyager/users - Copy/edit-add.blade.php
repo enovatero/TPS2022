@@ -7,7 +7,7 @@
 @stop
 
 @section('page_header')
-    <h1 style="margin-left: 3rem !important;" class="page-title">
+    <h1 class="page-title">
         <i class="{{ $dataType->icon }}"></i>
         {{ __('voyager::generic.'.(isset($dataTypeContent->id) ? 'edit' : 'add')).' '.$dataType->getTranslatedAttribute('display_name_singular') }}
     </h1>
@@ -24,9 +24,9 @@
             @endif
             {{ csrf_field() }}
 
-            <div   class="row">
-                <div class="add__user--card-container">
-                    <div class="panel panel-bordered add__user--card">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="panel panel-bordered">
                     {{-- <div class="panel"> --}}
                         @if (count($errors) > 0)
                             <div class="alert alert-danger">
@@ -38,37 +38,19 @@
                             </div>
                         @endif
 
-                             <div class="panel-body ">
-      
-      
-                             <div class="add__user--container">
-                             <div  class="edit__user-cont">
-                            <!-- <span class="form__client--detail">Detalii utilizator</span> -->
+                        <div class="panel-body">
                             <div class="form-group">
                                 <label for="name">{{ __('voyager::generic.name') }}</label>
                                 <input type="text" class="form-control" id="name" name="name" placeholder="{{ __('voyager::generic.name') }}"
                                        value="{{ old('name', $dataTypeContent->name ?? '') }}">
                             </div>
-                            <div class="form-group">
-                                <label for="short_name">Short Name</label>
-                                <input type="text" class="form-control" id="short_name" name="short_name" placeholder="Short Name"
-                                       value="{{ old('short_name', $dataTypeContent->short_name ?? '') }}">
-                            </div>
-                            <div class="form-group">
-                                <label for="phone">Phone</label>
-                                <input type="text" class="form-control" id="phone" name="phone" placeholder="Phone"
-                                       value="{{ old('phone', $dataTypeContent->phone ?? '') }}">
-                            </div>
-                            <div class="form-group">
-                                <label for="wme_user_id">WME User Id</label>
-                                <input type="text" class="form-control" id="wme_user_id" name="wme_user_id" placeholder="WME User Id"
-                                       value="{{ old('wme_user_id', $dataTypeContent->wme_user_id ?? '') }}">
-                            </div>
+
                             <div class="form-group">
                                 <label for="email">{{ __('voyager::generic.email') }}</label>
                                 <input type="email" class="form-control" id="email" name="email" placeholder="{{ __('voyager::generic.email') }}"
                                        value="{{ old('email', $dataTypeContent->email ?? '') }}">
                             </div>
+
                             <div class="form-group">
                                 <label for="password">{{ __('voyager::generic.password') }}</label>
                                 @if(isset($dataTypeContent->password))
@@ -89,14 +71,7 @@
                                     @endphp
                                     @include('voyager::formfields.relationship')
                                 </div>
-                                
-                            @endcan
-                        </div>
-
-
-                        <div class="add__user--secDiv">
-                            @can('editRoles', $dataTypeContent)
-                            <div class="form-group">
+                                <div class="form-group">
                                     <label for="additional_roles">{{ __('voyager::profile.roles_additional') }}</label>
                                     @php
                                         $row     = $dataTypeRows->where('field', 'user_belongstomany_role_relationship')->first();
@@ -104,9 +79,7 @@
                                     @endphp
                                     @include('voyager::formfields.relationship')
                                 </div>
-                                @endcan
-
-
+                            @endcan
                             @php
                             if (isset($dataTypeContent->locale)) {
                                 $selected_locale = $dataTypeContent->locale;
@@ -124,32 +97,27 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="form-group profile__picture--cont">
-                                        <span class="change__picture">Change the profile picture</span>
-                                        @if(isset($dataTypeContent->avatar))
-                                            <div class="avatar__user-cont">
-                                            <img  class="profile__picture--avatar" src="{{ filter_var($dataTypeContent->avatar, FILTER_VALIDATE_URL) ? $dataTypeContent->avatar : Voyager::image( $dataTypeContent->avatar ) }}"  />
-                                            <label for="file-upload" class="add__picture--btn">+</label> 
-                                            <input style="display: none;" id="file-upload" type="file" data-name="avatar" name="avatar">   
-                                        </div>
-                                        @endif
-                                        
-                                    </div>
                         </div>
-                        </div>
-                        
-                        </div>
-                        <button type="submit" class="btn btn-primary pull-right save add__user--btn-left">
-                {{ __('voyager::generic.save') }}
-            </button>
                     </div>
-                   
                 </div>
-              
-                
+
+                <div class="col-md-4">
+                    <div class="panel panel panel-bordered panel-warning">
+                        <div class="panel-body">
+                            <div class="form-group">
+                                @if(isset($dataTypeContent->avatar))
+                                    <img src="{{ filter_var($dataTypeContent->avatar, FILTER_VALIDATE_URL) ? $dataTypeContent->avatar : Voyager::image( $dataTypeContent->avatar ) }}" style="width:200px; height:auto; clear:both; display:block; padding:2px; border:1px solid #ddd; margin-bottom:10px;" />
+                                @endif
+                                <input type="file" data-name="avatar" name="avatar">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-         
+            <button type="submit" class="btn btn-primary pull-right save">
+                {{ __('voyager::generic.save') }}
+            </button>
         </form>
 
         <iframe id="form_target" name="form_target" style="display:none"></iframe>
@@ -163,7 +131,6 @@
 
 @section('javascript')
     <script>
-       
         $('document').ready(function () {
             $('.toggleswitch').bootstrapToggle();
         });
