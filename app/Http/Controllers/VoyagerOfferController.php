@@ -72,8 +72,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             });
         }
 
-        $orderBy = $request->get('order_by', $dataType->order_column);
-        $sortOrder = $request->get('sort_order', $dataType->order_direction);
+        $orderBy = $request->get('order_by', $dataType->order_column) ?: 'id';
+        $sortOrder = $request->get('sort_order', $dataType->order_direction) ?: 'desc';
         $usesSoftDeletes = false;
         $showSoftDeleted = false;
 
@@ -493,7 +493,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
 
         // order by date, and user selectable column
-        $orderColumn = ['offer_date', 'desc'];
+        $orderColumn = ['delivery_date', 'desc'];
         $query->orderBy($orderColumn[0], $orderColumn[1]);
         if ($request->order_by) {
             $query->orderBy($request->order_by, $request->sort_order);
