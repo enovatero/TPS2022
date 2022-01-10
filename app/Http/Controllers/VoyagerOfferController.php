@@ -948,7 +948,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         try{
           \App\Http\Controllers\Admin\VoyagerClientsController::syncClient($client->id);
         } catch(\Exception $e){}
-        return ['success' => true, 'client_id' => $client->id, 'client_name' => $client->name];
+        $editInsertAddress->city_name = $editInsertAddress->city_name();
+        $editInsertAddress->state_name = $editInsertAddress->state_name();
+        $editInsertAddress->phone = $editInsertAddress->delivery_phone != null ? $editInsertAddress->delivery_phone : $editInsertAddress->userData()->phone;
+        $editInsertAddress->name = $editInsertAddress->delivery_contact != null ? $editInsertAddress->delivery_contact : $editInsertAddress->userData()->name;
+        return ['success' => true, 'userAddresses' => [0 => $editInsertAddress], 'transparent_band' => 0, 'client_id' => $client->id, 'client_name' => $client->name];
+      
     }
 
     public function retrievePreselectedColors(Request $request){
@@ -1326,12 +1331,24 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         ]);
       }
       $offerProducts = OfferProduct::with('prices')->where('offer_id', $offer->id)->get();
-//       dd($offerProducts && count($offerProducts) > 0 && $modifyOfferProductsPrices);
       // daca am avut ceva selectat pana acum sterg pentru a afisa noua combinatie de atribute selectate
+      $dbOffProdsWithQty = [];
       if($offerProducts && count($offerProducts) > 0 && $modifyOfferProductsPrices){
         $offProdIds = $offerProducts->pluck('id');
         OfferProduct::whereIn('id', $offProdIds)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
         OfferPrice::whereIn('offer_products_id', $offProdIds)->delete(); // sterg toate valorile pentru ca am produse noi, definite prin atributele selectate
+        foreach($offerProducts as $offProd){
+          $arrElem = [
+            'offer_id'   => $offer->id,
+            'product_id' => $offProd->product_id,
+            'parent_id'  => $offProd->parent_id,
+            'qty'        => $offProd->qty,
+          ];
+          if(array_key_exists($offProd->parent_id, $dbOffProdsWithQty)){
+            $dbOffProdsWithQty[$offProd->parent_id] = [];
+          }
+          $dbOffProdsWithQty[$offProd->parent_id] = $arrElem;
+        }
       }
       if(count($attrQueryArray) > 0){
         // trec prin toti parintii ca sa iau produsele cu atributele selectate
@@ -1368,17 +1385,22 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $cursValutar = $offer->curs_eur != null ? $offer->curs_eur : ($offerType->exchange != null ? $offerType->exchange : \App\Http\Controllers\Admin\CursBNR::getExchangeRate("EUR"));
 
       $created_at = date("Y-m-d H:i:s");
-//       dd($modifyOfferProductsPrices);
       if($modifyOfferProductsPrices){
         // recreez noile valori pentru offer_products si offer_prices
         foreach($products as $product){
           $rulesPrices = (new self())->getRulesPricesByProductCategory($product->categoryId(), $product->price, $cursValutar);
           if($rulesPrices != null && count($rulesPrices) > 0){
+            $currentkey = $product->parent_id;
+            $currentQty = 0;
+            if(array_key_exists($currentkey, $dbOffProdsWithQty)){
+              $currentQty = $dbOffProdsWithQty[$currentkey]['qty'];
+            }
+            
             $offerProduct = new OfferProduct();
             $offerProduct->offer_id = $offer->id;
             $offerProduct->product_id = $product->id;
             $offerProduct->parent_id = $product->parent_id;
-            $offerProduct->qty = 0; // default 1 pentru cele gasite. La edit trebuie sa iau ce cantitati se trimit
+            $offerProduct->qty = $currentQty; // default 0 pentru cele gasite. La edit trebuie sa iau ce cantitati se trimit
             $offerProduct->created_at = $created_at;
             $offerProduct->updated_at = $created_at;
             $offerProduct->save();
@@ -1489,8 +1511,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->payment_type = $request->input('payment_type');
     $offer->external_number = $request->input('external_number');
     $offer->custom_off_type = $request->input('custom_off_type');
-    $offer->delivery_date = $request->input('delivery_date');
-    $offer->delivery_date = Carbon::parse($request->input('delivery_date'))->format('Y-m-d');
+    $offer->delivery_date = $request->input('delivery_date') != null ? Carbon::parse($request->input('delivery_date'))->format('Y-m-d') : null;
     $offer->observations = $request->input('observations');
     $offer->created_at = $request->input('created_at');
     $offer->updated_at = $request->input('updated_at');
@@ -1727,6 +1748,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       if($offer->payment_type == 1){
         return ['succes' => false, 'msg' => 'Comanda nu a putut fi lansata pentru ca este NEACHITATA!'];
       }
+      if($offer->delivery_date == null){
+        return ['succes' => false, 'msg' => 'Comanda nu a putut fi lansata pentru ca nu are data de livrara completata!'];
+      }
       $lastStatus = $offer->status;
       $offer->status = 1; // comanda lansata in productie
       // generez un numar de comanda pe baza comenzilor create anterior. Ex: count(comenzi) + 1
@@ -1766,8 +1790,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $is_mention = $is_mention ? 1 : 0;
       $offerEvent = new OfferEvent();
       $offerEvent->offer_id = $offer->id;
-      $offerEvent->user_name = $offer->agent->name;
-      $offerEvent->user_id = $offer->agent_id;
+      $offerEvent->user_name = Auth::user()->name;
+      $offerEvent->user_id = Auth::user()->id;
       $offerEvent->message = $message;
       $offerEvent->is_mention = $is_mention;
       $offerEvent->created_at = $created_at;
@@ -1791,7 +1815,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         break;
       case $newObj->wasChanged('client_id'):
 //         dd($newObj);
-        $fromValue = $oldObj->client->name;
+        $fromValue = $oldObj->client ? $oldObj->client->name : 'empty';
         $toValue = $newObj->client->name;
         $resultField = 'Client';
         $changedField = 'client_id';

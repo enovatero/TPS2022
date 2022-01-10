@@ -105,7 +105,7 @@ class AddressController extends Controller
       if ($validator->fails()){
           return ['success' => false, 'msg' => $validator->errors()->all()];  
       } else{
-        $address = UserAddress::where('id', $request->input('user_id'))->get();
+        $address = UserAddress::where('user_id', $request->input('user_id'))->get();
         $client = Client::find($request->input('user_id'));
         foreach($address as &$addr){
           $addr->city_name = $addr->city_name();

@@ -92,23 +92,23 @@
                                       @endif
                                   </div>
                                   @if($row->field == 'name')
-                                    <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
+                                    <div class="form-group col-md-12 container-inputs-juridica" @if((isset($dataTypeContent) && $dataTypeContent->type == 'juridica') || old('type', $dataTypeContent ?? '') == 'juridica') style="display: block;" @endif>
                                        <label class="control-label" for="name">CUI</label>
                                        <input class="form-control" type="text" name="cui" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->cui}}" @endif/>                          
                                     </div>
-                                    <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
+                                    <div class="form-group col-md-12 container-inputs-juridica" @if((isset($dataTypeContent) && $dataTypeContent->type == 'juridica') || old('type', $dataTypeContent ?? '') == 'juridica') style="display: block;" @endif>
                                        <label class="control-label" for="name">Reg. Com.</label>
                                        <input class="form-control" type="text" name="reg_com" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->reg_com}}" @endif/>                          
                                     </div>
-                                    <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
+                                    <div class="form-group col-md-12 container-inputs-juridica" @if((isset($dataTypeContent) && $dataTypeContent->type == 'juridica') || old('type', $dataTypeContent ?? '') == 'juridica') style="display: block;" @endif>
                                        <label class="control-label" for="name">Banca</label>
                                        <input class="form-control" type="text" name="banca" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->banca}}" @endif/>                          
                                     </div>
-                                    <div class="form-group col-md-12 container-inputs-juridica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: block;" @endif>
+                                    <div class="form-group col-md-12 container-inputs-juridica" @if((isset($dataTypeContent) && $dataTypeContent->type == 'juridica') || old('type', $dataTypeContent ?? '') == 'juridica') style="display: block;" @endif>
                                        <label class="control-label" for="name">IBAN</label>
                                        <input class="form-control" type="text" name="iban" autocomplete="off" @if(isset($legal_entity) && $legal_entity != null) value="{{$legal_entity->iban}}" @endif/>                          
                                     </div>
-                                    <div class="form-group col-md-12 container-inputs-fizica" @if(isset($dataTypeContent) && $dataTypeContent->type == 'juridica') style="display: none;" @endif>
+                                    <div class="form-group col-md-12 container-inputs-fizica" @if((isset($dataTypeContent) && $dataTypeContent->type == 'juridica') || old('type', $dataTypeContent ?? '') == 'juridica') style="display: none;" @endif>
                                        <label class="control-label" for="name">CNP</label>
                                        <input class="form-control" type="text" name="cnp" autocomplete="off" @if(isset($individual) && $individual != null) value="{{$individual->cnp}}" @endif/>                          
                                     </div>

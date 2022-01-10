@@ -1676,6 +1676,14 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                    $("#create_new_client>.modal-dialog .modal-body").html('');
                    var newOption = new Option(res.client_name, res.client_id, false, false);
                    $("select[name=client_id]").append(newOption).val(res.client_id).trigger('change');
+                   
+                   var html_addr = completeWithAddresses(res.userAddresses);
+                   var html_user_addresses = html_addr[0];
+                   var html_awb_addresses = html_addr[1];
+                   $("#deliveryAddressAWB").html(html_awb_addresses);
+                   $("select[name=delivery_address_user]").html(html_user_addresses);
+                   $('select[name=transparent_band] option[value='+res.transparent_band+']').prop('selected', true).trigger("change");
+                   $('select[name=delivery_address_user]').val(res.userAddresses[0].id).trigger('change');
                  } else{
                    var html_err = '';
                    console.log(res.msg);
@@ -1982,27 +1990,11 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             return arr.length !== 0 && new Set(arr).size !== 1;
           }
           $(document).on("click", ".btnAcceptOffer", function(){
-            var selectedColors = [];
             var launchOrder = false;
-            $('.selectColor').each(function(index){
-              if ($(this).has('option:selected')){
-                var valoareSelectata = $(this).val();
-                if(valoareSelectata != null){
-                  valoareSelectata = valoareSelectata.split("_");
-                  // iar valoarea RAL si o pun in selectedColors pentru a compara mai tarziu daca am diferente de culori
-                  selectedColors.push(valoareSelectata[3]);
-                }
-              }
-            });
-            // verific daca exista diferente de culori pentru a afisa un mesaj
-            if(checkDiff(selectedColors)){
-              if(confirm("Comanda pe care urmeaza sa o lansati are culori diferite. Doriti sa lansati comanda?")){
-                launchOrder = true;
-              } else{
-                launchOrder = false;
-              }
-            } else{
+            if(confirm("Comanda va fi trimisa in WinMentor si se va lansa in productie. Esti sigur ca datele sunt corecte si oferta este finala?")){
               launchOrder = true;
+            } else{
+              launchOrder = false;
             }
             if(launchOrder){
               var order_id = $(this).attr("order_id");
@@ -2070,6 +2062,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                 var selectedElements = this.collect();
                 if(selectedElements.length > 0){
                   var allIds = this.getAllIds();
+                  console.log(allIds);
                   if(allIds.length > 0){
                     $("input[name=mentions]").val(allIds);
                   }
@@ -2103,6 +2096,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                     $(".log-mesaje").html(resp.html_messages);
                     $("textarea#mentions").val("");
                     $("input[name=mentions]").val("");
+                    myMention.removeAllIds();
                     toastr.success(resp.msg);
                   } else{
                     toastr.error(resp.msg);

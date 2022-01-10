@@ -381,6 +381,17 @@ var Mention = function () {
       */
 
    }, {
+      key: 'removeAllIds',
+      value: function removeAllIds() {
+         this.allIds = [];
+         return true;
+      }
+
+      /**
+      * Sets up the HTML. Wrapper, Display, OptionsList, Options
+      */
+
+   }, {
       key: 'collect',
       value: function collect() {
          var _this2 = this;
