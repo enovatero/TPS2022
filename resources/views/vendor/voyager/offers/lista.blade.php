@@ -547,8 +547,8 @@
                                                         </select>
 
                                                     @elseif ($column['key'] == 'awb')
-                                                        {{ $data->delivery_type == 'fan' ? $data->fanData->awb : "" }}
-                                                        {{ $data->delivery_type == 'nemo' ? $data->nemoData->awb : "" }}
+                                                        {{ $data->delivery_type == 'fan' && $data->awb_id ? $data->fanData->awb : "" }}
+                                                        {{ $data->delivery_type == 'nemo' && $data->awb_id ? $data->nemoData->awb : "" }}
 
                                                     @elseif ($column['key'] == 'data_expediere')
                                                         {{ \Carbon\Carbon::parse($data->delivery_date)->format('d M') }}
