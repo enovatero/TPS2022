@@ -961,7 +961,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
       }
     }
     $wmeBankData = [];
-    if ($legalEntity) {
+    if ($client->type != 'fizica' && $legalEntity) {
         $wmeBankData = [[
             'NumarCont' => $legalEntity->iban,
             'Sucursala'=> $legalEntity->banca,
