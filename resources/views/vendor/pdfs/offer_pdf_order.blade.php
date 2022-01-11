@@ -88,7 +88,7 @@
         {{$offer->offerType->title}}
       </p>
 			<p style="font-size: 12pt">
-        <strong>Agent</strong>: {{Auth::user()->name}}<br>
+        <strong>Agent</strong>: {{$offer->agent->name}}<br>
       </p>
 			<p style="font-size: 12pt">
         <strong>Client</strong>: {{$offer->client ? $offer->client->name : ''}}<br><br>
@@ -112,7 +112,7 @@
       </p>
       @if(!$twoColumns)
         <p style="text-align: left; font-size: 12pt">
-          <strong>Ambalare:</strong> {{$offer->packing != null ? ($offer->packing == 0 ? 'Nu' : 'Da') : '-'}}
+          <strong>Ambalare:</strong> {{$offer->packing ? $offer->_packing->name : '-'}}
         </p>
         <!-- Ascund doar pentru jaluzele -->
         @if(strpos($offer->offerType->title, 'aluze') === false)

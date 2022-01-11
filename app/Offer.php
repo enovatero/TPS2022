@@ -100,4 +100,7 @@ class Offer extends Model
     public function products(){
       return $this->hasMany(OfferProduct::class, 'offer_id', 'id');
     }
+    public function _packing(){
+        return $this->hasOne(Packing::class, 'id', 'packing');
+    }
 }
