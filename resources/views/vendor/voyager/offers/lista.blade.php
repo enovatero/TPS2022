@@ -383,12 +383,14 @@
                                                                     $statusClass = '';
                                                                     if ($data->status_name) {
                                                                         if ($status_title == 'noua') $statusClass = 'offer__status--green';
-                                                                        if ($status_title == 'refuzata') $statusClass = 'offer__status--orange';
+                                                                        if ($status_title == 'refuzata') $statusClass = 'offer__status--red';
                                                                         if ($status_title == 'anulata') $statusClass = 'offer__status--yellow';
                                                                         if ($status_title == 'modificata') $statusClass = 'offer__status--purple';
                                                                         if ($status_title == 'finalizata') $statusClass = 'offer__status--gray';
                                                                         if ($status_title == 'retur') $statusClass = 'offer__status--red';
                                                                         if ($status_title == 'productie') $statusClass = 'offer__status--blue';
+                                                                        if ($status_title == 'expediata') $statusClass = 'offer__status--yellow';
+                                                                        if ($status_title == 'livrata') $statusClass = 'offer__status--orange';
                                                                     }
                                                                 @endphp
                                                                 <option
@@ -545,7 +547,8 @@
                                                         </select>
 
                                                     @elseif ($column['key'] == 'awb')
-                                                        {{ $data->awb_id }}
+                                                        {{ $data->delivery_type == 'fan' && $data->awb_id ? $data->fanData->awb : "" }}
+                                                        {{ $data->delivery_type == 'nemo' && $data->awb_id ? $data->nemoData->awb : "" }}
 
                                                     @elseif ($column['key'] == 'data_expediere')
                                                         {{ \Carbon\Carbon::parse($data->delivery_date)->format('d M') }}

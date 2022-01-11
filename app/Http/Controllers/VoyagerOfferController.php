@@ -494,7 +494,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
 
         // order by date, and user selectable column
-        $orderColumn = ['offer_date', 'desc'];
+        $orderColumn = ['delivery_date', 'desc'];
         $query->orderBy($orderColumn[0], $orderColumn[1]);
         if ($request->order_by) {
             $query->orderBy($request->order_by, $request->sort_order);
@@ -972,7 +972,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $editInsertAddress->phone = $editInsertAddress->delivery_phone != null ? $editInsertAddress->delivery_phone : $editInsertAddress->userData()->phone;
         $editInsertAddress->name = $editInsertAddress->delivery_contact != null ? $editInsertAddress->delivery_contact : $editInsertAddress->userData()->name;
         return ['success' => true, 'userAddresses' => [0 => $editInsertAddress], 'transparent_band' => 0, 'client_id' => $client->id, 'client_name' => $client->name];
-      
+
     }
 
     public function retrievePreselectedColors(Request $request){
@@ -1414,7 +1414,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             if(array_key_exists($currentkey, $dbOffProdsWithQty)){
               $currentQty = $dbOffProdsWithQty[$currentkey]['qty'];
             }
-            
+
             $offerProduct = new OfferProduct();
             $offerProduct->offer_id = $offer->id;
             $offerProduct->product_id = $product->id;
@@ -2117,6 +2117,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         'SerieDoc' => $order->serieName->name,
         'DataDoc' => Carbon::parse($order->delivery_date)->format('d.m.Y'),
         'IDClient' => $client->mentor_partener_code,
+        'Locatie' => ($order->delivery_address->wme_name !== null && $order->delivery_address->wme_name != "") ? $order->delivery_address->wme_name : "",
         'Observatii' => '',
         'CAMPEXTENSIECOMANDA' => '',
         'Moneda' => 'RON',

@@ -69,7 +69,7 @@
 			<b>Distribuitor:</b> {{$offer->distribuitor ? $offer->distribuitor->title : ''}}
 		</td>
 		<td width="{{$offerType && $offerType->header_img != null ? '35%' : '40%'}}" style="text-align: right; font-size: 10pt">
-			Oferta: <b>{{'TPS'.$offer->id}} {{$offer->serie}} / {{\Carbon\Carbon::parse($offer->offer_date)->format('d-m-Y')}}</b>
+			Oferta <b>{{$offer->id}}</b> {{$offer->numar_comanda ? "(".$offer->numar_comanda.")" : ""}} / {{\Carbon\Carbon::parse($offer->offer_date)->format('d-m-Y')}}</b>
 			<p style="font-size: 8pt;"><br>
         @if($attributes && count($attributes)>0)
           @foreach($attributes as $attr)
