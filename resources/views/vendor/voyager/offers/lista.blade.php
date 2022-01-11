@@ -678,6 +678,7 @@
                                 ])) }}').replace('perpagenum', this.value)">
                                     <option value="10" {{ request()->get('per_page') == 10 ? 'selected':'' }}>10</option>
                                     <option value="25" {{ request()->get('per_page') == 25 ? 'selected':'' }}>25</option>
+                                    <option value="50" {{ request()->get('per_page') == 50 ? 'selected':'' }}>50</option>
                                     <option value="100" {{ request()->get('per_page') == 100 ? 'selected':'' }}>100</option>
                                 </select>
                             </div>
