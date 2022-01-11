@@ -133,7 +133,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 });
               });
             }
-            $query->where('numar_comanda', '=', null);
+//             $query->where('numar_comanda', '=', null);
+            $query->orderBy('id', 'desc');
             $row = $dataType->rows->where('field', $orderBy)->firstWhere('type', 'relationship');
             if ($orderBy && (in_array($orderBy, $dataType->fields()) || !empty($row))) {
                 $querySortOrder = (!empty($sortOrder)) ? $sortOrder : 'desc';
