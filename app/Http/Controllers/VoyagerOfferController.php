@@ -503,7 +503,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $query->orderBy('numar_comanda', 'desc');
 
         // paginate and make query
-        $orders = $query->paginate($request->get('per_page', 10));
+        $orders = $query->paginate($request->get('per_page', 50));
         if (count($orders) == 0 && $orders->total() > 0) {
             return redirect(url()->current().'?'.http_build_query(array_merge(request()->all(), [
                 'page' => $orders->lastPage(),
