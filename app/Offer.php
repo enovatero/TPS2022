@@ -48,6 +48,8 @@ class Offer extends Model
     7 => 'N/A',
   ];
 
+    protected $perPage = 50;
+
     protected $casts = [];
     public function distribuitor(){
       return $this->belongsTo(Distribuitor::class)->orderBy('title', 'ASC');
