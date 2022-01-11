@@ -112,7 +112,7 @@
       </p>
       @if(!$twoColumns)
         <p style="text-align: left; font-size: 12pt">
-          <strong>Ambalare:</strong> {{$offer->packing ? $offer->_packing->name : '-'}}
+          <strong>Ambalare:</strong> {{$offer->packing ? $offer->_packing->title : '-'}}
         </p>
         <!-- Ascund doar pentru jaluzele -->
         @if(strpos($offer->offerType->title, 'aluze') === false)
