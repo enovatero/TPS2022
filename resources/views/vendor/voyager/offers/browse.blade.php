@@ -171,7 +171,7 @@
                                                             <b>{{ $data->offer_date }}</b>
                                                         </div>
                                                         <div class="item additional">
-                                                            Subtotal: <span>{{ $subtotalPriceDay }} lei</span>
+                                                            @if (Auth::user()->hasPermission("offer_column_valoare")) Subtotal: <span>{{ $subtotalPriceDay }} lei</span> @endif
                                                         </div>
                                                         <div class="item additional">
                                                             Subtotal: <span>{{ $subtotalMlDay }} ml</span>
