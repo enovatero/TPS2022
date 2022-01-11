@@ -229,7 +229,7 @@
                                         <b style="text-transform: uppercase;">{{ \Carbon\Carbon::parse($day['date'])->format('d M') }}</b>
                                     </div>
                                     <div class="item additional">
-                                        @if ($user->hasPermission("offer_column_valoare")) Subtotal: <span>{{ $day['subtotal_price'] }} lei</span> @endif
+                                        @if (Auth::user()->hasPermission("offer_column_valoare")) Subtotal: <span>{{ $day['subtotal_price'] }} lei</span> @endif
                                     </div>
                                     <div class="item additional">
                                         Subtotal: <span>{{ $day['subtotal_ml'] }} ml</span>
