@@ -50,7 +50,7 @@
                                                 @foreach (App\Models\User::where('role_id', 9)->orderBy('short_name')->pluck('short_name', 'id') as $agent_id => $agent_name)
                                                     <option
                                                         value="{{ $agent_id }}"
-                                                        {{ request()->get('agent') == $agent_id ? 'selected' : '' }}
+                                                        {{ request()->get('agent_id') == $agent_id ? 'selected' : '' }}
                                                     >
                                                         {{ $agent_name }}
                                                     </option>
