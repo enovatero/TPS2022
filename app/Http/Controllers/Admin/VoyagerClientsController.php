@@ -862,7 +862,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     $url = "http://".config('winmentor.host').":".config('winmentor.port')."/datasnap/rest/TServerMethods/InfoPartener//";
     $client = Client::find($client_id);
     if($client->sync_done == 1){
-      return ['success' => false, 'msg' => 'Clientul a fost deja sincronizat cu WinMentor!', 'warning' => true];
+      //return ['success' => false, 'msg' => 'Clientul a fost deja sincronizat cu WinMentor!', 'warning' => true];
     }
     $userAddresses = $client->userAddress;
     $cui = '';
@@ -874,7 +874,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     if ($usrAddresses && count($usrAddresses) == 1) {
         $usrAddress = $usrAddresses[0];
         array_push($usrAddressList, [
-            'Denumire' => $usrAddress->wme_name ?? "SEDIU-".$usrAddress->id,
+            'Denumire' => $usrAddress->wme_name ?? "SEDIU-FIRMA",
             'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
             'TipSediu' => 'SFL',
             'Strada' => $usrAddress->address,
@@ -887,6 +887,11 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
             'eMail' => $client->email
         ]);
+        if (!$usrAddress->wme_name) {
+            $userAddressToUpdate = UserAddress::find($usrAddress->id);
+            $userAddressToUpdate->wme_name = "SEDIU-FIRMA";
+            $userAddressToUpdate->save();
+        }
     } elseif($usrAddresses && count($usrAddresses) > 0) {
         foreach ($usrAddresses as $usrAddress) {
             if ($usrAddress->wme_name == 'SEDIU FIRMA') {
@@ -922,6 +927,11 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
                     'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
                     'eMail' => $client->email
                 ]);
+                if (!$usrAddress->wme_name) {
+                    $userAddressToUpdate = UserAddress::find($usrAddress->id);
+                    $userAddressToUpdate->wme_name = "SEDIU-".$usrAddress->id;
+                    $userAddressToUpdate->save();
+                }
             }
         }
     }
