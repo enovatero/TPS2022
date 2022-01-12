@@ -204,7 +204,7 @@
       <td width="30%" align="right">
               <br>
               Lungime totala: <b>{{$offer->dimension}}</b><br><br>
-              Total cutii: <b>{{$offer->boxes}}</b>
+              @if ($offerType->tile_fence == 0) Total cutii: <b>{{$offer->boxes}}</b> @endif
       </td>
     @endif
 	</tr>
