@@ -862,7 +862,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     $url = "http://".config('winmentor.host').":".config('winmentor.port')."/datasnap/rest/TServerMethods/InfoPartener//";
     $client = Client::find($client_id);
     if($client->sync_done == 1){
-      //return ['success' => false, 'msg' => 'Clientul a fost deja sincronizat cu WinMentor!', 'warning' => true];
+        return ['success' => false, 'msg' => 'Clientul a fost deja sincronizat cu WinMentor!', 'warning' => true];
     }
     $userAddresses = $client->userAddress;
     $cui = '';
