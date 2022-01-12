@@ -43,7 +43,7 @@
                                             <select
                                                 class="custom-table-select form-control"
                                                 onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                    'agent' => 'value'
+                                                    'agent_id' => 'value'
                                                 ])) }}').replace('value', this.value)"
                                             >
                                                 <option value=""> - </option>

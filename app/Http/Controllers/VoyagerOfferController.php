@@ -268,7 +268,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'agent',
-                'order_by' => null,
+                'order_by' => 'agent_id',
                 'label' => 'Agent',
                 'width' => '110px',
             ],
