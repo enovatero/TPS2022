@@ -36,7 +36,29 @@
 
                         <div class="custom-table-filters overflow__list-1" >
                             @foreach ($columns as $column)
-                                @if ($column['key'] == 'plata')
+                                @if ($column['key'] == 'agent')
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru {{ $column['label'] }}</div>
+                                            <select
+                                                class="custom-table-select form-control"
+                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                    'agent' => 'value'
+                                                ])) }}').replace('value', this.value)"
+                                            >
+                                                <option value=""> - </option>
+                                                @foreach (App\Models\User::where('role_id', 9)->orderBy('short_name')->pluck('short_name', 'id') as $agent_id => $agent_name)
+                                                    <option
+                                                        value="{{ $agent_id }}"
+                                                        {{ request()->get('agent') == $agent_id ? 'selected' : '' }}
+                                                    >
+                                                        {{ $agent_name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+                                @elseif ($column['key'] == 'plata')
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>

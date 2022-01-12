@@ -1896,7 +1896,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       case $newObj->wasChanged('delivery_details'):
         $fromValue = $oldObj->delivery_details;
         $toValue = $newObj->delivery_details;
-        $resultField = 'Date livrare';
+        $resultField = 'Detalii livrare';
         $changedField = 'delivery_details';
         break;
       case $newObj->wasChanged('packing'):
