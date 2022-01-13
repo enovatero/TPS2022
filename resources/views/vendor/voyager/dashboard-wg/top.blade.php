@@ -9,7 +9,8 @@
       </div>
     </div>
   </div>
-  <div style="border-left: 5px solid #38AFAF;" class="wg__products">
+    @if (Auth::user()->hasRole('MANAGER') || Auth::user()->hasRole('admin'))
+    <div style="border-left: 5px solid #38AFAF;" class="wg__products">
     <div class="wg__products--container">
       <img src="/images/profits.svg" />
       <span class="wg__products--bar"> </span>
@@ -19,6 +20,7 @@
       </div>
     </div>
   </div>
+    @endif
   <div style="border-left: 5px solid #C715EB;" class="wg__products">
     <div class="wg__products--container">
       <img src="/images/clients.svg" />
@@ -41,5 +43,5 @@
     </div>
   </div>
 
-  
+
 </div>
