@@ -1771,7 +1771,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         return ['succes' => false, 'msg' => 'Comanda nu a putut fi lansata pentru ca nu are data de livrara completata!'];
       }
       $lastStatus = $offer->status;
-      $offer->status = 1; // comanda lansata in productie
+      $offer->status = 5; // comanda lansata in productie
       // generez un numar de comanda pe baza comenzilor create anterior. Ex: count(comenzi) + 1
       $nextOrderNumber = Offer::where('numar_comanda', '!=', null)->where('serie', $offer->serie)->max('numar_comanda');
       if($nextOrderNumber == 0){
