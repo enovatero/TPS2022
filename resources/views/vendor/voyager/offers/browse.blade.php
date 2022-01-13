@@ -232,9 +232,14 @@
                                                     <span class="offers__status">
                                                       @php
                                                         $dataStatus = \App\Status::find($data->status);
-                                                        $dataStatus = $dataStatus == null ? 'No results' : $dataStatus->title;
+                                                        if (!$dataStatus) {
+                                                            $dataStatus = new stdClass();
+                                                            $dataStatus->bg_color = null;
+                                                            $dataStatus->text_color = null;
+                                                        }
+                                                        //$dataStatus = $dataStatus == null ? 'No results' : $dataStatus->title;
                                                       @endphp
-                                                            <span style="text-transform: capitalize;" class="{{$dataStatus == 'noua' ? 'offer__status--green' : ($dataStatus == 'refuzata' ? 'offer__status--orange' : ($dataStatus == 'anulata' ? 'offer__status--yellow' : ($dataStatus == 'modificata' ? 'offer__status--purple' : ( $dataStatus == 'finalizata'  ? 'offer__status--gray' : ( $dataStatus == 'retur'  ? 'offer__status--red' : ( $dataStatus == 'productie'  ? 'offer__status--blue' : '' ) ) ) ) )) }} ">
+                                                            <span style="text-transform: uppercase; padding: 10px !important; background-color: {{$dataStatus->bg_color ?: "lightgray"}}; color: {{$dataStatus->text_color ?: "black"}}">
                                                               @include('voyager::formfields.relationship', ['view' => 'browse','options' => $row->details])
                                                             </span>
                                                     </span>

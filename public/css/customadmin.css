@@ -672,7 +672,6 @@ tbody td img {
 }
 .offers__status span > p {
   margin-bottom: 0 !important;
-  color: #ffffff;
 }
 .offer__status--yellow {
   background-color: #ebac15;
@@ -694,7 +693,6 @@ tbody td img {
 .offer__status--red {
   background-color: #e44e15;
 }
-
 .offer__status--blue {
   background-color: #179bcc;
 }

@@ -400,29 +400,20 @@
                                                         </span>
                                                        --}}
                                                         <select class="offerStatusSelector">
-                                                            @foreach (App\Status::pluck('title', 'id') as $status_id => $status_title)
+                                                            @foreach (App\Status::orderBy('item_order')->get() as $status)
                                                                 @php
                                                                     $statusClass = '';
-                                                                    if ($data->status_name) {
-                                                                        if ($status_title == 'noua') $statusClass = 'offer__status--green';
-                                                                        if ($status_title == 'refuzata') $statusClass = 'offer__status--red';
-                                                                        if ($status_title == 'anulata') $statusClass = 'offer__status--yellow';
-                                                                        if ($status_title == 'modificata') $statusClass = 'offer__status--purple';
-                                                                        if ($status_title == 'finalizata') $statusClass = 'offer__status--gray';
-                                                                        if ($status_title == 'retur') $statusClass = 'offer__status--red';
-                                                                        if ($status_title == 'productie') $statusClass = 'offer__status--blue';
-                                                                        if ($status_title == 'expediata') $statusClass = 'offer__status--yellow';
-                                                                        if ($status_title == 'livrata') $statusClass = 'offer__status--orange';
-                                                                    }
                                                                 @endphp
                                                                 <option
-                                                                    value="{{$status_id}}"
-                                                                    statustitle="{{$status_title}}"
+                                                                    value="{{$status->id}}"
+                                                                    statustitle="{{$status->title}}"
                                                                     statusclass="{{$statusClass}}"
+                                                                    statusBgColor="{{$status->bg_color ?: "lightgray"}}"
+                                                                    statusTextColor="{{$status->text_color ?: "black"}}"
                                                                     orderid="{{$data->id}}"
-                                                                    {{$data->status == $status_id ? 'selected' : ''}}
+                                                                    {{$data->status == $status->id ? 'selected' : ''}}
                                                                 >
-                                                                    {{ ucfirst($status_title) }}
+                                                                    {{ strtoupper($status->title) }}
                                                                 </option>
                                                             @endforeach
                                                         </select>
@@ -949,10 +940,12 @@
               }
               var statusClass = $(state.element).attr('statusclass');
               var statusTitle = $(state.element).attr('statustitle');
+              var statusBgColor = $(state.element).attr('statusbgcolor');
+              var statusTextColor = $(state.element).attr('statustextcolor');
 
               var $state = $(
                 `
-                <span style="text-transform: capitalize;" class="${statusClass}">
+                <span style="text-transform: uppercase; padding: 10px !important; background-color: ${statusBgColor}; color: ${statusTextColor}">
                   <p>${statusTitle}</p>
                 </span>
                 `
