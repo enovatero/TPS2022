@@ -3,8 +3,8 @@
   $todayProfit = \App\Offer::where('status', 2)->where('offer_date', date('Y-m-d'))->sum('total_final');
   $clients = \App\Client::get()->count();
   $users = \App\Models\User::get()->count();
-  $top5Users = \App\Models\User::with('role')->take(5)->get();
-  $top5Orders = \App\Offer::with('client')->take(5)->latest('offer_date')->get();
+  $top5Users = \App\Models\User::with('role')->latest('created_at')->take(5)->get();
+  $top5Orders = \App\Offer::with('client')->latest('offer_date')->take(5)->get();
   $calendarOrders = [];
   $orderProfitMonthly = \App\Offer::select(\DB::raw('SUM(total_final) as total, COUNT(id) as orders, MONTH(offer_date) as month'))->groupBy('month')->get();
   $orderProfitMonthly = $orderProfitMonthly->toArray();
