@@ -1,7 +1,7 @@
 <div class="nw--container">
   <div class="nw__topside">
     <span class="nw__title">Cele mai noi comenzi </span>
-    <a href="/admin/offers?sort_order=desc&order_by=serie" class="nw__see">Vezi tot </a>
+    <a href="/admin/lista-oferte" class="nw__see">Vezi toate </a>
   </div>
   <span class="nw__bar"></span>
   @if($top5Orders && count($top5Orders) > 0)
