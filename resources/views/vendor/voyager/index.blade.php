@@ -11,14 +11,14 @@
   $ordersChart = [];
   $totalOrdersChart = [];
   for($i = 1; $i <= 12; $i++){
-    $ordersChart[$i] = 0;                    
-    $totalOrdersChart[$i] = 0;                    
+    $ordersChart[$i] = 0;
+    $totalOrdersChart[$i] = 0;
   }
   foreach($orderProfitMonthly as $order){
     $ordersChart[$order['month']] = $order['orders'];
-    $totalOrdersChart[$order['month']] = $order['total'] != 0 ? number_format($order['total']/1000, 4, '.', '') : 0;
+    $totalOrdersChart[$order['month']] = $order['total'] != 0 ? number_format($order['total']/1000, 2) : 0;
   }
-                      
+
 @endphp
 
 @extends('voyager::master')
@@ -421,7 +421,7 @@
                 window.dispatchEvent(new Event('resize'));
 
             });
-            
+
         </script>
     @endif
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.29.0/dist/apexcharts.min.js"></script>
@@ -446,14 +446,14 @@
           chart: {
           type: 'bar',
           height: 280,
-        
+
         },
         plotOptions: {
           bar: {
             horizontal: false,
             columnWidth: '55%',
             endingShape: 'rounded',
-            
+
           },
         },
         dataLabels: {
@@ -467,12 +467,12 @@
         xaxis: {
           categories: ['Ian', 'Feb' , 'Mart' , 'Apr', 'Mai', 'Iun' , 'Iul' , 'Aug' , 'Sep' , 'Oct' , 'Noi' , 'Dec'],
         },
-       
+
         fill: {
           opacity: 1
         },
         colors: ['#EBAC15', "#4EA71B"],
-    
+
         tooltip: {
           y: {
             formatter: function (val, {seriesIndex}) {
@@ -511,7 +511,7 @@
         ...this.comenzi.map(comanda => ({
           dates: comanda.dates,
           highlight: {
-            color: comanda.color,   
+            color: comanda.color,
             fillMode: 'light',
           },
           popover: {
@@ -568,7 +568,7 @@
      }
   return comenzi;
   }
-        
+
 </script>
 
 
