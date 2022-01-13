@@ -2115,7 +2115,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $postData = [
         'NrDoc' => $order->numar_comanda,
         'SerieDoc' => $order->serieName->name,
-        'DataDoc' => Carbon::parse($order->delivery_date)->format('d.m.Y'),
+        'DataDoc' => Carbon::parse($order->offer_date)->format('d.m.Y'),
         'IDClient' => $client->mentor_partener_code,
         'Locatie' => ($order->delivery_address->wme_name !== null && $order->delivery_address->wme_name != "") ? $order->delivery_address->wme_name : "",
         'Observatii' => '',
