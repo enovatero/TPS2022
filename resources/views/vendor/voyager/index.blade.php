@@ -440,7 +440,7 @@
           name: 'Numar Comenzi',
           data: orders
         }, {
-          name: 'Profit Lunar',
+          name: 'Vanzari',
           data: totalOrdersChart
         }, ],
           chart: {
