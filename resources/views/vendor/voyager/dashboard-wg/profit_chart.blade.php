@@ -1,7 +1,7 @@
+@if (Auth::user()->hasRole('MANAGER') || Auth::user()->hasRole('admin'))
 <div class="pf--container">
   <div class="nw__topside">
     <span class="nw__title">Statistici profit lunar </span>
-  
   </div>
   <span class="nw__bar"></span>
    <!-- <div class="pf__about">
@@ -15,7 +15,6 @@
       </div>
    </div> -->
    <div  id="chart"></div>
-  
-  
 </div>
+@endif
 
