@@ -497,8 +497,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $orderColumn = ['delivery_date', 'desc'];
         $query->orderBy($orderColumn[0], $orderColumn[1]);
         if ($request->order_by) {
-            $query->orderBy($request->order_by, $request->sort_order);
-            $orderColumn = [$request->order_by, $request->sort_order];
+            $orderColumn = [$request->get('order_by', 'id'), $request->get('sort_order', 'desc')];
+            $query->orderBy($orderColumn[0], $orderColumn[1]);
         }
         $query->orderBy('numar_comanda', 'desc');
 

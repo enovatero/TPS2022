@@ -257,13 +257,13 @@
                                                 @endif
                                             @endforeach
                                             @if($data->sync_done == 1)
-                                              <a title="Sincronizeaza in WinMentor" class="btn btn-add-new btnSincronizeazaClient" client_id="{{$data->id}}">
-                                                  <i class="voyager-check"></i> <span class="hidden-xs hidden-sm">Sincronizat WinMentor</span>
-                                              </a>
+                                                <a title="Sincronizeaza in WinMentor" class="btn btn-add-new btnSincronizeazaClient isSyncDone" client_id="{{$data->id}}">
+                                                    <i class="voyager-check"></i>&nbsp; <span class="hidden-xs hidden-sm">Sincronizat WinMentor</span>
+                                                </a>
                                             @else
-                                              <a title="Sincronizeaza in WinMentor" class="btn btn-add-new btnSincronizeazaClient" client_id="{{$data->id}}">
-                                                  <i class="voyager-check"></i> <span class="hidden-xs hidden-sm">Sincronizeaza WinMentor</span>
-                                              </a>
+                                                <a title="Sincronizeaza in WinMentor" class="btn btn-add-new btnSincronizeazaClient" client_id="{{$data->id}}">
+                                                    <i class="voyager-refresh"></i>&nbsp; <span class="hidden-xs hidden-sm">Sincronizeaza WinMentor</span>
+                                                </a>
                                             @endif
                                         </td>
                                     </tr>

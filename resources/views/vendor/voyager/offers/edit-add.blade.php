@@ -149,7 +149,11 @@ $iconUrl = $dataType->icon;
              <legend class="text-{{ $row->details->legend->align ?? 'center' }}" style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
          @endif
 
-        <div @if($row->display_name == 'Tip oferta' || $row->display_name == 'Tip oferta custom') style="width: 100% !important;" @endif class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
+        <div
+          @if($row->display_name == 'Tip oferta' || $row->display_name == 'Tip oferta custom' || $row->display_name == 'Sursa') style="width: 100% !important;" @endif
+          class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}"
+          @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif
+        >
          {{ $row->slugify }}
          @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
            <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>

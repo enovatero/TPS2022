@@ -2058,3 +2058,7 @@ input[readonly] {
 .show-errors-popup{
   display: block !important;
 }
+
+.btnSincronizeazaClient.isSyncDone {
+  background: #9dff63;
+}
