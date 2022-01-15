@@ -1977,11 +1977,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $taggedUsers = explode(",", $taggedUsers);
         $adminUsers = User::whereIn('id', $taggedUsers)->get();
         foreach($adminUsers as $user){
-          Mail::to($user->email)->send(new Mentions($offer->id, $offer->id, $message, $offer->agent->name, $user->name, false)); // trimite catre userii tag-uiti
+          Mail::to($user->email)->send(new Mentions($offer->id, $offer->id, $message, Auth::user()->name, $user->name, false)); // trimite catre userii tag-uiti
         }
         $adminEmails = explode(" ", setting('admin.cc_emails'));
         foreach($adminEmails as $email){
-          Mail::to($email)->send(new Mentions($offer->id, $offer->id, $message, $offer->agent->name, 'Admin', true)); // trimite catre email-urile din admin
+          Mail::to($email)->send(new Mentions($offer->id, $offer->id, $message, Auth::user()->name, 'Admin', true)); // trimite catre email-urile din admin
         }
       }
 
