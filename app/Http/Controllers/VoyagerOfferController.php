@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Admin\VoyagerClientsController;
 use Exception;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\Request;
@@ -2080,6 +2081,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       if($clientSync['success']){
         $client = $clientSync['client'];
       }
+    } else {
+        //dd($client);
+        VoyagerClientsController::syncClientAddress($client->id);
     }
     $items = [];
     $products = $order->orderProducts;
