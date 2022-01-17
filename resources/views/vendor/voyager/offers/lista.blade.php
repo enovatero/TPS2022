@@ -565,6 +565,7 @@
 
                                                     @elseif ($column['key'] == 'data_expediere')
                                                         {{ \Carbon\Carbon::parse($data->delivery_date)->format('d M') }}
+                                                        @if ($data->actual_delivery_date != $data->delivery_date && !in_array($data->status, [2,5,6])) <br><span style="color:darkolivegreen">[{{\Carbon\Carbon::parse($data->actual_delivery_date)->format('d M')}}]</span> @endif
 
                                                     @elseif ($column['key'] == 'agent')
                                                         {{ $data->agent ? $data->agent->name : '-' }}

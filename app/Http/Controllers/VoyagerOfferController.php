@@ -330,6 +330,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'width' => '95px',
             ],
             [
+                'key' => 'data_actuala_expediere',
+                'order_by' => 'actual_delivery_date',
+                'label' => 'Data Expediere Reala',
+                'width' => '95px',
+            ],
+            [
                 'key' => 'status',
                 'order_by' => 'status',
                 'label' => 'Stare',
@@ -498,7 +504,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
 
         // order by date, and user selectable column
-        $orderColumn = ['delivery_date', 'desc'];
+        $orderColumn = ['actual_delivery_date', 'desc'];
         $query->orderBy($orderColumn[0], $orderColumn[1]);
         if ($request->order_by) {
             $orderColumn = [$request->get('order_by', 'id'), $request->get('sort_order', 'desc')];
@@ -507,7 +513,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $query->orderBy('numar_comanda', 'desc');
 
         // paginate and make query
-        $orders = $query->paginate($request->get('per_page', 50));
+        $orders = $query->paginate($request->get('per_page', 200));
         if (count($orders) == 0 && $orders->total() > 0) {
             return redirect(url()->current().'?'.http_build_query(array_merge(request()->all(), [
                 'page' => $orders->lastPage(),
@@ -517,32 +523,37 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         // calculate delayed orders
         foreach ($orders as $order) {
           $not_delivered_statuses = [
-            1, // noua
+            //1, // noua
             2, // finalizata
             // 3, // anulata
-            4, // retur
-            5, // modificata
+            //4, // retur
+            5, // asteptare
             6, // productie
             // 7, // livrata
             // 8, // expediata
           ];
+
           if (in_array($order->status, $not_delivered_statuses)) {
             $delivery_date = Carbon::parse($order->delivery_date);
             $today = Carbon::now()->startOfDay();
             if ($delivery_date->lt($today)) {
-              $order->intarziere = $delivery_date->diffInDays($today).'Z';
-              $order->delivery_date = $today->format('Y-m-d');
+                $order->intarziere = $delivery_date->diffInDays($today).'Z';
+                $order->actual_delivery_date = $today->format('Y-m-d');
+
+                $orderToUpdate = Offer::find($order->id);
+                $orderToUpdate->actual_delivery_date = $order->actual_delivery_date;
+                $orderToUpdate->save();
             }
           }
         }
 
         // group by date, and calculate day stats
         $orderGroups = [];
-        foreach ($orders->groupBy('delivery_date') as $day => $dayOrders) {
+        foreach ($orders->groupBy('actual_delivery_date') as $day => $dayOrders) {
             $subtotalPrice = 0;
             $subtotalMl = 0;
             $subtotalPrice = round(
-                Offer::where('delivery_date', $day)
+                Offer::where('actual_delivery_date', $day)
                     ->where('numar_comanda', '!=', null)
                     ->whereHas('offerType', function (Builder $qr) use($tileFence){
                         $qr->where('tile_fence', $tileFence);
@@ -1541,6 +1552,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     $offer->external_number = $request->input('external_number');
     $offer->custom_off_type = $request->input('custom_off_type');
     $offer->delivery_date = $request->input('delivery_date') != null ? Carbon::parse($request->input('delivery_date'))->format('Y-m-d') : null;
+    $offer->actual_delivery_date =  $offer->delivery_date;
     $offer->observations = $request->input('observations');
     $offer->created_at = $request->input('created_at');
     $offer->updated_at = $request->input('updated_at');
