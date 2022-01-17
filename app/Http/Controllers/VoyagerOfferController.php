@@ -531,7 +531,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $today = Carbon::now()->startOfDay();
             if ($delivery_date->lt($today)) {
               $order->intarziere = $delivery_date->diffInDays($today).'Z';
-              $order->offer_date = $today->format('Y-m-d');
+              $order->delivery_date = $today->format('Y-m-d');
             }
           }
         }
@@ -1472,7 +1472,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       $offer->total_final = number_format($totalCalculat, 2);
       $offer->save();
       $priceRules = \App\RulesPrice::get();
-      return view('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $offer->reducere, 'offer' => $offer, 'priceRules' => $priceRules])->render();
+      return view('vendor.voyager.products.offer_box', [
+        'parents' => $offerType->parents,
+        'reducere' => $offer->reducere,
+        'offer' => $offer,
+        'priceRules' => $priceRules,
+        'onlySelectQty' => true,
+      ])->render();
     }
 
     // la fel si functia asta... sa termin cu JSON-urile mai intai
@@ -1958,7 +1964,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
   }
 
   public static function getHtmlLogMentions($offer_id, $limit = 0){
-    $orderMentions = $limit != 0 ? OfferEvent::where(['offer_id' => $offer_id, 'is_mention' => 1])->orderBy('created_at', 'DESC')->take($limit)->get() : OfferEvent::where(['offer_id' => $offer_id, 'is_mention' => 1])->orderBy('created_at', 'DESC')->get();
+    $query = OfferEvent::where(['offer_id' => $offer_id, 'is_mention' => 1])->orderBy('created_at', 'DESC');
+    if ($limit != 0) $query->take($limit);
+    $orderMentions = $query->get();
     return view('vendor.voyager.partials.log_events', ['offerEvents' => $orderMentions])->render();
   }
 

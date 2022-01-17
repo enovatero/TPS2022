@@ -216,7 +216,7 @@
 	<tr>
 		<td>
 			<p><b>Observatii:</b></p>
-			<p>{{$offer->observations != null ? ucfirst($offer->observations) : 'Fara observatii'}}</p>
+			<p>{!! $offer->observations != null ? str_replace("\n", '<br />', ucfirst($offer->observations)) : 'Fara observatii' !!}</p>
 		</td>
         <td align="right">
             <p><b>Semnatura de receptie:</b></p>
