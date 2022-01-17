@@ -573,7 +573,7 @@
                                                         {{ $data->distribuitor_order }}
 
                                                     @elseif ($column['key'] == 'intarziere')
-                                                        {{ $data->intarziere ?: '-' }}
+                                                        {!! $data->intarziere ? '<b style="color:red;font-size:16px">'.$data->intarziere.'</b>' : '-' !!}
 
                                                     @elseif ($column['key'] == 'judet')
                                                         {{ $data->delivery_address ? $data->delivery_address->state_name() : '-' }}
@@ -582,7 +582,16 @@
                                                         {{ $data->delivery_address ? $data->delivery_address->city_name() : '-' }}
 
                                                     @elseif ($column['key'] == 'telefon')
-                                                        {{ $data->delivery_address ? $data->delivery_address->delivery_phone : '-' }}
+                                                        @php
+                                                            $phone = '-';
+                                                            if ($data->delivery_address && $data->delivery_address->delivery_phone) {
+                                                                $phone = $data->delivery_address->delivery_phone;
+                                                            }
+                                                            if ($data->client && $data->client->phone) {
+                                                                $phone = $data->client->phone;
+                                                            }
+                                                        @endphp
+                                                        {{ $phone }}
 
                                                     @elseif ($column['key'] == 'fisiere')
                                                         @php

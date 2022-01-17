@@ -5,6 +5,7 @@
   foreach($priceRules as $rule){
     $totalCalculatRules[$rule->id] = 0;
   }
+  $tabindex = 20;
 @endphp
 <div class="box-body table-responsive no-padding table-prices">
   <input name="selectedProducts" class="selectedProducts" type="hidden"/>
@@ -56,7 +57,10 @@
             <td style="text-align: left;"> {{$parent->title}}</td>
             <td style="text-align:center">{{$parent->um_title->title}}</td>
             <td style="text-align:center">
-              <input type="number"  @if($parent->offerProducts != null) name="offerQty[]" value="{{$parent->offerProducts->qty}}" @else readonly @endif autocomplete="off" class="form-control input-sm changeQty parentId-{{$parent->id}}" parentId="{{$parent->id}}" style="width: 70px; display:inline">
+              <input type="number"
+                @if($parent->offerProducts != null) name="offerQty[]" value="{{$parent->offerProducts->qty}}" {!! isset($onlySelectQty) && $onlySelectQty ? 'tabindex="'.(++$tabindex).'"' : '' !!} @else readonly @endif
+                autocomplete="off" class="form-control input-sm changeQty parentId-{{$parent->id}}" parentId="{{$parent->id}}" style="width: 70px; display:inline"
+              />
             </td>
             <td style="text-align:center;">
               <input readonly type="number" autocomplete="off" class="form-control input-sm eurFaraTVA parent-{{$parent->id}}" style="width: 70px; display:inline; cursor: not-allowed;" @if($eurFaraTVA != 0) value="{{$eurFaraTVA}}" @else value="0.00" @endif>

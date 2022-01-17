@@ -862,7 +862,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                         <input name="offer_id" type="hidden" value="{{$dataTypeContent->getKey()}}"/>
                           <div class="col-md-12">
                             <div class="box container-offer-listing-products">
-                              @include('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $dataTypeContent->reducere, 'offer' => $offer])
+                              @include('vendor.voyager.products.offer_box', ['parents' => $offerType->parents, 'reducere' => $dataTypeContent->reducere, 'offer' => $offer, 'onlySelectQty' => true])
                             </div>
                           </div>
                           <div class="col-md-12 butoane-oferta" test="{{$dataTypeContent->status_name->title}}">

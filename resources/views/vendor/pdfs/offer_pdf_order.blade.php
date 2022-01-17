@@ -95,7 +95,9 @@
       </p>
       @if(!$twoColumns)
         <p style="font-size: 12pt">
-          <strong>Observatii</strong><br>{{$offer->observations != null ? ucfirst($offer->observations) : 'Fara observatii'}}
+          <strong>Observatii:</strong>
+          <br>
+          {!! $offer->observations != null ? str_replace("\n", '<br />', ucfirst($offer->observations)) : 'Fara observatii' !!}
         </p>
       @endif
 		</td>
