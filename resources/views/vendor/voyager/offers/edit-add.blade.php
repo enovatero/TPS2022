@@ -1290,7 +1290,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
             {{--var newOption = new Option("Client nou", -1, false, false);--}}
             {{--$("#select_client>select").append(newOption).trigger('change');--}}
             {{--$("#agent_oferta>input").val("{{Auth::user()->name}}");--}}
-            $("#agent_oferta>input").val("{{ $offer->agent->name }}");
+            $("#agent_oferta>input").val("{{ isset($offer) && $offer->agent ? $offer->agent->name : Auth::user()->name }}");
             $("#agent_oferta>input").attr("disabled","disabled");
           var isEdit = {!! $edit != "" ? 'true' : 'false' !!};
           if(!isEdit){
