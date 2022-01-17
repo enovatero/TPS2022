@@ -1287,10 +1287,11 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                 $(".log-evenimente>.log-evenimente-list").css("display", 'flex');
               }
             });
-//           var newOption = new Option("Client nou", -1, false, false);
-//           $("#select_client>select").append(newOption).trigger('change');
-          $("#agent_oferta>input").val("{{Auth::user()->name}}");
-          $("#agent_oferta>input").attr("disabled","disabled");
+            {{--var newOption = new Option("Client nou", -1, false, false);--}}
+            {{--$("#select_client>select").append(newOption).trigger('change');--}}
+            {{--$("#agent_oferta>input").val("{{Auth::user()->name}}");--}}
+            $("#agent_oferta>input").val("{{ $offer->agent->name }}");
+            $("#agent_oferta>input").attr("disabled","disabled");
           var isEdit = {!! $edit != "" ? 'true' : 'false' !!};
           if(!isEdit){
             var now = new Date();
@@ -1684,7 +1685,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
                    $("#create_new_client>.modal-dialog .modal-body").html('');
                    var newOption = new Option(res.client_name, res.client_id, false, false);
                    $("select[name=client_id]").append(newOption).val(res.client_id).trigger('change');
-                   
+
                    var html_addr = completeWithAddresses(res.userAddresses);
                    var html_user_addresses = html_addr[0];
                    var html_awb_addresses = html_addr[1];
