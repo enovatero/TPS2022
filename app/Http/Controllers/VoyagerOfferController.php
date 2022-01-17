@@ -120,20 +120,22 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $master = $request->get('master');
             if($master){
               $query->where(function($query1) use($master){
-                $query1->whereHas('client', function (Builder $qr) use($master){
-                    $qr->where('phone', $master);
-                })
-                ->orWhereHas('client', function (Builder $qr) use($master){
-                  $qr->where('name', 'like' ,'%'.$master.'%');
-                })
-                ->orWhereHas('nemoData', function (Builder $qr) use($master){
-                  $qr->where('awb', $master);
-                })
-                ->orWhereHas('fanData', function (Builder $qr) use($master){
-                  $qr->where('awb', $master);
-                });
+                    $query1->where('external_number', $master)
+                    ->orWhereHas('client', function (Builder $qr) use($master){
+                        $qr->where('phone', $master);
+                    })
+                    ->orWhereHas('client', function (Builder $qr) use($master){
+                        $qr->where('name', 'like' ,'%'.$master.'%');
+                    })
+                    ->orWhereHas('nemoData', function (Builder $qr) use($master){
+                        $qr->where('awb', $master);
+                    })
+                    ->orWhereHas('fanData', function (Builder $qr) use($master){
+                        $qr->where('awb', $master);
+                    });
               });
             }
+
 //             $query->where('numar_comanda', '=', null);
             $query->orderBy('id', 'desc');
             $row = $dataType->rows->where('field', $orderBy)->firstWhere('type', 'relationship');
@@ -399,12 +401,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'label' => 'Contabilitate',
                 'width' => '155px',
             ],
-//             [
-//                 'key' => 'comanda_distribuitor',
-//                 'order_by' => 'distribuitor_order',
-//                 'label' => 'Comanda Distribuitor',
-//                 'width' => '100px',
-//             ],
+            [
+                'key' => 'comanda_distribuitor',
+                'order_by' => 'external_number',
+                'label' => 'Comanda Distribuitor',
+                'width' => '100px',
+            ],
             [
                 'key' => 'fisiere',
                 'order_by' => null,
@@ -479,18 +481,19 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $master = $request->get('master');
         if($master){
           $query->where(function($query1) use($master){
-            $query1->whereHas('client', function (Builder $qr) use($master){
-                $qr->where('phone', $master);
-            })
-            ->orWhereHas('client', function (Builder $qr) use($master){
-              $qr->where('name', 'like' ,'%'.$master.'%');
-            })
-            ->orWhereHas('nemoData', function (Builder $qr) use($master){
-              $qr->where('awb', $master);
-            })
-            ->orWhereHas('fanData', function (Builder $qr) use($master){
-              $qr->where('awb', $master);
-            });
+                $query1->where('external_number', $master)
+                ->orWhereHas('client', function (Builder $qr) use($master){
+                    $qr->where('phone', $master);
+                })
+                ->orWhereHas('client', function (Builder $qr) use($master){
+                    $qr->where('name', 'like' ,'%'.$master.'%');
+                })
+                ->orWhereHas('nemoData', function (Builder $qr) use($master){
+                    $qr->where('awb', $master);
+                })
+                ->orWhereHas('fanData', function (Builder $qr) use($master){
+                    $qr->where('awb', $master);
+                });
           });
         }
 
@@ -1973,6 +1976,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
       (new self())->createEvent($offer, $message, true);
 
       $taggedUsers = $request->input('mentionIds');
+      dd($taggedUsers);
       if($taggedUsers != null){
         $taggedUsers = explode(",", $taggedUsers);
         $adminUsers = User::whereIn('id', $taggedUsers)->get();

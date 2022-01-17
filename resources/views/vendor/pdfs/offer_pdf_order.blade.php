@@ -8,7 +8,7 @@
       }
 		p {
 			margin: 0;
-			font-size:8pt;
+			font-size:12pt;
 		}
 		td {
 			vertical-align: top;
@@ -86,7 +86,7 @@
 		<td width="48%">
       <p style="font-size: 24pt;">
         {{$offer->offerType->title}}
-      </p>
+      </p><br>
 			<p style="font-size: 12pt">
         <strong>Agent</strong>: {{$offer->agent->name}}<br>
       </p>
@@ -99,15 +99,16 @@
         </p>
       @endif
 		</td>
-		<td width="40%" style="text-align: right; font-size: 24pt">
-			Comanda: <b>#{{$offer->numar_comanda}}</b>
-            <p style="text-align: left; font-size: 12pt">
+		<td width="40%" style="text-align: right; font-size: 12pt">
+            <p style="font-size: 24pt; text-align: right">Comanda: <strong>{{$offer->numar_comanda}}</strong></p>
+            @if ($offer->external_number) <p style="font-size: 12pt">Comanda distribuitor: {{$offer->external_number}}</p><br> @endif
+            <p style="text-align: left;">
                 <strong>Data livrare:</strong> {{$offer->delivery_date}}
             </p>
-            <p style="text-align: left; font-size: 12pt">
+            <p style="text-align: left; ">
                 <strong>Tip livrare:</strong> {{$offer->delivery_type}}
             </p>
-			<p style="text-align: left; font-size: 12pt">
+			<p style="text-align: left;">
         <strong>Detalii livrare:</strong> {{$offer->delivery_details != null ? $offer->delivery_details : '-'}}
       </p>
       @if(!$twoColumns)
@@ -323,7 +324,7 @@
   @if($offerProducts)
     @foreach($offerProducts as $offerProduct)
        @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
-          <tr class="items item_wborder">
+          <tr class="items">
               <td align="center" style="font-size: 14px;">{{$counter++}}</td>
               <td style="font-size: 14px;">{{$offerProduct->getParent->title}}</td>
               <td align="center" class="bold" style="font-size: 14px;">{{$offerProduct->getParent->um_title->title}}</td>

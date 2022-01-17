@@ -2,14 +2,14 @@
 <head>
 	<style>
 		body {font-family: sans-serif;
-    font-size: 9pt;
+    font-size: 10pt;
 }
 		p {
 			margin: 0;
 			font-size:8pt;
 		}
 		td {
-			vertical-align: top;
+			vertical-align: middle;
 			font-size:9pt;
 		}
 		table {
@@ -17,9 +17,12 @@
 		}
 		.items td {
 			border: solid 1px slategray;
-			padding: 1px 5px;
+			padding: 2px 5px;
 			font-size: 8pt;
 		}
+        .prices {
+            font-size: 9pt !important;
+        }
 		.item_wborder td {
 			border-bottom: solid 2px black !important;
 		}
@@ -37,6 +40,7 @@
 		.items td.totals {
 			text-align: right;
 			border: 0.1mm solid darkgray;
+            font-size: 9pt !important;
 		}
 		table.items {
 			border-collapse: collapse;
@@ -69,7 +73,8 @@
 			<b>Distribuitor:</b> {{$offer->distribuitor ? $offer->distribuitor->title : ''}}
 		</td>
 		<td width="{{$offerType && $offerType->header_img != null ? '35%' : '40%'}}" style="text-align: right; font-size: 10pt">
-			Oferta <b>{{$offer->id}}</b> {{$offer->numar_comanda ? "(".$offer->numar_comanda.")" : ""}} / {{\Carbon\Carbon::parse($offer->offer_date)->format('d-m-Y')}}</b>
+			OFERTA <b>{{$offer->id}}</b> {{$offer->numar_comanda ? "(C".$offer->numar_comanda.")" : ""}} / {{\Carbon\Carbon::parse($offer->offer_date)->format('d-m-Y')}}</b>
+            @if ($offer->external_number) <br>Comanda distribuitor: {{$offer->external_number}} @endif
 			<p style="font-size: 8pt;"><br>
         @if($attributes && count($attributes)>0)
           @foreach($attributes as $attr)
@@ -131,10 +136,10 @@
 		<td width="5%">Nr.<br>crt.</td>
 		<td>Denumirea produselor</td>
 		<td width="5%">U.M.</td>
-		<td width="10%">Cantitate</td>
-		<td width="11%" style="white-space: nowrap">Pret unitar<br>(EUR fara TVA)</td>
-		<td width="11%" style="white-space: nowrap">Pret unitar<br>(RON cu TVA)</td>
-		<td width="14%" style="white-space: nowrap">Total<br>(RON cu TVA)</td>
+		<td width="5%">Cantitate</td>
+		<td width="10%" style="white-space: nowrap">Pret unitar<br>(EUR fara TVA)</td>
+		<td width="10%" style="white-space: nowrap">Pret unitar<br>(RON cu TVA)</td>
+		<td width="12%" style="white-space: nowrap">Total<br>(RON cu TVA)</td>
 	</tr>
 	</thead>
 	<tbody>
@@ -160,14 +165,14 @@
             $totalCalculat += $ronTotal;
             $totalCalculatPi += $checkRule != null ? $checkRule->base_price : 0;
           @endphp
-          <tr class="items item_wborder">
+          <tr class="items">
               <td align="center">{{$counter++}}</td>
               <td>{{$offerProduct->getParent->title}}</td>
-              <td align="center" class="bold">{{$offerProduct->getParent->um_title->title}}</td>
-              <td align="center" class="bold">{{$offerProduct->qty}}</td>
-              <td align="right" class="bold">{{$eurFaraTVA}}</td>
-              <td align="right" class="bold">{{$ronCuTVA}}</td>
-              <td align="right" class="bold">{{$ronTotal}}</td>
+              <td align="center" class="">{{$offerProduct->getParent->um_title->title}}</td>
+              <td align="center" class="prices">{{$offerProduct->qty}}</td>
+              <td align="right" class="prices">{{$eurFaraTVA}}</td>
+              <td align="right" class="prices">{{$ronCuTVA}}</td>
+              <td align="right" class="prices">{{$ronTotal}}</td>
             </tr>
       @endif
     @endforeach

@@ -570,7 +570,7 @@
                                                         {{ $data->agent ? $data->agent->name : '-' }}
 
                                                     @elseif ($column['key'] == 'comanda_distribuitor')
-                                                        {{ $data->distribuitor_order }}
+                                                        {{ $data->external_number }}
 
                                                     @elseif ($column['key'] == 'intarziere')
                                                         {{ $data->intarziere ?: '-' }}
