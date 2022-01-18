@@ -587,8 +587,7 @@
                                                             $phone = '-';
                                                             if ($data->delivery_address && $data->delivery_address->delivery_phone) {
                                                                 $phone = $data->delivery_address->delivery_phone;
-                                                            }
-                                                            if ($data->client && $data->client->phone) {
+                                                            } elseif ($data->client && $data->client->phone) {
                                                                 $phone = $data->client->phone;
                                                             }
                                                         @endphp
