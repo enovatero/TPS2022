@@ -14,7 +14,7 @@
                 </div>
             </div>
         </form>
-        <h1 class="page-title">{{ $title }}</h1>
+        <h1 class="page-title">{{ $title }} @if ($tileFence == 0) acoperis @else garduri @endif</h1>
         @can('add', app($model))
             <a href="{{ route('voyager.'.$slug.'.create') }}" class="btn btn-success btn-add-new">
                 <i class="voyager-plus"></i> <span>{{ __('voyager::generic.add_new') }}</span>
