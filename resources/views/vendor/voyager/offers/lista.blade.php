@@ -261,7 +261,7 @@
                                     <thead>
                                         <tr class="overflow__list-1">
                                             @foreach ($columns as $column)
-                                              @if(in_array($column['key'],['oras', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
+                                              @if(in_array($column['key'],['ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
                                                 @continue
                                               @endif
                                               @if(in_array($column['key'],['print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
@@ -303,7 +303,7 @@
                                         @foreach ($day['orders'] as $data)
                                         <tr  class="tr--list--off" >
                                             @foreach ($columns as $column)
-                                                @if(in_array($column['key'],['oras', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
+                                                @if(in_array($column['key'],['ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
                                                   @continue
                                                 @endif
                                                 @if(in_array($column['key'],['print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)

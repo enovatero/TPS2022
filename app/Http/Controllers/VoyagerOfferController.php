@@ -340,7 +340,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             [
                 'key' => 'oras',
                 'order_by' => null,
-                'label' => 'Oras',
+                'label' => 'Localitate',
                 'width' => '90px',
             ],
             [
