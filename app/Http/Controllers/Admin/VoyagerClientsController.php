@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use TCG\Voyager\Database\Schema\SchemaManager;
 use TCG\Voyager\Events\BreadDataAdded;
 use TCG\Voyager\Events\BreadDataDeleted;
@@ -52,7 +53,11 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
 
         $getter = $dataType->server_side ? 'paginate' : 'get';
 
-        $search = (object) ['value' => $request->get('s'), 'key' => $request->get('key'), 'filter' => $request->get('filter')];
+        $search = (object)[
+            'value' => $request->get('s'),
+            'key' => $request->get('key'),
+            'filter' => $request->get('filter')
+        ];
 
         $searchNames = [];
         if ($dataType->server_side) {
@@ -70,14 +75,20 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         if (strlen($dataType->model_name) != 0) {
             $model = app($dataType->model_name);
 
-            $query = $model::select($dataType->name.'.*');
+            $query = $model::select($dataType->name . '.*');
 
-            if ($dataType->scope && $dataType->scope != '' && method_exists($model, 'scope'.ucfirst($dataType->scope))) {
+            if ($dataType->scope && $dataType->scope != '' && method_exists(
+                    $model,
+                    'scope' . ucfirst($dataType->scope)
+                )) {
                 $query->{$dataType->scope}();
             }
 
             // Use withTrashed() if model uses SoftDeletes and if toggle is selected
-            if ($model && in_array(SoftDeletes::class, class_uses_recursive($model)) && Auth::user()->can('delete', app($dataType->model_name))) {
+            if ($model && in_array(SoftDeletes::class, class_uses_recursive($model)) && Auth::user()->can(
+                    'delete',
+                    app($dataType->model_name)
+                )) {
                 $usesSoftDeletes = true;
 
                 if ($request->get('showSoftDeleted')) {
@@ -91,13 +102,18 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
 
             if ($search->value != '' && $search->key && $search->filter) {
                 $search_filter = ($search->filter == 'equals') ? '=' : 'LIKE';
-                $search_value = ($search->filter == 'equals') ? $search->value : '%'.$search->value.'%';
+                $search_value = ($search->filter == 'equals') ? $search->value : '%' . $search->value . '%';
 
-                $searchField = $dataType->name.'.'.$search->key;
-                if ($row = $this->findSearchableRelationshipRow($dataType->rows->where('type', 'relationship'), $search->key)) {
+                $searchField = $dataType->name . '.' . $search->key;
+                if ($row = $this->findSearchableRelationshipRow(
+                    $dataType->rows->where('type', 'relationship'),
+                    $search->key
+                )) {
                     $query->whereIn(
                         $searchField,
-                        $row->details->model::where($row->details->label, $search_filter, $search_value)->pluck('id')->toArray()
+                        $row->details->model::where($row->details->label, $search_filter, $search_value)->pluck(
+                            'id'
+                        )->toArray()
                     );
                 } else {
                     if ($dataType->browseRows->pluck('field')->contains($search->key)) {
@@ -111,12 +127,12 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
                 $querySortOrder = (!empty($sortOrder)) ? $sortOrder : 'desc';
                 if (!empty($row)) {
                     $query->select([
-                        $dataType->name.'.*',
-                        'joined.'.$row->details->label.' as '.$orderBy,
+                        $dataType->name . '.*',
+                        'joined.' . $row->details->label . ' as ' . $orderBy,
                     ])->leftJoin(
-                        $row->details->table.' as joined',
-                        $dataType->name.'.'.$row->details->column,
-                        'joined.'.$row->details->key
+                        $row->details->table . ' as joined',
+                        $dataType->name . '.' . $row->details->column,
+                        'joined.' . $row->details->key
                     );
                 }
 
@@ -190,23 +206,26 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             $view = "voyager::$slug.browse";
         }
 
-        return Voyager::view($view, compact(
-            'actions',
-            'dataType',
-            'dataTypeContent',
-            'isModelTranslatable',
-            'search',
-            'orderBy',
-            'orderColumn',
-            'sortableColumns',
-            'sortOrder',
-            'searchNames',
-            'isServerSide',
-            'defaultSearchKey',
-            'usesSoftDeletes',
-            'showSoftDeleted',
-            'showCheckboxColumn'
-        ));
+        return Voyager::view(
+            $view,
+            compact(
+                'actions',
+                'dataType',
+                'dataTypeContent',
+                'isModelTranslatable',
+                'search',
+                'orderBy',
+                'orderColumn',
+                'sortableColumns',
+                'sortOrder',
+                'searchNames',
+                'isServerSide',
+                'defaultSearchKey',
+                'usesSoftDeletes',
+                'showSoftDeleted',
+                'showCheckboxColumn'
+            )
+        );
     }
 
     //***************************************
@@ -237,7 +256,10 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             if ($model && in_array(SoftDeletes::class, class_uses_recursive($model))) {
                 $query = $query->withTrashed();
             }
-            if ($dataType->scope && $dataType->scope != '' && method_exists($model, 'scope'.ucfirst($dataType->scope))) {
+            if ($dataType->scope && $dataType->scope != '' && method_exists(
+                    $model,
+                    'scope' . ucfirst($dataType->scope)
+                )) {
                 $query = $query->{$dataType->scope}();
             }
             $dataTypeContent = call_user_func([$query, 'findOrFail'], $id);
@@ -299,7 +321,10 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             if ($model && in_array(SoftDeletes::class, class_uses_recursive($model))) {
                 $query = $query->withTrashed();
             }
-            if ($dataType->scope && $dataType->scope != '' && method_exists($model, 'scope'.ucfirst($dataType->scope))) {
+            if ($dataType->scope && $dataType->scope != '' && method_exists(
+                    $model,
+                    'scope' . ucfirst($dataType->scope)
+                )) {
                 $query = $query->{$dataType->scope}();
             }
             $dataTypeContent = call_user_func([$query, 'findOrFail'], $id);
@@ -329,24 +354,27 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         if (view()->exists("voyager::$slug.edit-add")) {
             $view = "voyager::$slug.edit-add";
         }
-      // dupa ce am adaugat clientul, ii completez datele daca e persoana fizica in Individuals iar daca e juridica in LegalEntity
+        // dupa ce am adaugat clientul, ii completez datele daca e persoana fizica in Individuals iar daca e juridica in LegalEntity
         $individual = null;
         $legal_entity = null;
         $addresses = null;
-        if($dataTypeContent->type == 'fizica'){
-          $addresses = UserAddress::where('user_id', $id)->get();
-          $individual = Individual::where('user_id', $id)->first();
-        } else{
-          $addresses = UserAddress::where('user_id', $id)->get();
-          $legal_entity = LegalEntity::where('user_id', $id)->first();
+        if ($dataTypeContent->type == 'fizica') {
+            $addresses = UserAddress::where('user_id', $id)->get();
+            $individual = Individual::where('user_id', $id)->first();
+        } else {
+            $addresses = UserAddress::where('user_id', $id)->get();
+            $legal_entity = LegalEntity::where('user_id', $id)->first();
         }
-        if($addresses && count($addresses) > 0){
-          foreach($addresses as &$address){
-            $address->state_name = $address->state_name();
-            $address->city_name = $address->city_name();
-          }
+        if ($addresses && count($addresses) > 0) {
+            foreach ($addresses as &$address) {
+                $address->state_name = $address->state_name();
+                $address->city_name = $address->city_name();
+            }
         }
-        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'addresses', 'individual', 'legal_entity'));
+        return Voyager::view(
+            $view,
+            compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'addresses', 'individual', 'legal_entity')
+        );
     }
 
     // POST BR(E)AD
@@ -362,7 +390,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
 
         $model = app($dataType->model_name);
         $query = $model->query();
-        if ($dataType->scope && $dataType->scope != '' && method_exists($model, 'scope'.ucfirst($dataType->scope))) {
+        if ($dataType->scope && $dataType->scope != '' && method_exists($model, 'scope' . ucfirst($dataType->scope))) {
             $query = $query->{$dataType->scope}();
         }
         if ($model && in_array(SoftDeletes::class, class_uses_recursive($model))) {
@@ -374,71 +402,78 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         // Check permission
         $this->authorize('edit', $data);
 
-      // pot adauga mai multe adrese pentru un client
+        // pot adauga mai multe adrese pentru un client
         $errMessages = [];
         $addressesCounter = $request->input('addressesCounter');
-        if($addressesCounter != null){
-          $addresses = $request->input('address');
-          $countries = $request->input('country');
-          $states = $request->input('state');
-          $cities = $request->input('city');
-          $wme_name = $request->input('wme_name');
-          $ids = $request->input('ids');
-          $addrErrs = 0;
-        // verific daca am mai multe adrese adaugate si trec prin fiecare, sa vad ce campuri nu a completat
-          for($key = 0; $key < $addressesCounter; $key++){
-            if($addresses == null || !array_key_exists($key, $addresses)){
-              $addrErrs++;
+        if ($addressesCounter != null) {
+            $addresses = $request->input('address');
+            $countries = $request->input('country');
+            $states = $request->input('state');
+            $cities = $request->input('city');
+            $wme_name = $request->input('wme_name');
+            $ids = $request->input('ids');
+            $addrErrs = 0;
+            // verific daca am mai multe adrese adaugate si trec prin fiecare, sa vad ce campuri nu a completat
+            for ($key = 0; $key < $addressesCounter; $key++) {
+                if ($addresses == null || !array_key_exists($key, $addresses)) {
+                    $addrErrs++;
+                }
+                if ($countries == null || !array_key_exists($key, $countries)) {
+                    $addrErrs++;
+                }
+                if ($states == null || !array_key_exists($key, $states)) {
+                    $addrErrs++;
+                }
+                if ($cities == null || !array_key_exists($key, $cities)) {
+                    $addrErrs++;
+                }
+                if ($wme_name == null || !array_key_exists($key, $wme_name)) {
+                    $addrErrs++;
+                }
             }
-            if($countries == null || !array_key_exists($key, $countries)){
-              $addrErrs++;
+            if ($addrErrs > 0) {
+                $errMessages['address'] = [0 => 'Pentru fiecare adresa adaugata, va rugam sa verificati campurile Adresa, Tara, Judet, Oras!'];
             }
-            if($states == null || !array_key_exists($key, $states)){
-              $addrErrs++;
-            }
-            if($cities == null || !array_key_exists($key, $cities)){
-              $addrErrs++;
-            }
-            if($wme_name == null || !array_key_exists($key, $wme_name)){
-              $addrErrs++;
-            }
-          }
-          if($addrErrs > 0){
-            $errMessages['address'] = [0 => 'Pentru fiecare adresa adaugata, va rugam sa verificati campurile Adresa, Tara, Judet, Oras!'];
-          }
         }
-      // verific daca iban-ul este corect
-        if($request->iban != null){
-          if(!(new self())->checkIBAN($request->iban)){
-            $addrErrs++;
-            $errMessages['iban'] = [0 => 'Te rugam sa introduci un iban valid!'];
-          }
+        // verific daca iban-ul este corect
+        if ($request->iban != null) {
+            if (!(new self())->checkIBAN($request->iban)) {
+                $addrErrs++;
+                $errMessages['iban'] = [0 => 'Te rugam sa introduci un iban valid!'];
+            }
         }
-      // verific daca CNP-ul este corect
-        if($request->cnp != null){
-          if(!(new self())->validCNP($request->cnp)){
-            $addrErrs++;
-            $errMessages['cnp'] = [0 => 'Te rugam sa introduci un CNP valid!'];
-          }
+        // verific daca CNP-ul este corect
+        if ($request->cnp != null) {
+            if (!(new self())->validCNP($request->cnp)) {
+                $addrErrs++;
+                $errMessages['cnp'] = [0 => 'Te rugam sa introduci un CNP valid!'];
+            }
         }
+
         // verific daca numarul de telefon respecta formatul 0722222222
-        if(!preg_match('/^[0-9]{10}+$/', $request->input('phone'))){
-          $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];
-          $addrErrs++;
+//        if(!preg_match('/^[0-9]{15}+$/', $request->input('phone'))){
+//          $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];
+//          $addrErrs++;
+//        }
+        $checkPhoneNumber = $this->validatePhoneNumber($request);
+        if ($checkPhoneNumber) {
+            $errMessages['phone'] = [0 => $checkPhoneNumber];
+            $addrErrs++;
         }
+
 
         // Validate fields with ajax
 //         $val = $this->validateBread($request->all(), $dataType->editRows, $dataType->name, $id)->validate();
         $val = $this->validateBread($request->all(), $dataType->editRows, $dataType->name, $id);
 
         if ($val->fails() || $addrErrs > 0) {
-          if(count($errMessages) > 0){
-            $errMessages = array_merge($errMessages, $val->errors()->toArray());
-          } else{
-            $errMessages = $val->errors()->toArray();
-          }
+            if (count($errMessages) > 0) {
+                $errMessages = array_merge($errMessages, $val->errors()->toArray());
+            } else {
+                $errMessages = $val->errors()->toArray();
+            }
 //           dd(back()->withInput());
-          return back()->withInput()->withErrors($errMessages);
+            return back()->withInput()->withErrors($errMessages);
         }
 
         // Get fields with images to remove before updating and make a copy of $data
@@ -457,77 +492,77 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
 
         $user_id = $data->id;
         // insert/update data into user_addresses table
-        if($addressesCounter != null){
-          $addresses = $request->input('address');
-          $countries = $request->input('country');
-          $states = $request->input('state');
-          $cities = $request->input('city');
-          $cities = $request->input('city');
-          $wme_name = $request->input('wme_name');
-          $ids = $request->input('ids');
+        if ($addressesCounter != null) {
+            $addresses = $request->input('address');
+            $countries = $request->input('country');
+            $states = $request->input('state');
+            $cities = $request->input('city');
+            $cities = $request->input('city');
+            $wme_name = $request->input('wme_name');
+            $ids = $request->input('ids');
 
-          for($key = 0; $key < $addressesCounter; $key++){
-            if(array_key_exists($key, $addresses)){
-              $address = $addresses[$key];
-            }
-            if(array_key_exists($key, $countries)){
-              $itemCountry = $countries[$key];
-            }
-            if($states != null && array_key_exists($key, $states)){
-              $itemState = $states[$key];
-            }
-            if($cities != null && array_key_exists($key, $cities)){
-              $itemCity = $cities[$key];
-            }
-            if($wme_name != null && array_key_exists($key, $wme_name)){
-              $itemWmeName = $wme_name[$key];
-            }
-            if($ids != null && array_key_exists($key, $ids)){
-              $itemId = $ids[$key];
-              $editInsertAddress = UserAddress::find($itemId);
-            } else{
-              $editInsertAddress = new UserAddress;
-            }
+            for ($key = 0; $key < $addressesCounter; $key++) {
+                if (array_key_exists($key, $addresses)) {
+                    $address = $addresses[$key];
+                }
+                if (array_key_exists($key, $countries)) {
+                    $itemCountry = $countries[$key];
+                }
+                if ($states != null && array_key_exists($key, $states)) {
+                    $itemState = $states[$key];
+                }
+                if ($cities != null && array_key_exists($key, $cities)) {
+                    $itemCity = $cities[$key];
+                }
+                if ($wme_name != null && array_key_exists($key, $wme_name)) {
+                    $itemWmeName = $wme_name[$key];
+                }
+                if ($ids != null && array_key_exists($key, $ids)) {
+                    $itemId = $ids[$key];
+                    $editInsertAddress = UserAddress::find($itemId);
+                } else {
+                    $editInsertAddress = new UserAddress;
+                }
 
-            $editInsertAddress->address = $address;
-            $editInsertAddress->user_id = $user_id;
-            $editInsertAddress->country = $itemCountry;
-            $editInsertAddress->state = $itemState;
-            $editInsertAddress->wme_name = $itemWmeName;
-            $editInsertAddress->city = $itemCity;
-            $editInsertAddress->save();
-          }
+                $editInsertAddress->address = $address;
+                $editInsertAddress->user_id = $user_id;
+                $editInsertAddress->country = $itemCountry;
+                $editInsertAddress->state = $itemState;
+                $editInsertAddress->wme_name = $itemWmeName;
+                $editInsertAddress->city = $itemCity;
+                $editInsertAddress->save();
+            }
         }
 //         // insert/update data into individuals/legal_entities (fizica/juridica)
-        if($request->input('type') == 'fizica' && $request->input('cnp') != null){
-          // check to see if in legal_entities has values for this entry
-          if($request->input('juridica_id') != null){
-            $entity = LegalEntity::find($request->input('juridica_id'));
-            $entity->delete();
-          }
-          $individual = Individual::find($id);
-          if($individual == null){
-            $individual = new Individual;
-          }
-          $individual->user_id = $user_id;
-          $individual->cnp = $request->input('cnp');
-          $individual->save();
-        } else{
-          // check to see if in individuals has values for this entry
-          if($request->input('fizica_id') != null){
-            $individual = Individual::find($request->input('fizica_id'));
-            $individual->delete();
-          }
-          $entity = LegalEntity::find($id);
-          if($entity == null){
-            $entity = new LegalEntity;
-          }
-          $entity->user_id = $user_id;
-          $entity->cui = $request->input('cui');
-          $entity->reg_com = $request->input('reg_com');
-          $entity->banca = $request->input('banca');
-          $entity->iban = $request->input('iban');
-          $entity->save();
+        if ($request->input('type') == 'fizica' && $request->input('cnp') != null) {
+            // check to see if in legal_entities has values for this entry
+            if ($request->input('juridica_id') != null) {
+                $entity = LegalEntity::find($request->input('juridica_id'));
+                $entity->delete();
+            }
+            $individual = Individual::find($id);
+            if ($individual == null) {
+                $individual = new Individual;
+            }
+            $individual->user_id = $user_id;
+            $individual->cnp = $request->input('cnp');
+            $individual->save();
+        } else {
+            // check to see if in individuals has values for this entry
+            if ($request->input('fizica_id') != null) {
+                $individual = Individual::find($request->input('fizica_id'));
+                $individual->delete();
+            }
+            $entity = LegalEntity::find($id);
+            if ($entity == null) {
+                $entity = new LegalEntity;
+            }
+            $entity->user_id = $user_id;
+            $entity->cui = $request->input('cui');
+            $entity->reg_com = $request->input('reg_com');
+            $entity->banca = $request->input('banca');
+            $entity->iban = $request->input('iban');
+            $entity->save();
         }
 
         if (auth()->user()->can('browse', app($dataType->model_name))) {
@@ -537,7 +572,9 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         }
 
         return $redirect->with([
-            'message'    => __('voyager::generic.successfully_updated')." {$dataType->getTranslatedAttribute('display_name_singular')}",
+            'message' => __(
+                    'voyager::generic.successfully_updated'
+                ) . " {$dataType->getTranslatedAttribute('display_name_singular')}",
             'alert-type' => 'success',
         ]);
     }
@@ -559,117 +596,124 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         // Check permission
         $this->authorize('add', app($dataType->model_name));
 
-      // aceleasi verificari ca la update
+        // aceleasi verificari ca la update
         $errMessages = [];
         $addressesCounter = $request->input('addressesCounter');
-        if($addressesCounter != null){
-          $addresses = $request->input('address');
-          $countries = $request->input('country');
-          $states = $request->input('state');
-          $cities = $request->input('city');
-          $wme_name = $request->input('wme_name');
-          $ids = $request->input('ids');
-          $addrErrs = 0;
-          for($key = 0; $key < $addressesCounter; $key++){
-            if($addresses == null || !array_key_exists($key, $addresses)){
-              $addrErrs++;
+        if ($addressesCounter != null) {
+            $addresses = $request->input('address');
+            $countries = $request->input('country');
+            $states = $request->input('state');
+            $cities = $request->input('city');
+            $wme_name = $request->input('wme_name');
+            $ids = $request->input('ids');
+            $addrErrs = 0;
+            for ($key = 0; $key < $addressesCounter; $key++) {
+                if ($addresses == null || !array_key_exists($key, $addresses)) {
+                    $addrErrs++;
+                }
+                if ($countries == null || !array_key_exists($key, $countries)) {
+                    $addrErrs++;
+                }
+                if ($states == null || !array_key_exists($key, $states)) {
+                    $addrErrs++;
+                }
+                if ($cities == null || !array_key_exists($key, $cities)) {
+                    $addrErrs++;
+                }
+                if ($wme_name == null || !array_key_exists($key, $wme_name)) {
+                    $addrErrs++;
+                }
             }
-            if($countries == null || !array_key_exists($key, $countries)){
-              $addrErrs++;
+            if ($addrErrs > 0) {
+                $errMessages['address'] = [0 => 'Pentru fiecare adresa adaugata, va rugam sa verificati campurile Adresa, Tara, Judet, Oras, Denumire WME!'];
             }
-            if($states == null || !array_key_exists($key, $states)){
-              $addrErrs++;
-            }
-            if($cities == null || !array_key_exists($key, $cities)){
-              $addrErrs++;
-            }
-            if($wme_name == null || !array_key_exists($key, $wme_name)){
-              $addrErrs++;
-            }
-          }
-          if($addrErrs > 0){
-            $errMessages['address'] = [0 => 'Pentru fiecare adresa adaugata, va rugam sa verificati campurile Adresa, Tara, Judet, Oras, Denumire WME!'];
-          }
         }
-        if($request->iban != null){
-          if(!(new self())->checkIBAN($request->iban)){
+        if ($request->iban != null) {
+            if (!(new self())->checkIBAN($request->iban)) {
+                $addrErrs++;
+                $errMessages['iban'] = [0 => 'Te rugam sa introduci un iban valid!'];
+            }
+        }
+//        if (!preg_match('/^[0-9]{15}+$/', $request->input('phone'))) {
+//            $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];
+//            $addrErrs++;
+//        }
+
+        $checkPhoneNumber = $this->validatePhoneNumber($request);
+        if ($checkPhoneNumber) {
+            $errMessages['phone'] = [0 => $checkPhoneNumber];
             $addrErrs++;
-            $errMessages['iban'] = [0 => 'Te rugam sa introduci un iban valid!'];
-          }
         }
-        if(!preg_match('/^[0-9]{10}+$/', $request->input('phone'))){
-          $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];
-          $addrErrs++;
-        }
+
         // Validate fields with ajax
         $val = $this->validateBread($request->all(), $dataType->addRows);
         if ($val->fails() || $addrErrs > 0) {
-          if(count($errMessages) > 0){
-            $errMessages = array_merge($errMessages, $val->errors()->toArray());
-          } else{
-            $errMessages = $val->errors()->toArray();
-          }
+            if (count($errMessages) > 0) {
+                $errMessages = array_merge($errMessages, $val->errors()->toArray());
+            } else {
+                $errMessages = $val->errors()->toArray();
+            }
 //           dd(back()->withInput());
-          return back()->withInput()->withErrors($errMessages);
+            return back()->withInput()->withErrors($errMessages);
         }
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         $user_id = $data->id;
         // insert/update data into user_addresses table
-        if($addressesCounter != null){
-          $addresses = $request->input('address');
-          $countries = $request->input('country');
-          $states = $request->input('state');
-          $cities = $request->input('city');
-          $wme_name = $request->input('wme_name');
-          $ids = $request->input('ids');
+        if ($addressesCounter != null) {
+            $addresses = $request->input('address');
+            $countries = $request->input('country');
+            $states = $request->input('state');
+            $cities = $request->input('city');
+            $wme_name = $request->input('wme_name');
+            $ids = $request->input('ids');
 
-          for($key = 0; $key < $addressesCounter; $key++){
-            if(array_key_exists($key, $addresses)){
-              $address = $addresses[$key];
-            }
-            if(array_key_exists($key, $countries)){
-              $itemCountry = $countries[$key];
-            }
-            if($states != null && array_key_exists($key, $states)){
-              $itemState = $states[$key];
-            }
-            if($cities != null && array_key_exists($key, $cities)){
-              $itemCity = $cities[$key];
-            }
-            if($wme_name != null && array_key_exists($key, $wme_name)){
-              $itemWmeName = $wme_name[$key];
-            }
-            if($ids != null && array_key_exists($key, $ids)){
-              $itemId = $ids[$key];
-              $editInsertAddress = UserAddress::find($itemId);
-            } else{
-              $editInsertAddress = new UserAddress;
-            }
+            for ($key = 0; $key < $addressesCounter; $key++) {
+                if (array_key_exists($key, $addresses)) {
+                    $address = $addresses[$key];
+                }
+                if (array_key_exists($key, $countries)) {
+                    $itemCountry = $countries[$key];
+                }
+                if ($states != null && array_key_exists($key, $states)) {
+                    $itemState = $states[$key];
+                }
+                if ($cities != null && array_key_exists($key, $cities)) {
+                    $itemCity = $cities[$key];
+                }
+                if ($wme_name != null && array_key_exists($key, $wme_name)) {
+                    $itemWmeName = $wme_name[$key];
+                }
+                if ($ids != null && array_key_exists($key, $ids)) {
+                    $itemId = $ids[$key];
+                    $editInsertAddress = UserAddress::find($itemId);
+                } else {
+                    $editInsertAddress = new UserAddress;
+                }
 
-            $editInsertAddress->address = $address;
-            $editInsertAddress->user_id = $user_id;
-            $editInsertAddress->country = $itemCountry;
-            $editInsertAddress->state = $itemState;
-            $editInsertAddress->city = $itemCity;
-            $editInsertAddress->wme_name = $itemWmeName;
-            $editInsertAddress->save();
-          }
+                $editInsertAddress->address = $address;
+                $editInsertAddress->user_id = $user_id;
+                $editInsertAddress->country = $itemCountry;
+                $editInsertAddress->state = $itemState;
+                $editInsertAddress->city = $itemCity;
+                $editInsertAddress->wme_name = $itemWmeName;
+                $editInsertAddress->save();
+            }
         }
-        if($request->input('type') == 'fizica' && $request->input('cnp') != null){
-          $individual = new Individual;
-          $individual->user_id = $user_id;
-          $individual->cnp = $request->input('cnp');
-          $individual->save();
+        if ($request->input('type') == 'fizica' && $request->input('cnp') != null) {
+            $individual = new Individual;
+            $individual->user_id = $user_id;
+            $individual->cnp = $request->input('cnp');
+            $individual->save();
         }
-        if($request->input('type') == 'juridica'){
-           $entity = new LegalEntity;
-           $entity->user_id = $user_id;
-           $entity->cui = $request->input('cui');
-           $entity->reg_com = $request->input('reg_com');
-           $entity->banca = $request->input('banca');
-           $entity->iban = $request->input('iban');
-           $entity->save();
+        if ($request->input('type') == 'juridica') {
+            $entity = new LegalEntity;
+            $entity->user_id = $user_id;
+            $entity->cui = $request->input('cui');
+            $entity->reg_com = $request->input('reg_com');
+            $entity->banca = $request->input('banca');
+            $entity->iban = $request->input('iban');
+            $entity->save();
         }
 //         // insert/update data into individuals/legal_entities (fizica/juridica)
 //         if($request->input('type') == 'fizica'){
@@ -702,7 +746,9 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             }
 
             return $redirect->with([
-                'message'    => __('voyager::generic.successfully_added_new')." {$dataType->getTranslatedAttribute('display_name_singular')}",
+                'message' => __(
+                        'voyager::generic.successfully_added_new'
+                    ) . " {$dataType->getTranslatedAttribute('display_name_singular')}",
                 'alert-type' => 'success',
             ]);
         } else {
@@ -749,16 +795,18 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             }
         }
 
-        $displayName = count($ids) > 1 ? $dataType->getTranslatedAttribute('display_name_plural') : $dataType->getTranslatedAttribute('display_name_singular');
+        $displayName = count($ids) > 1 ? $dataType->getTranslatedAttribute(
+            'display_name_plural'
+        ) : $dataType->getTranslatedAttribute('display_name_singular');
 
         $res = $data->destroy($ids);
         $data = $res
             ? [
-                'message'    => __('voyager::generic.successfully_deleted')." {$displayName}",
+                'message' => __('voyager::generic.successfully_deleted') . " {$displayName}",
                 'alert-type' => 'success',
             ]
             : [
-                'message'    => __('voyager::generic.error_deleting')." {$displayName}",
+                'message' => __('voyager::generic.error_deleting') . " {$displayName}",
                 'alert-type' => 'error',
             ];
 
@@ -770,397 +818,391 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     }
 
 //   Check IBAN FUNCTION
-    public static function checkIBAN($iban) {
-      $iban = strtolower(str_replace(' ','',$iban));
-      $Countries = array('al'=>28,'ad'=>24,'at'=>20,'az'=>28,'bh'=>22,'be'=>16,'ba'=>20,'br'=>29,'bg'=>22,'cr'=>21,'hr'=>21,'cy'=>28,'cz'=>24,'dk'=>18,'do'=>28,'ee'=>20,'fo'=>18,'fi'=>18,'fr'=>27,'ge'=>22,'de'=>22,'gi'=>23,'gr'=>27,'gl'=>18,'gt'=>28,'hu'=>28,'is'=>26,'ie'=>22,'il'=>23,'it'=>27,'jo'=>30,'kz'=>20,'kw'=>30,'lv'=>21,'lb'=>28,'li'=>21,'lt'=>20,'lu'=>20,'mk'=>19,'mt'=>31,'mr'=>27,'mu'=>30,'mc'=>27,'md'=>24,'me'=>22,'nl'=>18,'no'=>15,'pk'=>24,'ps'=>29,'pl'=>28,'pt'=>25,'qa'=>29,'ro'=>24,'sm'=>27,'sa'=>24,'rs'=>22,'sk'=>24,'si'=>19,'es'=>24,'se'=>24,'ch'=>21,'tn'=>24,'tr'=>26,'ae'=>23,'gb'=>22,'vg'=>24);
-      $Chars = array('a'=>10,'b'=>11,'c'=>12,'d'=>13,'e'=>14,'f'=>15,'g'=>16,'h'=>17,'i'=>18,'j'=>19,'k'=>20,'l'=>21,'m'=>22,'n'=>23,'o'=>24,'p'=>25,'q'=>26,'r'=>27,'s'=>28,'t'=>29,'u'=>30,'v'=>31,'w'=>32,'x'=>33,'y'=>34,'z'=>35);
+    public static function checkIBAN($iban)
+    {
+        $iban = strtolower(str_replace(' ', '', $iban));
+        $Countries = array(
+            'al' => 28,
+            'ad' => 24,
+            'at' => 20,
+            'az' => 28,
+            'bh' => 22,
+            'be' => 16,
+            'ba' => 20,
+            'br' => 29,
+            'bg' => 22,
+            'cr' => 21,
+            'hr' => 21,
+            'cy' => 28,
+            'cz' => 24,
+            'dk' => 18,
+            'do' => 28,
+            'ee' => 20,
+            'fo' => 18,
+            'fi' => 18,
+            'fr' => 27,
+            'ge' => 22,
+            'de' => 22,
+            'gi' => 23,
+            'gr' => 27,
+            'gl' => 18,
+            'gt' => 28,
+            'hu' => 28,
+            'is' => 26,
+            'ie' => 22,
+            'il' => 23,
+            'it' => 27,
+            'jo' => 30,
+            'kz' => 20,
+            'kw' => 30,
+            'lv' => 21,
+            'lb' => 28,
+            'li' => 21,
+            'lt' => 20,
+            'lu' => 20,
+            'mk' => 19,
+            'mt' => 31,
+            'mr' => 27,
+            'mu' => 30,
+            'mc' => 27,
+            'md' => 24,
+            'me' => 22,
+            'nl' => 18,
+            'no' => 15,
+            'pk' => 24,
+            'ps' => 29,
+            'pl' => 28,
+            'pt' => 25,
+            'qa' => 29,
+            'ro' => 24,
+            'sm' => 27,
+            'sa' => 24,
+            'rs' => 22,
+            'sk' => 24,
+            'si' => 19,
+            'es' => 24,
+            'se' => 24,
+            'ch' => 21,
+            'tn' => 24,
+            'tr' => 26,
+            'ae' => 23,
+            'gb' => 22,
+            'vg' => 24
+        );
+        $Chars = array(
+            'a' => 10,
+            'b' => 11,
+            'c' => 12,
+            'd' => 13,
+            'e' => 14,
+            'f' => 15,
+            'g' => 16,
+            'h' => 17,
+            'i' => 18,
+            'j' => 19,
+            'k' => 20,
+            'l' => 21,
+            'm' => 22,
+            'n' => 23,
+            'o' => 24,
+            'p' => 25,
+            'q' => 26,
+            'r' => 27,
+            's' => 28,
+            't' => 29,
+            'u' => 30,
+            'v' => 31,
+            'w' => 32,
+            'x' => 33,
+            'y' => 34,
+            'z' => 35
+        );
 
-      if(array_key_exists(substr($iban,0,2) ,$Countries) && strlen($iban) == $Countries[substr($iban,0,2)]){
+        if (array_key_exists(substr($iban, 0, 2), $Countries) && strlen($iban) == $Countries[substr($iban, 0, 2)]) {
+            $MovedChar = substr($iban, 4) . substr($iban, 0, 4);
+            $MovedCharArray = str_split($MovedChar);
+            $NewString = "";
 
-          $MovedChar = substr($iban, 4).substr($iban,0,4);
-          $MovedCharArray = str_split($MovedChar);
-          $NewString = "";
+            foreach ($MovedCharArray as $key => $value) {
+                if (!is_numeric($MovedCharArray[$key])) {
+                    $MovedCharArray[$key] = $Chars[$MovedCharArray[$key]];
+                }
+                $NewString .= $MovedCharArray[$key];
+            }
 
-          foreach($MovedCharArray AS $key => $value){
-              if(!is_numeric($MovedCharArray[$key])){
-                  $MovedCharArray[$key] = $Chars[$MovedCharArray[$key]];
-              }
-              $NewString .= $MovedCharArray[$key];
-          }
-
-          if(bcmod($NewString, '97') == 1)
-          {
-              return true;
-          }
-      }
-      return false;
-    }
-  // Check CNP function
-    public static function validCNP($p_cnp) {
-      // CNP must have 13 characters
-      if(strlen($p_cnp) != 13) {
-          return false;
-      }
-      $cnp = str_split($p_cnp);
-      unset($p_cnp);
-      $hashTable = array( 2 , 7 , 9 , 1 , 4 , 6 , 3 , 5 , 8 , 2 , 7 , 9 );
-      $hashResult = 0;
-      // All characters must be numeric
-      for($i=0 ; $i<13 ; $i++) {
-          if(!is_numeric($cnp[$i])) {
-              return false;
-          }
-          $cnp[$i] = (int)$cnp[$i];
-          if($i < 12) {
-              $hashResult += (int)$cnp[$i] * (int)$hashTable[$i];
-          }
-      }
-      unset($hashTable, $i);
-      $hashResult = $hashResult % 11;
-      if($hashResult == 10) {
-          $hashResult = 1;
-      }
-      // Check Year
-      $year = ($cnp[1] * 10) + $cnp[2];
-      switch( $cnp[0] ) {
-          case 1  : case 2 : { $year += 1900; } break; // cetateni romani nascuti intre 1 ian 1900 si 31 dec 1999
-          case 3  : case 4 : { $year += 1800; } break; // cetateni romani nascuti intre 1 ian 1800 si 31 dec 1899
-          case 5  : case 6 : { $year += 2000; } break; // cetateni romani nascuti intre 1 ian 2000 si 31 dec 2099
-          case 7  : case 8 : case 9 : {                // rezidenti si Cetateni Straini
-              $year += 2000;
-              if($year > (int)date('Y')-14) {
-                  $year -= 100;
-              }
-          } break;
-          default : {
-              return false;
-          } break;
-      }
-      return ($year > 1800 && $year < 2099 && $cnp[12] == $hashResult);
-  }
-
-  public function syncClientToMentor(Request $request){
-    if($request->input('client_id') == null){
-      return ['success' => false, 'msg' => 'Trebuie sa selectezi un client pentru a-l sincroniza cu Mentor!', 'warning' => false];
-    }
-    return (new self())->syncClient($request->input('client_id'));
-  }
-
-  public static function syncClient($client_id){
-
-    $host = config('winmentor.host');
-    $port = config('winmentor.port');
-    $waitTimeoutInSeconds = 3;
-    $winMentorServer = false;
-    try{
-      if($fp = fsockopen($host,$port,$errCode,$errStr,$waitTimeoutInSeconds)){
-         $winMentorServer = true;
-      }
-      fclose($fp);
-    } catch(\Exception $e){}
-
-    $url = "http://".config('winmentor.host').":".config('winmentor.port')."/datasnap/rest/TServerMethods/InfoPartener//";
-    $client = Client::find($client_id);
-    if($client->sync_done == 1){
-        self::syncClientAddress($client->id);
-        return ['success' => false, 'msg' => 'Clientul a fost deja sincronizat cu WinMentor!', 'warning' => true];
-    }
-    $userAddresses = $client->userAddress;
-    $cui = '';
-    $regCom = '';
-    $codPartener = '';
-    $persoanaFizica = 'DA';
-    $usrAddresses = UserAddress::where('user_id', $client->id)->get();
-    $usrAddressList = [];
-    if ($usrAddresses && count($usrAddresses) == 1) {
-        $usrAddress = $usrAddresses[0];
-        array_push($usrAddressList, [
-            'Denumire' => $usrAddress->wme_name ?? "SEDIU-FIRMA",
-            'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
-            'TipSediu' => 'SFL',
-            'Strada' => $usrAddress->address,
-            'Numar' => '',
-            'Bloc' => '',
-            'Etaj' => '',
-            'Apartament' => '',
-            'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$usrAddress->state_name()] : $usrAddress->state_name(),
-            'Tara' => $usrAddress->country,
-            'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
-            'eMail' => $client->email
-        ]);
-        if (!$usrAddress->wme_name) {
-            $userAddressToUpdate = UserAddress::find($usrAddress->id);
-            $userAddressToUpdate->wme_name = "SEDIU-FIRMA";
-            $userAddressToUpdate->save();
-        }
-    } elseif($usrAddresses && count($usrAddresses) > 0) {
-        foreach ($usrAddresses as $usrAddress) {
-            if ($usrAddress->wme_name == 'SEDIU FIRMA') {
-                array_push($usrAddressList, [
-                    'Denumire' => $usrAddress->wme_name ?? "SEDIU-" . $usrAddress->id,
-                    'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
-                    'TipSediu' => 'SFL',
-                    'Strada' => $usrAddress->address,
-                    'Numar' => '',
-                    'Bloc' => '',
-                    'Etaj' => '',
-                    'Apartament' => '',
-                    'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$usrAddress->state_name()] : $usrAddress->state_name(),
-                    'Tara' => $usrAddress->country,
-                    'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
-                    'eMail' => $client->email
-                ]);
+            if (bcmod($NewString, '97') == 1) {
+                return true;
             }
         }
-        foreach ($usrAddresses as $usrAddress) {
-            if ($usrAddress->wme_name != 'SEDIU FIRMA') {
-                array_push($usrAddressList, [
-                    'Denumire' => $usrAddress->wme_name ?? "SEDIU-" . $usrAddress->id,
-                    'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$usrAddress->city_name()] : $usrAddress->city_name(),
-                    'TipSediu' => 'FL',
-                    'Strada' => $usrAddress->address,
-                    'Numar' => '',
-                    'Bloc' => '',
-                    'Etaj' => '',
-                    'Apartament' => '',
-                    'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$usrAddress->state_name()] : $usrAddress->state_name(),
-                    'Tara' => $usrAddress->country,
-                    'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
-                    'eMail' => $client->email
-                ]);
-                if (!$usrAddress->wme_name) {
-                    $userAddressToUpdate = UserAddress::find($usrAddress->id);
-                    $userAddressToUpdate->wme_name = "SEDIU-".$usrAddress->id;
-                    $userAddressToUpdate->save();
+        return false;
+    }
+
+    // Check CNP function
+    public static function validCNP($p_cnp)
+    {
+        // CNP must have 13 characters
+        if (strlen($p_cnp) != 13) {
+            return false;
+        }
+        $cnp = str_split($p_cnp);
+        unset($p_cnp);
+        $hashTable = array(2, 7, 9, 1, 4, 6, 3, 5, 8, 2, 7, 9);
+        $hashResult = 0;
+        // All characters must be numeric
+        for ($i = 0; $i < 13; $i++) {
+            if (!is_numeric($cnp[$i])) {
+                return false;
+            }
+            $cnp[$i] = (int)$cnp[$i];
+            if ($i < 12) {
+                $hashResult += (int)$cnp[$i] * (int)$hashTable[$i];
+            }
+        }
+        unset($hashTable, $i);
+        $hashResult = $hashResult % 11;
+        if ($hashResult == 10) {
+            $hashResult = 1;
+        }
+        // Check Year
+        $year = ($cnp[1] * 10) + $cnp[2];
+        switch ($cnp[0]) {
+            case 1  :
+            case 2 :
+                {
+                    $year += 1900;
+                }
+                break; // cetateni romani nascuti intre 1 ian 1900 si 31 dec 1999
+            case 3  :
+            case 4 :
+                {
+                    $year += 1800;
+                }
+                break; // cetateni romani nascuti intre 1 ian 1800 si 31 dec 1899
+            case 5  :
+            case 6 :
+                {
+                    $year += 2000;
+                }
+                break; // cetateni romani nascuti intre 1 ian 2000 si 31 dec 2099
+            case 7  :
+            case 8 :
+            case 9 :
+                {                // rezidenti si Cetateni Straini
+                    $year += 2000;
+                    if ($year > (int)date('Y') - 14) {
+                        $year -= 100;
+                    }
+                }
+                break;
+            default :
+                {
+                    return false;
+                }
+                break;
+        }
+        return ($year > 1800 && $year < 2099 && $cnp[12] == $hashResult);
+    }
+
+    public function syncClientToMentor(Request $request)
+    {
+        if ($request->input('client_id') == null) {
+            return [
+                'success' => false,
+                'msg' => 'Trebuie sa selectezi un client pentru a-l sincroniza cu Mentor!',
+                'warning' => false
+            ];
+        }
+        return (new self())->syncClient($request->input('client_id'));
+    }
+
+    public static function syncClient($client_id)
+    {
+        $host = config('winmentor.host');
+        $port = config('winmentor.port');
+        $waitTimeoutInSeconds = 3;
+        $winMentorServer = false;
+        try {
+            if ($fp = fsockopen($host, $port, $errCode, $errStr, $waitTimeoutInSeconds)) {
+                $winMentorServer = true;
+            }
+            fclose($fp);
+        } catch (\Exception $e) {
+        }
+
+        $url = "http://" . config('winmentor.host') . ":" . config(
+                'winmentor.port'
+            ) . "/datasnap/rest/TServerMethods/InfoPartener//";
+        $client = Client::find($client_id);
+        if ($client->sync_done == 1) {
+            return ['success' => false, 'msg' => 'Clientul a fost deja sincronizat cu WinMentor!', 'warning' => true];
+        }
+        $userAddresses = $client->userAddress;
+        $cui = '';
+        $regCom = '';
+        $codPartener = '';
+        $persoanaFizica = 'DA';
+        $usrAddresses = UserAddress::where('user_id', $client->id)->get();
+        $usrAddressList = [];
+        if ($usrAddresses && count($usrAddresses) == 1) {
+            $usrAddress = $usrAddresses[0];
+            array_push($usrAddressList, [
+                'Denumire' => $usrAddress->wme_name ?? "SEDIU-" . $usrAddress->id,
+                'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config(
+                    'winmentor.cities'
+                )[$usrAddress->city_name()] : $usrAddress->city_name(),
+                'TipSediu' => 'SFL',
+                'Strada' => $usrAddress->address,
+                'Numar' => '',
+                'Bloc' => '',
+                'Etaj' => '',
+                'Apartament' => '',
+                'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config(
+                    'winmentor.states'
+                )[$usrAddress->state_name()] : $usrAddress->state_name(),
+                'Tara' => $usrAddress->country,
+                'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
+                'eMail' => $client->email
+            ]);
+        } elseif ($usrAddresses && count($usrAddresses) > 0) {
+            foreach ($usrAddresses as $usrAddress) {
+                if ($usrAddress->wme_name == 'SEDIU FIRMA') {
+                    array_push($usrAddressList, [
+                        'Denumire' => $usrAddress->wme_name ?? "SEDIU-" . $usrAddress->id,
+                        'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config(
+                            'winmentor.cities'
+                        )[$usrAddress->city_name()] : $usrAddress->city_name(),
+                        'TipSediu' => 'SFL',
+                        'Strada' => $usrAddress->address,
+                        'Numar' => '',
+                        'Bloc' => '',
+                        'Etaj' => '',
+                        'Apartament' => '',
+                        'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config(
+                            'winmentor.states'
+                        )[$usrAddress->state_name()] : $usrAddress->state_name(),
+                        'Tara' => $usrAddress->country,
+                        'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
+                        'eMail' => $client->email
+                    ]);
+                }
+            }
+            foreach ($usrAddresses as $usrAddress) {
+                if ($usrAddress->wme_name != 'SEDIU FIRMA') {
+                    array_push($usrAddressList, [
+                        'Denumire' => $usrAddress->wme_name ?? "SEDIU-" . $usrAddress->id,
+                        'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config(
+                            'winmentor.cities'
+                        )[$usrAddress->city_name()] : $usrAddress->city_name(),
+                        'TipSediu' => 'FL',
+                        'Strada' => $usrAddress->address,
+                        'Numar' => '',
+                        'Bloc' => '',
+                        'Etaj' => '',
+                        'Apartament' => '',
+                        'Judet' => array_key_exists($usrAddress->state_name(), config('winmentor.states')) ? config(
+                            'winmentor.states'
+                        )[$usrAddress->state_name()] : $usrAddress->state_name(),
+                        'Tara' => $usrAddress->country,
+                        'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
+                        'eMail' => $client->email
+                    ]);
                 }
             }
         }
-    }
-    if($client->type == 'fizica'){
-      $individual = Individual::where('user_id', $client->id)->first();
-      $cui = '';
-      $codPartener = "PF-".$client->id;
-    } else{
-      $legalEntity = LegalEntity::where('user_id', $client->id)->first();
-      $cui = $legalEntity ? $legalEntity->cui : '';
-      $regCom = $legalEntity ? $legalEntity->reg_com : '';
-      $persoanaFizica = 'NU';
-      if($usrAddress->country == 'RO'){
-        $diff = -1;
-        if($legalEntity){
-          $updatedDate = Carbon::parse($legalEntity->updated_at);
-          $now = Carbon::now();
-          $diff = $updatedDate->diffInDays($now);
+        if ($client->type == 'fizica') {
+            $individual = Individual::where('user_id', $client->id)->first();
+            $cui = '';
+            $codPartener = "PF-" . $client->id;
+        } else {
+            $legalEntity = LegalEntity::where('user_id', $client->id)->first();
+            $cui = $legalEntity ? $legalEntity->cui : '';
+            $regCom = $legalEntity ? $legalEntity->reg_com : '';
+            $persoanaFizica = 'NU';
+            if ($usrAddress->country == 'RO') {
+                $diff = -1;
+                if ($legalEntity) {
+                    $updatedDate = Carbon::parse($legalEntity->updated_at);
+                    $now = Carbon::now();
+                    $diff = $updatedDate->diffInDays($now);
+                }
+                // am diferenta de la ultimul update mai mare de 30 de zile, iau datele de la anaf si le modific in baza de date pentru firma selectata
+                if ($diff >= 30) {
+                    $anaf = new \Itrack\Anaf\Client();
+                    $dataVerificare = date("Y-m-d");
+                    $anaf->addCif($cui, $dataVerificare);
+                    $company = $anaf->first();
+                    if ($company->getName() != null && $company->getName() != "") {
+                        $legalEntity->cui = $company->getCIF();
+                        $legalEntity->reg_com = $company->getRegCom();
+                        $legalEntity->iban = $company->getTVA()->getTVASplitIBAN();
+                        $legalEntity->save();
+                        $cui = $legalEntity->cui;
+                    }
+                }
+                $codPartener = "PJ-RO-" . $cui;
+            } else {
+                $codPartener = 'PJ-' . $usrAddress->country . '-' . $cui;
+            }
         }
-        // am diferenta de la ultimul update mai mare de 30 de zile, iau datele de la anaf si le modific in baza de date pentru firma selectata
-        if($diff >= 30){
-          $anaf = new \Itrack\Anaf\Client();
-          $dataVerificare = date("Y-m-d");
-          $anaf->addCif($cui, $dataVerificare);
-          $company = $anaf->first();
-          if($company->getName() != null && $company->getName() != ""){
-            $legalEntity->cui = $company->getCIF();
-            $legalEntity->reg_com = $company->getRegCom();
-            $legalEntity->iban = $company->getTVA()->getTVASplitIBAN();
-            $legalEntity->save();
-            $cui = $legalEntity->cui;
-          }
+        $wmeBankData = [];
+        if ($client->type != 'fizica' && $legalEntity) {
+            $wmeBankData = [
+                [
+                    'NumarCont' => $legalEntity->iban,
+                    'Sucursala' => $legalEntity->banca,
+                ]
+            ];
         }
-        $codPartener = "PJ-RO-".$cui;
-      } else{
-        $codPartener = 'PJ-'.$usrAddress->country.'-'.$cui;
-      }
+        $postData = [
+            'TipOperatie' => 'A',
+            'CUI' => $cui,
+            'CodExtern' => $codPartener, // il generez ca pe TPS vechi
+            'CodIntern' => '',
+            'RegCom' => $regCom == null ? '' : $regCom,
+            'Nume' => $client->name,
+            'PersoanaFizica' => $persoanaFizica,
+            'Observatii' => 'Client sincronizat din TPS, manual',
+            'Sedii' => $usrAddressList,
+            'ConturiBancare' => $wmeBankData,
+        ];
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/plain'));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+        if ($winMentorServer) {
+            $result = curl_exec($ch);
+            $result = json_decode($result, true);
+        } else {
+            curl_close($ch);
+            return ['success' => false, 'msg' => 'Nu s-a putut conecta la serverul WinMentor!', 'warning' => false];
+        }
+        curl_close($ch);
+        if (array_key_exists('Error', $result) && $result['Error'] == "ok" && $winMentorServer) {
+            $client->sync_done = 1;
+            $client->mentor_partener_code = $codPartener;
+            $client->save();
+            return ['success' => true, 'msg' => 'Clientul a fost sincronizat cu succes!', 'client' => $client];
+        } else {
+            return [
+                'success' => false,
+                'msg' => array_key_exists('error', $result) ? $result['error'] : $result['Error'],
+                'warning' => false
+            ];
+        }
     }
-    $wmeBankData = [];
-    if ($client->type != 'fizica' && $legalEntity) {
-        $wmeBankData = [[
-            'NumarCont' => $legalEntity->iban,
-            'Sucursala'=> $legalEntity->banca,
-        ]];
+
+    public function validatePhoneNumber(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|min:10|max:15'
+        ], [
+            'required' => 'Introduceti un numar de telefon',
+            'min' => 'Numarul de telefon trebuie sa aiba minim 10 cifre',
+            'max' => 'Numarul de telefon trebuie sa aiba maxim 15 cifre'
+        ]);
+        $errors = $validator->errors();
+        return $errors->first('phone');
     }
-    $postData = [
-        'TipOperatie' => 'A',
-        'CUI' => $cui,
-        'CodExtern' => $codPartener, // il generez ca pe TPS vechi
-        'CodIntern' => '',
-        'RegCom' => $regCom == null ? '' : $regCom,
-        'Nume' => $client->name,
-        'PersoanaFizica' => $persoanaFizica,
-        'Observatii' => 'Client sincronizat din TPS, manual',
-        'Sedii' => $usrAddressList,
-        'ConturiBancare' => $wmeBankData,
-    ];
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain'));
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-    if($winMentorServer){
-       $result = curl_exec($ch);
-       $result = json_decode($result, true);
-    } else{
-       curl_close ($ch);
-       return ['success' => false, 'msg' => 'Nu s-a putut conecta la serverul WinMentor!', 'warning' => false];
-    }
-    curl_close ($ch);
-    if (array_key_exists('Error', $result) && $result['Error'] == "ok" && $winMentorServer){
-      $client->sync_done = 1;
-      $client->mentor_partener_code = $codPartener;
-      $client->save();
-      return ['success' => true, 'msg' => 'Clientul a fost sincronizat cu succes!', 'client' => $client];
-    } else{
-      return ['success' => false, 'msg' => array_key_exists('error', $result) ? $result['error'] : $result['Error'], 'warning' => false];
-    }
-  }
-
-  public static function syncClientAddress($client_id)
-  {
-      if(!$client_id){
-          return ['success' => false, 'msg' => 'Trebuie sa selectezi un client pentru a-l sincroniza cu Mentor!', 'warning' => false];
-      }
-
-      $host = config('winmentor.host');
-      $port = config('winmentor.port');
-      $waitTimeoutInSeconds = 3;
-      $winMentorServer = false;
-      try{
-          if($fp = fsockopen($host,$port,$errCode,$errStr,$waitTimeoutInSeconds)){
-              $winMentorServer = true;
-          }
-          fclose($fp);
-      } catch(\Exception $e){}
-
-      //$url = "http://".config('winmentor.host').":".config('winmentor.port')."/datasnap/rest/TServerMethods/SediuPartener//";
-      $client = Client::find($client_id);
-      //dd($client);
-      if (!$client || !$client->mentor_partener_code) {
-          return ['success' => false, 'msg' => 'Client inexistent!', 'warning' => false];
-      }
-
-      ////
-      $url = "http://".config('winmentor.host').":".config('winmentor.port')."/datasnap/rest/TServerMethods/%22GetInfoPartener%22//";
-      $ch = curl_init();
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-      curl_setopt($ch, CURLOPT_URL, $url.$client->mentor_partener_code);
-      curl_setopt($ch, CURLOPT_POST, 1);
-      curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain'));
-      //curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-
-      if($winMentorServer){
-          $result = curl_exec($ch);
-          $result = json_decode($result, true);
-      } else{
-          curl_close ($ch);
-          return ['success' => false, 'msg' => 'Nu s-a putut conecta la serverul WinMentor!', 'warning' => false];
-      }
-      curl_close ($ch);
-
-      if (array_key_exists('Error', $result) && $result['Error'] == "ok" && $winMentorServer){
-          //return ['success' => true, 'msg' => 'Adresele clientului au fost sincronizate cu succes!', 'client' => $client];
-      } else{
-          return ['success' => false, 'msg' => array_key_exists('error', $result) ? $result['error'] : $result['Error'], 'warning' => false];
-      }
-
-      //dd($result);
-
-      $DBAddresses = UserAddress::where('user_id', $client->id)->get();
-      $WMEAddressesResult = $result['Data']['Sedii'];
-      $WMEAddresses = [];
-
-      foreach ($WMEAddressesResult as $item) {
-          $WMEAddresses[$item['Denumire']] = $item;
-      }
-
-      //dd($WMEAddresses);
-        //dd($DBAddresses);
-      foreach ($DBAddresses as $DBAddress) {
-          if (in_array($DBAddress->wme_name, array_keys($WMEAddresses))) {
-              // momentan nu suprascriem adresele existente
-              continue;
-              //dd('modificam');
-              //modificam
-              $WMEAddressToModify = [
-                  'Identificator' => 'Denumire',
-                  'Denumire' => $DBAddress->wme_name ?? "SEDIU-".$DBAddress->id,
-                  'Localitate' => array_key_exists($DBAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$DBAddress->city_name()] : $DBAddress->city_name(),
-                  'Strada' => $DBAddress->address,
-                  'Judet' => array_key_exists($DBAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$DBAddress->state_name()] : $DBAddress->state_name(),
-                  'Tara' => $DBAddress->country,
-                  'Telefon' => $DBAddress->delivery_phone != null ? $DBAddress->delivery_phone : $client->phone,
-                  'eMail' => $client->email
-              ];
-              $postData = [
-                  'TipOperatie' => 'M',
-                  'IDPartener' => $client->mentor_partener_code,
-                  'Sediu' => $WMEAddressToModify,
-              ];
-              $url = "http://".config('winmentor.host').":".config('winmentor.port')."/datasnap/rest/TServerMethods/SediuPartener/";
-              $ch = curl_init();
-              curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-              curl_setopt($ch, CURLOPT_URL, $url);
-              curl_setopt($ch, CURLOPT_POST, 1);
-              curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain'));
-              curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-              if($winMentorServer){
-                  $result = curl_exec($ch);
-                  $result = json_decode($result, true);
-              } else{
-                  curl_close ($ch);
-                  return ['success' => false, 'msg' => 'Nu s-a putut conecta la serverul WinMentor!', 'warning' => false];
-              }
-              curl_close ($ch);
-              if (array_key_exists('result', $result) && $result['result'] == "ok" && $winMentorServer){
-                  //return ['success' => true, 'msg' => 'Adresa a fost sincronizat cu succes!', 'client' => $client];
-              } else{
-                  return ['success' => false, 'msg' => array_key_exists('ErrorList', $result) ? json_encode($result['ErrorList']) : $result['result'], 'warning' => false];
-              }
-          } else {
-              //dd('adaugam');
-              //dd(['adaugam',$DBAddress]);
-              //adaugam
-              $WMEAddressToAdd = [
-                  'Denumire' => $DBAddress->wme_name ?? "SEDIU-".$DBAddress->id,
-                  'Localitate' => array_key_exists($DBAddress->city_name(), config('winmentor.cities')) ? config('winmentor.cities')[$DBAddress->city_name()] : $DBAddress->city_name(),
-                  'Strada' => $DBAddress->address,
-                  'Judet' => array_key_exists($DBAddress->state_name(), config('winmentor.states')) ? config('winmentor.states')[$DBAddress->state_name()] : $DBAddress->state_name(),
-                  'Tara' => $DBAddress->country,
-                  'Telefon' => $DBAddress->delivery_phone != null ? $DBAddress->delivery_phone : $client->phone,
-                  'eMail' => $client->email,
-                  'TipSediu' => count($WMEAddresses) > 1 ? 'FL' :'SFL',
-              ];
-              $postData = [
-                  'TipOperatie' => 'A',
-                  'IDPartener' => $client->mentor_partener_code,
-                  'Sediu' => $WMEAddressToAdd,
-              ];
-              $url = "http://".config('winmentor.host').":".config('winmentor.port')."/datasnap/rest/TServerMethods/SediuPartener/";
-              $ch = curl_init();
-              curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-              curl_setopt($ch, CURLOPT_URL, $url);
-              curl_setopt($ch, CURLOPT_POST, 1);
-              curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain'));
-              curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-              //dd($postData);
-              if($winMentorServer){
-                  $result = curl_exec($ch);
-                  $result = json_decode($result, true);
-              } else{
-                  curl_close ($ch);
-                  return ['success' => false, 'msg' => 'Nu s-a putut conecta la serverul WinMentor!', 'warning' => false];
-              }
-              curl_close ($ch);
-              //dd($result);
-              if (array_key_exists('result', $result) && $result['result'] == "ok" && $winMentorServer){
-                  //return ['success' => true, 'msg' => 'Adresa a fost sincronizat cu succes!', 'client' => $client];
-                  $DBAddressToSave = UserAddress::find($DBAddress->id);
-                  $DBAddressToSave->wme_name = $DBAddress->wme_name ?? "SEDIU-".$DBAddress->id;
-                  $DBAddressToSave->save();
-              } else{
-                  return ['success' => false, 'msg' => array_key_exists('ErrorList', $result) ? json_encode($result['ErrorList']) : $result['result'], 'warning' => false];
-              }
-          }
-      }
-  }
-
 }
