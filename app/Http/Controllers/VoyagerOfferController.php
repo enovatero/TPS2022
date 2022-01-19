@@ -2450,3 +2450,4 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $phone = substr($phone, 0, 2) == '00' ? $phone : '+' . $phone;
         return $phone;
     }
+}
