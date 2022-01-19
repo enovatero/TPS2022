@@ -2230,10 +2230,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if ($phone == null) {
             return ['success' => false, 'msg' => 'Niciun numar de telefon asociat comenzii!'];
         }
-        // completez numarul de telefon cu +4 pentru ca sa pot trimite sms-ul
-        if (strpos($phone, "+4") !== 0 && strlen($phone) == 10) {
-            $phone = '+4' . $phone;
-        }
+//    // completez numarul de telefon cu +4 pentru ca sa pot trimite sms-ul
+//   	if(strpos($phone, "+4") !== 0 && strlen($phone) == 10){
+//   		$phone = '+4'.$phone;
+//   	}
+
+        $phone = self::getPhoneNumberReadyToSend($phone);
+
         // fac request-ul catre smso si trimit sms-ul
         $client = new GuzzleClient;
         try {
@@ -2438,4 +2441,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         return ['success' => true, 'msg' => 'Statusul a fost modificat cu succes!'];
     }
 
-}
+    public static function getPhoneNumberReadyToSend($phone)
+    {
+        $phone = substr($phone, 0, 2) == '00' ? $phone : '+' . $phone;
+        return $phone;
+    }
