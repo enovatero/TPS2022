@@ -151,7 +151,7 @@ class AddressController extends Controller
             'city' => ['required'],
             'state' => ['required'],
             'delivery_address' => ['required'],
-            'delivery_phone' => ['required', 'min:10', 'max:15'],
+            'delivery_phone' => ['required', 'min:10', 'max:15', 'numeric'],
             'delivery_contact' => ['required'],
         ];
         $validationMessages = [
@@ -164,6 +164,7 @@ class AddressController extends Controller
             'delivery_phone.required' => "Numarul de telefon este obligatoriu!",
             'delivery_phone.min' => "Numarul de telefon trebuie sa aiba minim 10 cifre",
             'delivery_phone.max' => "Numarul de telefon poate avea maxim 15 cifre",
+            'delivery_phone.numeric' => "Numarul de telefon poate contine doar cifre",
             'delivery_contact.required' => "Persoana de contact este obligatorie!",
         ];
 

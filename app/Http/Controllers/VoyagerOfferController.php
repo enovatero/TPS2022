@@ -136,6 +136,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             if ($master) {
                 $query->where(function ($query1) use ($master) {
                     $query1->where('external_number', $master)
+                        ->orWhere('id', $master)
+                        ->orWhere('numar_comanda', $master)
                         ->orWhereHas('client', function (Builder $qr) use ($master) {
                             $qr->where('phone', $master);
                         })
@@ -506,6 +508,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if ($master) {
             $query->where(function ($query1) use ($master) {
                 $query1->where('external_number', $master)
+                    ->orWhere('id', $master)
+                    ->orWhere('numar_comanda', $master)
                     ->orWhereHas('client', function (Builder $qr) use ($master) {
                         $qr->where('phone', $master);
                     })

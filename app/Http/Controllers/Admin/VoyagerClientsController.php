@@ -1196,11 +1196,12 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
     public function validatePhoneNumber(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|min:10|max:15'
+            'phone' => 'required|min:10|max:15|numeric'
         ], [
             'required' => 'Introduceti un numar de telefon',
             'min' => 'Numarul de telefon trebuie sa aiba minim 10 cifre',
-            'max' => 'Numarul de telefon trebuie sa aiba maxim 15 cifre'
+            'max' => 'Numarul de telefon trebuie sa aiba maxim 15 cifre',
+            'numeric' => 'Numarul de telefon poate contine doar 15 cifre'
         ]);
         $errors = $validator->errors();
         return $errors->first('phone');
