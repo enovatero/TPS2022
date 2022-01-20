@@ -1841,7 +1841,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $message = "a generat PDF oferta";
             (new self())->createEvent($offer, $message);
 
-            return $pdf->download('Oferta_TPS' . $offer->serie . '_' . date('m-d-Y') . '.pdf');
+            return $pdf->download("Oferta_{$offer->serieName->name}_{$offer->id}_" . ($offer->numar_comanda ? 'C'.$offer->numar_comanda.'_' : '') . "{$offer->offer_date}.pdf");
         }
         return ['success' => false];
     }
@@ -1894,7 +1894,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             );
             $message = "a generat Fisa PDF oferta";
             (new self())->createEvent($offer, $message);
-            return $pdf->download('Fisa Comanda_TPS' . $offer->numar_comanda . '_' . date('m-d-Y') . '.pdf');
+            return $pdf->download("Fisa_Comanda_{$offer->serieName->name}_{$offer->numar_comanda}_{$offer->offer_date}.pdf");
         }
         return ['success' => false];
     }
