@@ -142,12 +142,12 @@
 @if($offerType && $offerType->header_img != null)
     <table>
         <tr>
-            <td width="20%">
+            <td width="10%">
                 <img src="{{Voyager::image($offerType->left_img)}}" style="width: 140px;">
             </td>
             <td width="90%">
                 @endif
-                <table class="items" width="100%" cellpadding="1">
+                <table class="items" width="100%">
                     <thead>
                     <tr>
                         <td width="5%">Nr.<br>crt.</td>
