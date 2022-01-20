@@ -2062,3 +2062,17 @@ input[readonly] {
 .btnSincronizeazaClient.isSyncDone {
   background: #9dff63;
 }
+
+.offer__list--td {
+    white-space: nowrap;
+}
+
+.offer__list--td p {
+    margin: 0 !important;
+    white-space: nowrap;
+}
+
+.overflow__list-1 {
+    white-space: nowrap;
+}
+

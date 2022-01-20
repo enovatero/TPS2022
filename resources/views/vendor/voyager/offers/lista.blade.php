@@ -309,7 +309,7 @@
                                                 @if(in_array($column['key'],['print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
                                                   @continue
                                                 @endif
-                                                <td class="overflow__list-1 @if($column['key'] == 'status') statusTd @endif" class="column_{{ $column['key'] }}">
+                                                <td class="overflow__list-1 column_{{ $column['key'] }} @if($column['key'] == 'status') statusTd @endif">
 
 
                                                     @if ($column['key'] == 'nr_com')
@@ -352,12 +352,14 @@
                                                         @endphp
                                                         @if (count($colors) > 0)
                                                             @foreach ($colors as $key => $color)
+                                                                @if ($key == 0)
                                                             <div class="color__color-code--cont" style="margin-bottom:3px; justify-content: flex-start; margin-left: 10px;">
                                                                 <span class="color__square" style="background-color: {{ $color['color'] }}"></span>
-                                                                <span class="edit__color-code" style="text-transform: uppercase;">
+                                                                <span class="edit__color-code" style="text-transform: uppercase;white-space: nowrap">
                                                                     {{ $color['colorName'] }}
                                                                 </span>
                                                             </div>
+                                                                @endif
                                                             @endforeach
                                                         @else
                                                             <div>-</div>
@@ -568,7 +570,7 @@
                                                         @if ($data->actual_delivery_date != $data->delivery_date && !in_array($data->status, [2,5,6])) <br><span style="color:darkolivegreen">[{{\Carbon\Carbon::parse($data->actual_delivery_date)->format('d M')}}]</span> @endif
 
                                                     @elseif ($column['key'] == 'agent')
-                                                        {{ $data->agent ? $data->agent->name : '-' }}
+                                                        {{ $data->agent ? $data->agent->short_name : '-' }}
 
                                                     @elseif ($column['key'] == 'comanda_distribuitor')
                                                         {{ $data->external_number }}
