@@ -598,7 +598,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 //                        $order->prod_ml += $prod->qty * $prod->getParent->dimension;
 //                    }
                     if ($prod->qty > 0 && $prod->getParent->dimension > 0) {
-                        $order->prod_ml += $prod->qty * $prod->getParent->dimension;
+                        $order->prod_ml += $prod->qty * $prod->getParent->dimension * (strpos($prod->getParent->title, 'SET 25') !== false ? 25 : 1);
                     }
                 }
                 $updateOrder = $order->fresh();
@@ -1822,8 +1822,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 //            if($offProd->getParent->um == 1 && $offProd->getParent->dimension > 0){
 //              $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
 //            }
-                        $dimension += $offProd->getParent->dimension > 0 ? $offProd->getParent->dimension * $offProd->qty : 0;
-                        $totalQty += $offProd->qty;
+                        $dimension += $offProd->getParent->dimension > 0 ? $offProd->getParent->dimension * $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1) : 0;
+                        $totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
                     }
                 }
                 $boxes = intval(ceil($totalQty / 25)); // rotunjire la urmatoarea valoare
@@ -1875,11 +1875,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                         if ($offProd->getParent->um == 8) {
                             $dimension += $offProd->qty;
                         }
-                        if ($offProd->getParent->um == 1 && $offProd->getParent->dimension > 0) {
-                            $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension * $offProd->qty : $offProd->qty;
-                        }
-//               $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
-                        $totalQty += $offProd->qty;
+//                          if ($offProd->getParent->um == 1 && $offProd->getParent->dimension > 0) {
+//                              $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension * $offProd->qty : $offProd->qty;
+//                          }
+//                          $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
+                        $dimension += $offProd->getParent->dimension > 0 ? $offProd->getParent->dimension * $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1) : 0;
+
+                        $totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
                     }
                 }
                 $boxes = intval(ceil($totalQty / 25)); // rotunjire la urmatoarea valoare
