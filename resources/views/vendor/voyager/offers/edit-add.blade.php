@@ -1188,7 +1188,7 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
 
 @section('javascript')
 <script src="../../../js/lodash.min.js"></script>
-<script src="../../../js/mention.js"></script>
+<script src="../../../js/mention.js?2"></script>
     <script>
         var params = {};
         var $file;
@@ -2062,23 +2062,29 @@ $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'e
           if(isEdit){
             var mentionsArray = [];
             var users = @json($adminUsers);
+            users.forEach(function (i) {
+              i.name = i.name.replace(/\s+/g, '');
+            });
             console.log(users);
             var myMention = new Mention({
               input: document.querySelector('#mentions'),
               reverse: true,
               options: users,
               update: function() {
-                var selectedElements = this.collect();
-                if(selectedElements.length > 0){
-                  var allIds = this.getAllIds();
-                  console.log(allIds);
-                  if(allIds.length > 0){
-                    $("input[name=mentions]").val(allIds);
-                  }
-                }
+                $("input[name=mentions]").val(this.collect().map(function (i) {
+                  return i.id;
+                }).join(','));
+                // console.log('updateee', this.collect());
+                // var selectedElements = this.collect();
+                // if(selectedElements.length > 0){
+                //   var allIds = this.getAllIds();
+                //   if(allIds.length > 0){
+                //     $("input[name=mentions]").val(allIds);
+                //   }
+                // }
               },
               template: function(option) {
-                 return '<img style="width: 20px;height:20px;border-radius: 50%;overflow:hidden; margin-right: 5px;" src="../../../storage/'+option.avatar+'"/>' + option.name
+                  return '<img style="width: 20px;height:20px;border-radius: 50%;overflow:hidden; margin-right: 5px;" src="../../../storage/'+option.avatar+'"/>' + option.name
               }
             });
             $(".btnSaveMention").click(function(){
