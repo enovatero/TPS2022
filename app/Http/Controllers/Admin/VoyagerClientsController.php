@@ -449,7 +449,6 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
                 $errMessages['cnp'] = [0 => 'Te rugam sa introduci un CNP valid!'];
             }
         }
-
         // verific daca numarul de telefon respecta formatul 0722222222
 //        if(!preg_match('/^[0-9]{15}+$/', $request->input('phone'))){
 //          $errMessages['phone'] = [0 => 'Numarul de telefon nu respecta formatul corect! Ex. 0712345678'];
@@ -460,7 +459,6 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             $errMessages['phone'] = [0 => $checkPhoneNumber];
             $addrErrs++;
         }
-
 
         // Validate fields with ajax
 //         $val = $this->validateBread($request->all(), $dataType->editRows, $dataType->name, $id)->validate();
@@ -644,7 +642,6 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             $errMessages['phone'] = [0 => $checkPhoneNumber];
             $addrErrs++;
         }
-
         // Validate fields with ajax
         $val = $this->validateBread($request->all(), $dataType->addRows);
         if ($val->fails() || $addrErrs > 0) {
@@ -1034,6 +1031,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
             ) . "/datasnap/rest/TServerMethods/InfoPartener//";
         $client = Client::find($client_id);
         if ($client->sync_done == 1) {
+            self::syncClientAddress($client->id);
             return ['success' => false, 'msg' => 'Clientul a fost deja sincronizat cu WinMentor!', 'warning' => true];
         }
         $userAddresses = $client->userAddress;
@@ -1046,7 +1044,7 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         if ($usrAddresses && count($usrAddresses) == 1) {
             $usrAddress = $usrAddresses[0];
             array_push($usrAddressList, [
-                'Denumire' => $usrAddress->wme_name ?? "SEDIU-" . $usrAddress->id,
+                'Denumire' => $usrAddress->wme_name ?? "SEDIU-FIRMA",
                 'Localitate' => array_key_exists($usrAddress->city_name(), config('winmentor.cities')) ? config(
                     'winmentor.cities'
                 )[$usrAddress->city_name()] : $usrAddress->city_name(),
@@ -1063,6 +1061,11 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
                 'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
                 'eMail' => $client->email
             ]);
+            if (!$usrAddress->wme_name) {
+                $userAddressToUpdate = UserAddress::find($usrAddress->id);
+                $userAddressToUpdate->wme_name = "SEDIU-FIRMA";
+                $userAddressToUpdate->save();
+            }
         } elseif ($usrAddresses && count($usrAddresses) > 0) {
             foreach ($usrAddresses as $usrAddress) {
                 if ($usrAddress->wme_name == 'SEDIU FIRMA') {
@@ -1106,6 +1109,11 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
                         'Telefon' => $usrAddress->delivery_phone != null ? $usrAddress->delivery_phone : $client->phone,
                         'eMail' => $client->email
                     ]);
+                    if (!$usrAddress->wme_name) {
+                        $userAddressToUpdate = UserAddress::find($usrAddress->id);
+                        $userAddressToUpdate->wme_name = "SEDIU-" . $usrAddress->id;
+                        $userAddressToUpdate->save();
+                    }
                 }
             }
         }
@@ -1193,6 +1201,198 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         }
     }
 
+    public static function syncClientAddress($client_id)
+    {
+        if (!$client_id) {
+            return [
+                'success' => false,
+                'msg' => 'Trebuie sa selectezi un client pentru a-l sincroniza cu Mentor!',
+                'warning' => false
+            ];
+        }
+
+        $host = config('winmentor.host');
+        $port = config('winmentor.port');
+        $waitTimeoutInSeconds = 3;
+        $winMentorServer = false;
+        try {
+            if ($fp = fsockopen($host, $port, $errCode, $errStr, $waitTimeoutInSeconds)) {
+                $winMentorServer = true;
+            }
+            fclose($fp);
+        } catch (\Exception $e) {
+        }
+
+        //$url = "http://".config('winmentor.host').":".config('winmentor.port')."/datasnap/rest/TServerMethods/SediuPartener//";
+        $client = Client::find($client_id);
+        //dd($client);
+        if (!$client || !$client->mentor_partener_code) {
+            return ['success' => false, 'msg' => 'Client inexistent!', 'warning' => false];
+        }
+
+        ////
+        $url = "http://" . config('winmentor.host') . ":" . config(
+                'winmentor.port'
+            ) . "/datasnap/rest/TServerMethods/%22GetInfoPartener%22//";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_URL, $url . $client->mentor_partener_code);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/plain'));
+        //curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+
+        if ($winMentorServer) {
+            $result = curl_exec($ch);
+            $result = json_decode($result, true);
+        } else {
+            curl_close($ch);
+            return ['success' => false, 'msg' => 'Nu s-a putut conecta la serverul WinMentor!', 'warning' => false];
+        }
+        curl_close($ch);
+
+        if (array_key_exists('Error', $result) && $result['Error'] == "ok" && $winMentorServer) {
+            //return ['success' => true, 'msg' => 'Adresele clientului au fost sincronizate cu succes!', 'client' => $client];
+        } else {
+            return [
+                'success' => false,
+                'msg' => array_key_exists('error', $result) ? $result['error'] : $result['Error'],
+                'warning' => false
+            ];
+        }
+
+        //dd($result);
+
+        $DBAddresses = UserAddress::where('user_id', $client->id)->get();
+        $WMEAddressesResult = $result['Data']['Sedii'];
+        $WMEAddresses = [];
+
+        foreach ($WMEAddressesResult as $item) {
+            $WMEAddresses[$item['Denumire']] = $item;
+        }
+
+        //dd($WMEAddresses);
+        //dd($DBAddresses);
+        foreach ($DBAddresses as $DBAddress) {
+            if (in_array($DBAddress->wme_name, array_keys($WMEAddresses))) {
+                // momentan nu suprascriem adresele existente
+                continue;
+                //dd('modificam');
+                //modificam
+                $WMEAddressToModify = [
+                    'Identificator' => 'Denumire',
+                    'Denumire' => $DBAddress->wme_name ?? "SEDIU-" . $DBAddress->id,
+                    'Localitate' => array_key_exists($DBAddress->city_name(), config('winmentor.cities')) ? config(
+                        'winmentor.cities'
+                    )[$DBAddress->city_name()] : $DBAddress->city_name(),
+                    'Strada' => $DBAddress->address,
+                    'Judet' => array_key_exists($DBAddress->state_name(), config('winmentor.states')) ? config(
+                        'winmentor.states'
+                    )[$DBAddress->state_name()] : $DBAddress->state_name(),
+                    'Tara' => $DBAddress->country,
+                    'Telefon' => $DBAddress->delivery_phone != null ? $DBAddress->delivery_phone : $client->phone,
+                    'eMail' => $client->email
+                ];
+                $postData = [
+                    'TipOperatie' => 'M',
+                    'IDPartener' => $client->mentor_partener_code,
+                    'Sediu' => $WMEAddressToModify,
+                ];
+                $url = "http://" . config('winmentor.host') . ":" . config(
+                        'winmentor.port'
+                    ) . "/datasnap/rest/TServerMethods/SediuPartener/";
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/plain'));
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+                if ($winMentorServer) {
+                    $result = curl_exec($ch);
+                    $result = json_decode($result, true);
+                } else {
+                    curl_close($ch);
+                    return [
+                        'success' => false,
+                        'msg' => 'Nu s-a putut conecta la serverul WinMentor!',
+                        'warning' => false
+                    ];
+                }
+                curl_close($ch);
+                if (array_key_exists('result', $result) && $result['result'] == "ok" && $winMentorServer) {
+                    //return ['success' => true, 'msg' => 'Adresa a fost sincronizat cu succes!', 'client' => $client];
+                } else {
+                    return [
+                        'success' => false,
+                        'msg' => array_key_exists('ErrorList', $result) ? json_encode(
+                            $result['ErrorList']
+                        ) : $result['result'],
+                        'warning' => false
+                    ];
+                }
+            } else {
+                //dd('adaugam');
+                //dd(['adaugam',$DBAddress]);
+                //adaugam
+                $WMEAddressToAdd = [
+                    'Denumire' => $DBAddress->wme_name ?? "SEDIU-" . $DBAddress->id,
+                    'Localitate' => array_key_exists($DBAddress->city_name(), config('winmentor.cities')) ? config(
+                        'winmentor.cities'
+                    )[$DBAddress->city_name()] : $DBAddress->city_name(),
+                    'Strada' => $DBAddress->address,
+                    'Judet' => array_key_exists($DBAddress->state_name(), config('winmentor.states')) ? config(
+                        'winmentor.states'
+                    )[$DBAddress->state_name()] : $DBAddress->state_name(),
+                    'Tara' => $DBAddress->country,
+                    'Telefon' => $DBAddress->delivery_phone != null ? $DBAddress->delivery_phone : $client->phone,
+                    'eMail' => $client->email,
+                    'TipSediu' => count($WMEAddresses) > 1 ? 'FL' : 'SFL',
+                ];
+                $postData = [
+                    'TipOperatie' => 'A',
+                    'IDPartener' => $client->mentor_partener_code,
+                    'Sediu' => $WMEAddressToAdd,
+                ];
+                $url = "http://" . config('winmentor.host') . ":" . config(
+                        'winmentor.port'
+                    ) . "/datasnap/rest/TServerMethods/SediuPartener/";
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/plain'));
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+                //dd($postData);
+                if ($winMentorServer) {
+                    $result = curl_exec($ch);
+                    $result = json_decode($result, true);
+                } else {
+                    curl_close($ch);
+                    return [
+                        'success' => false,
+                        'msg' => 'Nu s-a putut conecta la serverul WinMentor!',
+                        'warning' => false
+                    ];
+                }
+                curl_close($ch);
+                //dd($result);
+                if (array_key_exists('result', $result) && $result['result'] == "ok" && $winMentorServer) {
+                    //return ['success' => true, 'msg' => 'Adresa a fost sincronizat cu succes!', 'client' => $client];
+                    $DBAddressToSave = UserAddress::find($DBAddress->id);
+                    $DBAddressToSave->wme_name = $DBAddress->wme_name ?? "SEDIU-" . $DBAddress->id;
+                    $DBAddressToSave->save();
+                } else {
+                    return [
+                        'success' => false,
+                        'msg' => array_key_exists('ErrorList', $result) ? json_encode(
+                            $result['ErrorList']
+                        ) : $result['result'],
+                        'warning' => false
+                    ];
+                }
+            }
+        }
+    }
+
     public function validatePhoneNumber(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -1205,4 +1405,5 @@ class VoyagerClientsController extends \TCG\Voyager\Http\Controllers\VoyagerBase
         $errors = $validator->errors();
         return $errors->first('phone');
     }
+
 }

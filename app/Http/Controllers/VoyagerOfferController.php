@@ -2319,7 +2319,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             }
         } else {
             //dd($client);
-            VoyagerClientsController::syncClientAddress($client->id);
+            \App\Http\Controllers\Admin\VoyagerClientsController::syncClientAddress($client->id);
         }
         $items = [];
         $products = $order->orderProducts;
