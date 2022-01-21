@@ -15,11 +15,11 @@ use App\ProductAttribute;
 
 class ColorsController extends Controller
 {
-  // am facut asta la cererea lor de a importa dintr-un fisier culorile, pentru a nu fi introduse manual de catre ei. 
+  // am facut asta la cererea lor de a importa dintr-un fisier culorile, pentru a nu fi introduse manual de catre ei.
   // Ignor asta pentru ca trebuie, la cererea lor, sa schimb toate json-urile in tabele separate, cu legaturi intre ele
 //   public function generatePDF(Request $request){
   public function uploadColors(){
-    
+
     $prodattrs = ProductAttribute::get();
     foreach($prodattrs as $prodattr){
       $atColor = null;
@@ -33,10 +33,10 @@ class ColorsController extends Controller
       $prodattr->dimension_id = $atDimension != null ? $atDimension->dimension_id : null;
       $prodattr->save();
     }
-    dd("Updatate");
+//    dd("Updatate");
     // ultimul upload
     $createdAt = date("Y-m-d H:i:s");
-    $colors = 
+    $colors =
     [
       [
         'color_code' => '3011 BGM',
@@ -99,8 +99,8 @@ class ColorsController extends Controller
         'both' => false,
       ],
     ];
-    dd($colors);
-//         $colors = 
+//    dd($colors);
+//         $colors =
 //     [
 //       [
 //         'color_code' => '3011 BGM',
@@ -238,7 +238,7 @@ class ColorsController extends Controller
 //         'both' => true,
 //       ],
 //     ];
-    
+
     $counter = 0;
     $offerTypes = OfferType::whereNotIn('id', [14, 15])->get();
     foreach($offerTypes as $offerType){
@@ -283,8 +283,8 @@ class ColorsController extends Controller
         }
       }
     }
-    dd('Inserted '.$counter.' colors');
+//    dd('Inserted '.$counter.' colors');
 
   }
-  
+
 }

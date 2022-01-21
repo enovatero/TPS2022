@@ -2187,7 +2187,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             (new self())->createEvent($offer, $message, true);
 
             $taggedUsers = $request->input('mentionIds');
-            dd($taggedUsers);
+//            dd($taggedUsers);
             if ($taggedUsers != null) {
                 $taggedUsers = explode(",", $taggedUsers);
                 $adminUsers = User::whereIn('id', $taggedUsers)->get();
