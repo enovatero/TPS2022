@@ -397,10 +397,11 @@ var Mention = function () {
          var _this2 = this;
          var mentions = this.findMatches().filter(function (word) {
             return _this2.options.some(function (option) {
+               word.id = option.id; // adaug id la rezultat
                var match = _this2.match(word.word.replace(_this2.symbol, ''), option);
-               var matchResult = match.success ? true : false
+               var matchResult = match.success ? true : false;
                if(match.id != null && match.id != undefined && !_this2.allIds.includes(match.id)){ 
-                _this2.allIds.push(match.id);
+                  _this2.allIds.push(match.id);
                }
                return matchResult;
             });

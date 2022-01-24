@@ -1796,8 +1796,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $totalQty = 0;
         if ($offer != null) {
             // iau produsele pe care le-am salvat in baza de date in offer_product
-            $offerProducts = OfferProduct::with(['prices', 'product', 'getParent'])->where('offer_id', $offer->id)->get(
-            );
+            $offerProducts = OfferProduct::with(['prices', 'product', 'getParent'])->where('offer_id', $offer->id)->get();
             $offerType = OfferType::find($offer->type);
             $offerType->parents = $offerType->parents();
 
@@ -1837,6 +1836,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'vendor.pdfs.offer_pdf',
                 ['offer' => $offer, 'offerProducts' => $offerProducts, 'attributes' => $attributes]
             );
+            // return $pdf->stream();
 
             $message = "a generat PDF oferta";
             (new self())->createEvent($offer, $message);
@@ -1894,6 +1894,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'vendor.pdfs.offer_pdf_order',
                 ['offer' => $offer, 'offerProducts' => $offerProducts, 'attributes' => $attributes]
             );
+            // return $pdf->stream();
             $message = "a generat Fisa PDF oferta";
             (new self())->createEvent($offer, $message);
             return $pdf->download("Fisa_Comanda_{$offer->serieName->name}_{$offer->numar_comanda}_{$offer->offer_date}.pdf");
@@ -2187,7 +2188,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             (new self())->createEvent($offer, $message, true);
 
             $taggedUsers = $request->input('mentionIds');
-//            dd($taggedUsers);
+            // dd($taggedUsers);
             if ($taggedUsers != null) {
                 $taggedUsers = explode(",", $taggedUsers);
                 $adminUsers = User::whereIn('id', $taggedUsers)->get();
