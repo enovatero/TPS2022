@@ -42,7 +42,7 @@
                             {{ method_field("PUT") }}
                         @endif
                         <div class="form-group col-md-12" style="padding-top: 15px;">
-                          <label class="control-label" for="name">Detalii articol</label>   
+                          <label class="control-label" for="name">Detalii articol</label>
                          </div>
                         <!-- CSRF TOKEN -->
                         {{ csrf_field() }}
@@ -66,7 +66,7 @@
 
                             @foreach($dataTypeRows as $row)
                                 @php
-                                  if(!in_array($row->field, ['name', 'mentor_cod_obiect', 'mentor_description', 'status', 'mentor_cod_intern'])){
+                                  if(!in_array($row->field, ['name', 'mentor_cod_obiect', 'mentor_description', 'status', 'mentor_cod_intern', 'mentor_cod_extern'])){
                                     continue;
                                   }
                                 @endphp
@@ -123,7 +123,7 @@
 
                             @foreach($dataTypeRows as $row)
                                 @php
-                                  if(in_array($row->field, ['name', 'mentor_cod_obiect', 'mentor_description', 'status', 'mentor_cod_intern'])){
+                                  if(in_array($row->field, ['name', 'mentor_cod_obiect', 'mentor_description', 'status', 'mentor_cod_intern', 'mentor_cod_extern'])){
                                     continue;
                                   }
                                 @endphp
@@ -162,7 +162,7 @@
                             @endforeach
                             <div class="containerAttributes">{!! $html_attributes !!}</div>
                         </div><!-- panel-body -->
-                          
+
                         </div>
 
                         <div class="panel-footer">
@@ -312,7 +312,7 @@
                   }
               });
             }
-            
+
             function formatState (state) {
               if (!state.id) {
                 return state.text;
@@ -331,7 +331,7 @@
                 return state.text;
               }
             };
-          
+
             if($(".retrievedAttribute")[0]){
                $(".retrievedAttribute").select2();
             }

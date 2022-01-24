@@ -2328,7 +2328,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $prodPrice = $product->pricesByRule($order->price_grid_id)->first();
             if ($product->qty > 0) {
                 array_push($items, [
-                    "ID" => $product->product->mentor_cod_obiect,
+                    "ID" => $product->product->mentor_cod_extern,
                     "Pret" => $prodPrice->ron_cu_tva,
                     "Observatii" => "",
                     "Cant" => $product->qty,
