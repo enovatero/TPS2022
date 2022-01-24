@@ -94,8 +94,8 @@ class WinMentor extends Command
             if (!$unit) {
                 $unit = new Unit;
                 $unit->title = $product['UM'];
-                $checkProduct->created_at = $createdAt;
-                $checkProduct->updated_at = $createdAt;
+                $unit->created_at = $createdAt;
+                $unit->updated_at = $createdAt;
                 $unit->save();
             }
         }
