@@ -238,7 +238,7 @@
                                                     </label>
                                                     <select
                                                         class="custom-table-select form-control"
-                                                        name="payment_type"
+                                                        name="payment_type" id="payment_type"
                                                     >
                                                         @foreach (App\Offer::$payment_types as $pkey => $payment_type)
                                                             <option
@@ -2136,6 +2136,7 @@
                                 $(".container-offer-listing-products").html(res.html_prices);
                             }
                             var payment_type = $('#payment_type option:selected').text().trim();
+                            alert(payment_type);
                             if (payment_type != 'Ramburs') {
                                 $('#cashback').val('0');
                             } else {
