@@ -2136,7 +2136,6 @@
                                 $(".container-offer-listing-products").html(res.html_prices);
                             }
                             var payment_type = $('#payment_type option:selected').text().trim();
-                            alert(payment_type);
                             if (payment_type != 'Ramburs') {
                                 $('#cashback').val('0');
                             } else {
