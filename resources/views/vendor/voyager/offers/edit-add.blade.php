@@ -50,7 +50,7 @@
                            href="/admin/generatePDF/{{$dataTypeContent->id}}"
                            style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
                             <i class="voyager-download" style="margin-right: 10px;"></i>
-                            <span> Descarca oferta PDF</span>
+                            <span> Oferta PDF</span>
                         </a>
                         @if($dataTypeContent->delivery_type == 'fan' && $dataTypeContent->fanData && $dataTypeContent->fanData->cont_id != null && $dataTypeContent->fanData->awb != null)
                             <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbFan"
@@ -77,7 +77,7 @@
                             <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank"
                                href="/admin/generatePDFFisa/{{$dataTypeContent->id}}"
                                style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
-                                <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa de comanda</span>
+                                <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa comanda PDF</span>
                             </a>
                             @if($dataTypeContent->status_name->title == 'noua' || $dataTypeContent->status_name->title == 'anulata' || $dataTypeContent->status_name->title == 'modificata' || $dataTypeContent->status_name->title == 'productie')
                                 <a class="btn btn-success btn-add-new btnSchimbaStatus" status="expediata"
@@ -1611,7 +1611,7 @@
                 $("input[name=offer_date]").val(now.toLocaleDateString('en-CA'));
             }
             var isNewClient = {!! $isNewClient != "" && $isNewClient == true ? 'true' : 'false' !!};
-            console.log(isNewClient);
+            //console.log(isNewClient);
             if (isNewClient && !isEdit) {
                 var newOption = new Option("Adauga client nou", -1, false, false);
                 $("select[name=client_id]").append(newOption).val(-1).trigger('change');
@@ -1641,7 +1641,7 @@
             if (isEdit) {
                 $(".container-doua-col-right").remove();
             }
-            console.log(new_client_clone);
+            //console.log(new_client_clone);
             $("#select_client > select").on('select2:select', function (e) {
                 var data = e.params.data;
                 if (data.id != -1) {
@@ -2394,7 +2394,7 @@
                 users.forEach(function (i) {
                     i.name = i.name.replace(/\s+/g, '');
                 });
-                console.log(users);
+                //console.log(users);
                 var myMention = new Mention({
                     input: document.querySelector('#mentions'),
                     reverse: true,
