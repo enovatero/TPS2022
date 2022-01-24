@@ -223,31 +223,31 @@
             @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
                 @php
                     // nu stiu de ce e bazat pe categorie ?
-                    // if($offerProduct->getParent->category->two_columns == 1){
-                    //   array_push($newProductsLeft, [
-                    //     'parent' => $offerProduct->getParent,
-                    //     'product' => $offerProduct->product,
-                    //     'qty'    => $offerProduct->qty,
-                    //     'two_columns' => 0,
-                    //   ]);
-                    // }
-                    // else {
-                    //   array_push($newProductsRight, [
-                    //     'parent' => $offerProduct->getParent,
-                    //     'product' => $offerProduct->product,
-                    //     'qty'    => $offerProduct->qty,
-                    //     'two_columns' => 1,
-                    //   ]);
-                    // }
-                    $left = $index % 2 == 0 ? true : false;
-                    $pushProd = [
-                        'parent' => $offerProduct->getParent,
-                        'product' => $offerProduct->product,
-                        'qty'    => $offerProduct->qty,
-                        'two_columns' => $left ? 0 : 1,
-                    ];
-                    if ($left) array_push($newProductsLeft, $pushProd);
-                    else array_push($newProductsRight, $pushProd);
+                    if($offerProduct->getParent->category->two_columns == 1){
+                       array_push($newProductsLeft, [
+                         'parent' => $offerProduct->getParent,
+                         'product' => $offerProduct->product,
+                         'qty'    => $offerProduct->qty,
+                         'two_columns' => 0,
+                       ]);
+                     }
+                     else {
+                       array_push($newProductsRight, [
+                         'parent' => $offerProduct->getParent,
+                         'product' => $offerProduct->product,
+                         'qty'    => $offerProduct->qty,
+                         'two_columns' => 1,
+                       ]);
+                     }
+                    //$left = $index % 2 == 0 ? true : false;
+                    //$pushProd = [
+                    //    'parent' => $offerProduct->getParent,
+                    //    'product' => $offerProduct->product,
+                    //    'qty'    => $offerProduct->qty,
+                    //    'two_columns' => $left ? 0 : 1,
+                    //];
+                    //if ($left) array_push($newProductsLeft, $pushProd);
+                    //else array_push($newProductsRight, $pushProd);
                 @endphp
             @endif
         @endforeach
@@ -293,7 +293,8 @@
                     <td style="font-size: 14px;">Denumirea produselor</td>
                     <td width="5%" style="font-size: 14px;">U.M.</td>
                     <td width="10%" style="font-size: 14px;">Cantitate</td>
-                    <td width="3%" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;font-size: 14px;"></td>
+                    <td width="3%"
+                        style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;font-size: 14px;"></td>
                     <td width="5%" style="font-size: 14px;">Nr.<br>crt.</td>
                     <td style="font-size: 14px;">Denumirea produselor</td>
                     <td width="5%" style="font-size: 14px;">U.M.</td>
@@ -314,7 +315,8 @@
                                     <td align="center">{{$item['parent']->um_title->title}}</td>
                                     <td align="center">{{$item['qty']}}</td>
                                     @if(array_key_exists($key+1, $newProducts) && $newProducts[$key+1]['two_columns'] == 1)
-                                        <td align="center" style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;"></td>
+                                        <td align="center"
+                                            style="border-top: 1px solid #ffffff;border-bottom: 1px solid #ffffff;background-color: #ffffff;"></td>
                                         <td align="center">{{$counterRight++}}</td>
                                         <td>{{$newProducts[$key+1]['parent']->title}}</td>
                                         <td align="center">{{$newProducts[$key+1]['parent']->um_title->title}}</td>

@@ -91,7 +91,7 @@ class WinMentor extends Command
                 $counterInsert++;
             }
             $unit = Unit::where('title', $product['UM'])->first();
-            if ($unit == null) {
+            if (!$unit) {
                 $unit = new Unit;
                 $unit->title = $product['UM'];
                 $checkProduct->created_at = $createdAt;
