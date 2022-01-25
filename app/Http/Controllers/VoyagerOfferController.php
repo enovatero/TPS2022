@@ -2156,10 +2156,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     // pentru o anumita oferta, iau log-ul
     public static function getHtmlLog($offer)
     {
-        $offerEvents = OfferEvent::where(['offer_id' => $offer->id, 'is_mention' => 0])->orderBy(
-            'created_at',
-            'DESC'
-        )->get();
+        $offerEvents = OfferEvent::query()
+            ->where(['offer_id' => $offer->id, 'is_mention' => 0])
+            ->orderBy('created_at', 'DESC')
+            ->orderBy('id', 'DESC')
+            ->get();
         return view('vendor.voyager.partials.log_events', ['offerEvents' => $offerEvents])->render();
     }
 
@@ -2293,6 +2294,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 
     public static function syncOrderToWinMentor($order_id)
     {
+        if (env('DISABLE_WINMENTOR')) {
+            return ['success' => true, 'msg' => 'Skip this'];
+        }
         $host = config('winmentor.host');
         $port = config('winmentor.port');
         $waitTimeoutInSeconds = 3;
@@ -2443,8 +2447,21 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if (!$statusId) {
             return ['success' => false, 'msg' => 'Selecteaza un status!'];
         }
+        
+        $oldStatusId = $order->status;
+        $oldStatus = $oldStatusId ? Status::find($oldStatusId) : null;
+        
         $order->status = $statusId;
         $order->save();
+        
+        $newStatus = $statusId ? Status::find($statusId) : null;
+        $message = "
+            a schimbat statusul comenzii
+            din <strong>". ($oldStatus ? $oldStatus->title : $oldStatusId) ."</strong>
+            in <strong>". ($newStatus ? $newStatus->title : $statusId) ."</strong>
+        ";
+        (new self())->createEvent($order, $message);
+        
         return ['success' => true, 'msg' => 'Statusul a fost modificat cu succes!'];
     }
 
