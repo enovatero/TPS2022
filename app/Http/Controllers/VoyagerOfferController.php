@@ -290,12 +290,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'width' => '113px',
             ],
             [
-                'key' => 'agent',
-                'order_by' => 'agent_id',
-                'label' => 'Agent',
-                'width' => '110px',
-            ],
-            [
                 'key' => 'tip_comanda',
                 'order_by' => 'type',
                 'label' => 'Tip Comanda',
@@ -342,6 +336,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'order_by' => null,
                 'label' => 'Localitate',
                 'width' => '90px',
+            ],
+            [
+                'key' => 'delivery_details',
+                'order_by' => null,
+                'label' => 'Detalii livrare',
+                'width' => '120px',
             ],
             [
                 'key' => 'data_expediere',
@@ -426,6 +426,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 'order_by' => 'billing_status',
                 'label' => 'Contabilitate',
                 'width' => '155px',
+            ],
+            [
+                'key' => 'agent',
+                'order_by' => 'agent_id',
+                'label' => 'Agent',
+                'width' => '110px',
             ],
             [
                 'key' => 'comanda_distribuitor',
@@ -1968,6 +1974,18 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                     'msg' => 'Comanda nu a putut fi lansata pentru ca nu are data de livrara completata!'
                 ];
             }
+            if (!$offer->distribuitor_id) {
+                return [
+                    'succes' => false,
+                    'msg' => 'Comanda nu a putut fi lansata pentru ca nu are selectata o sursa!'
+                ];
+            }
+            if ($offer->offerType->tile_fence == 1 && !$offer->custom_off_type) {
+                return [
+                    'succes' => false,
+                    'msg' => 'Comanda nu a putut fi lansata pentru ca nu are selectat campul Tip Oferta Custom!'
+                ];
+            }
             $lastStatus = $offer->status;
             $offer->status = 5; // comanda lansata in productie
             // generez un numar de comanda pe baza comenzilor create anterior. Ex: count(comenzi) + 1
@@ -2450,13 +2468,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if (!$statusId) {
             return ['success' => false, 'msg' => 'Selecteaza un status!'];
         }
-        
+
         $oldStatusId = $order->status;
         $oldStatus = $oldStatusId ? Status::find($oldStatusId) : null;
-        
+
         $order->status = $statusId;
         $order->save();
-        
+
         $newStatus = $statusId ? Status::find($statusId) : null;
         $message = "
             a schimbat statusul comenzii
@@ -2464,7 +2482,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             in <strong>". ($newStatus ? $newStatus->title : $statusId) ."</strong>
         ";
         (new self())->createEvent($order, $message);
-        
+
         return ['success' => true, 'msg' => 'Statusul a fost modificat cu succes!'];
     }
 

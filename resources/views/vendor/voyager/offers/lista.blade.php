@@ -261,10 +261,10 @@
                                     <thead>
                                         <tr class="overflow__list-1">
                                             @foreach ($columns as $column)
-                                              @if(in_array($column['key'],['ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
+                                              @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
                                                 @continue
                                               @endif
-                                              @if(in_array($column['key'],['print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
+                                              @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
                                                 @continue
                                               @endif
                                              <th class="column_{{ $column['key'] }}" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
@@ -303,15 +303,13 @@
                                         @foreach ($day['orders'] as $data)
                                         <tr  class="tr--list--off" >
                                             @foreach ($columns as $column)
-                                                @if(in_array($column['key'],['ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
+                                                @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
                                                   @continue
                                                 @endif
-                                                @if(in_array($column['key'],['print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
+                                                @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
                                                   @continue
                                                 @endif
                                                 <td class="overflow__list-1 column_{{ $column['key'] }} @if($column['key'] == 'status') statusTd @endif">
-
-
                                                     @if ($column['key'] == 'nr_com')
                                                         <a href="/admin/offers/{{ $data->id }}/edit">
                                                             {{ $data->numar_comanda }}
@@ -441,7 +439,7 @@
                                                         {{ $data->offerType ? $data->offerType->title : '-' }}
 
                                                     @elseif ($column['key'] == 'client')
-                                                        {{ $data->client ? $data->client->name : '-' }}
+                                                        {{ $data->client ? mb_strimwidth($data->client->name, 0, 15, '..') : '-' }}
 
                                                     @elseif ($column['key'] == 'print_awb')
                                                         <input
@@ -646,6 +644,9 @@
                                                         ">
                                                             Fisiere
                                                         </button>
+
+                                                    @elseif ($column['key'] == 'delivery_details')
+                                                        {{ $data->delivery_details ? $data->delivery_details : '-' }}
 
                                                     @elseif ($column['key'] == '')
 
@@ -956,7 +957,7 @@
 
               var $state = $(
                 `
-                <span style="text-transform: uppercase; padding: 10px !important; background-color: ${statusBgColor}; color: ${statusTextColor}">
+                <span style="text-transform: uppercase; font-weight:bold; padding: 10px !important; background-color: ${statusBgColor}; color: ${statusTextColor}">
                   <p>${statusTitle}</p>
                 </span>
                 `

@@ -248,7 +248,7 @@
                                                           //$dataStatus = $dataStatus == null ? 'No results' : $dataStatus->title;
                                                       @endphp
                                                             <span
-                                                                style="text-transform: uppercase; padding: 10px !important; background-color: {{$dataStatus->bg_color ?: "lightgray"}}; color: {{$dataStatus->text_color ?: "black"}}">
+                                                                style="text-transform: uppercase; font-weight: bold; padding: 10px !important; background-color: {{$dataStatus->bg_color ?: "lightgray"}}; color: {{$dataStatus->text_color ?: "black"}}">
                                                               @include('voyager::formfields.relationship', ['view' => 'browse','options' => $row->details])
                                                             </span>
                                                     </span>

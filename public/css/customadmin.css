@@ -1811,7 +1811,7 @@ textarea {
 }
 
 .select2-container--default {
-  width: 100% !important;
+  /*width: 100% !important;*/
 }
 
 .flex__box--cont {

@@ -348,6 +348,7 @@
             <td style="font-size: 14px;">Denumirea produselor</td>
             <td width="5%" style="font-size: 14px;">U.M.</td>
             <td width="10%" style="font-size: 14px;">Cantitate</td>
+            <td width="5%" style="border: none; background: none"></td>
         </tr>
         </thead>
         <tbody>
@@ -361,6 +362,7 @@
                         <td align="center" class="bold"
                             style="font-size: 14px;">{{$offerProduct->getParent->um_title->title}}</td>
                         <td align="center" class="bold" style="font-size: 14px;">{{$offerProduct->qty}}</td>
+                        <td align="center" width="5%" style="border: none; color: darkred; font-weight: bold; padding:2px 8px; font-size: 14px; white-space: nowrap">@if(strpos($offerProduct->getParent->title, 'SET 25') !== false) ({{($offerProduct->qty * 25)}} buc) @endif</td>
                     </tr>
                 @endif
             @endforeach
@@ -380,7 +382,7 @@
                 </td>
                 <td style="border: none; background: none">
                     <p style="text-align: right; font-size: 12pt">
-                        <strong>Responsabil incarcare:</strong>
+                        <strong>Responsabil @if($offer->offerType->tile_fence == 0) ambalare @else incarcare @endif :</strong>
                     </p>
                 </td>
             </tr>
