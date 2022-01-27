@@ -254,7 +254,7 @@
                                         @if (Auth::user()->hasPermission("offer_column_valoare")) Subtotal: <span>{{ $day['subtotal_price'] }} lei</span> @endif
                                     </div>
                                     <div class="item additional">
-                                        Subtotal: <span>{{ $day['subtotal_ml'] }} ml</span>
+                                        Subtotal: <span>{{ $day['subtotal_ml'] }} @if($tileFence == 1) MP @else ML @endif</span>
                                     </div>
                                 </div>
                                 <table id="dataTable" class="table table-hover">
