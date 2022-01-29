@@ -3,9 +3,9 @@
 </style>
 <div style="max-width:650px;margin:0 auto;background-color: #ffffff;padding-left: 50px; padding-right: 50px;">
     <div style="margin-bottom: 25px;">
-        <a href="{{config('app.url')}}" style="display: block; width: 120px;">
-            <img src="{{Voyager::image(setting('admin.icon_image'))}}" alt="logo" style="width: 100%;">
-        </a>
+{{--        <a href="{{config('app.url')}}" style="display: block; width: 120px;">--}}
+{{--            <img src="{{Voyager::image(setting('admin.icon_image'))}}" alt="logo" style="width: 100%;">--}}
+{{--        </a>--}}
     </div>
     <h1 style="color:#000000;font-family: 'Lexend', sans-serif;font-size:16px;text-align:left;">Salut {{$user_name}}!</h1>
     <p style="color:#000000;font-family: 'Lexend', sans-serif;font-size:12px;text-align:left;line-height: 1.6;">

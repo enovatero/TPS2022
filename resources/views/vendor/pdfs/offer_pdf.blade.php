@@ -86,8 +86,10 @@
             <b>Email:</b> {{$offer->agent ? $offer->agent->email : ''}}<br>
             <b>Distribuitor:</b> {{$offer->distribuitor ? $offer->distribuitor->title : ''}}
         </td>
-        <td width="{{$offerType && $offerType->header_img != null ? '35%' : '40%'}}" style="text-align: right; font-size: 10pt">
-            OFERTA <b>{{$offer->id}}</b> {{$offer->numar_comanda ? "(C".$offer->numar_comanda.")" : ""}} / {{\Carbon\Carbon::parse($offer->offer_date)->format('d-m-Y')}}</b>
+        <td width="{{$offerType && $offerType->header_img != null ? '35%' : '40%'}}"
+            style="text-align: right; font-size: 10pt">
+            OFERTA <b>{{$offer->id}}</b> {{$offer->numar_comanda ? "(C".$offer->numar_comanda.")" : ""}}
+            / {{\Carbon\Carbon::parse($offer->offer_date)->format('d-m-Y')}}</b>
             @if ($offer->external_number) <br>Comanda distribuitor: {{$offer->external_number}} @endif
             <p style="font-size: 8pt;"><br>
                 @if($attributes && count($attributes)>0)
@@ -109,9 +111,9 @@
             </p>
         </td>
         @if($offerType && $offerType->header_img != null)
-        <td width="10%">
-            <img src="{{Voyager::image($offerType->header_img)}}" style="width: 80px;"/>
-        </td>
+            <td width="10%">
+                <img src="{{Voyager::image($offerType->header_img)}}" style="width: 80px;"/>
+            </td>
         @endif
     </tr>
 </table>
@@ -121,19 +123,22 @@
         <td width="49%" style="border: 0; padding: 1mm 2mm;">
             <b>Detalii cumparator:</b><br>
             <span style="text-transform: uppercase">{{$offer->client ? $offer->client->name : ''}}</span><br>
-            Sediu: {{$offer->delivery_address ? $offer->delivery_address->address : ''}}
-            , {{$offer->delivery_address ? $offer->delivery_address->city_name() : ''}}<br>
-            CUI: {{$offer->client ? $offer->client->cui : ''}} | Reg.
-            Com.: {{$offer->client ? $offer->client->reg_com : ''}} <br>
+            Sediu: {{$offer->client ? $offer->client->userMainAddress->address : ''}}, {{$offer->client ? $offer->client->userMainAddress->city_name() : ''}}
+            , {{$offer->client ? $offer->client->userMainAddress->state_name() : ''}}<br>
+            CUI: {{$offer->client && $offer->client->legal_entity ? $offer->client->legal_entity->cui : ''}} | Reg.
+            Com.: {{$offer->client && $offer->client->legal_entity ? $offer->client->legal_entity->reg_com : ''}} <br>
             Email: {{$offer->client ? $offer->client->email : ''}}
         </td>
         <td width="2%" style="border: 0;"></td>
         <td width="49%" style="border: 0; padding: 1mm 2mm;">
             <b>Detalii livrare:</b><br>
             Adresa: {{$offer->delivery_address ? $offer->delivery_address->address : ''}}
-            , {{$offer->delivery_address ? $offer->delivery_address->city_name() : ''}}<br>
-            Persoana de contact: {{$offer->client ? $offer->client->name : ''}}<br>
-            Telefon: {{$offer->client ? $offer->client->phone : ''}}<br>
+            , {{$offer->delivery_address ? $offer->delivery_address->city_name() : ''}}, {{$offer->delivery_address ? $offer->delivery_address->state_name() : ''}}<br>
+            Persoana de
+            contact: {{!empty($offer->delivery_address->delivery_contact) ? $offer->delivery_address->delivery_contact : $offer->client->name}}
+            <br>
+            Telefon: {{!empty($offer->delivery_address->delivery_phone) ? $offer->delivery_address->delivery_phone : $offer->client->phone}}
+            <br>
             Data de livrare: {{\Carbon\Carbon::parse($offer->delivery_date)->format('d-m-Y')}}
         </td>
     </tr>
@@ -187,9 +192,9 @@
                                     <td>{{$offerProduct->getParent->title}}</td>
                                     <td align="center" class="">{{$offerProduct->getParent->um_title->title}}</td>
                                     <td align="center" class="prices">{{$offerProduct->qty}}</td>
-                                    <td align="right" class="prices">{{$eurFaraTVA}}</td>
-                                    <td align="right" class="prices">{{$ronCuTVA}}</td>
-                                    <td align="right" class="prices">{{$ronTotal}}</td>
+                                    <td align="right" class="prices">{{number_format($eurFaraTVA, 2, '.', '')}}</td>
+                                    <td align="right" class="prices">{{number_format($ronCuTVA, 2, '.', '')}}</td>
+                                    <td align="right" class="prices">{{number_format($ronTotal, 2, '.', '')}}</td>
                                 </tr>
                             @endif
                         @endforeach
@@ -197,15 +202,15 @@
 
                     <tr class="total">
                         <td colspan="6" class="totals"><b>Total general cu TVA inclus - RON -</b></td>
-                        <td class="totals"><b>{{$totalCalculat}}</b></td>
+                        <td class="totals"><b>{{number_format($totalCalculat, 2, '.', '')}}</b></td>
                     </tr>
                     <tr class="total">
                         <td colspan="6" class="totals"><b>Reducere - RON -</b></td>
-                        <td class="totals"><b>{{$reducere != 0 ? '- '.$reducere : '0.00'}}</b></td>
+                        <td class="totals"><b>{{$reducere ? '- '. number_format($reducere, 2, '.', '') : '0.00'}}</b></td>
                     </tr>
                     <tr class="total">
                         <td colspan="6" class="totals"><b>Total final - RON -</b></td>
-                        <td class="totals"><b>{{$totalCalculat - $reducere}}</b></td>
+                        <td class="totals"><b>{{number_format(($totalCalculat - $reducere), 2, '.', '')}}</b></td>
                     </tr>
                     </tbody>
                 </table>

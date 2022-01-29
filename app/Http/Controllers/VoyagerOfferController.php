@@ -563,6 +563,10 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 6, // productie
                 // 7, // livrata
                 // 8, // expediata
+                // pe stoc
+                11, // intarziere
+                12, // incarcata
+                13, // urgent
             ];
 
             if (in_array($order->status, $not_delivered_statuses)) {
