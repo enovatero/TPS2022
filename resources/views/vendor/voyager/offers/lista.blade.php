@@ -300,7 +300,12 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($day['orders'] as $data)
+                                        @php
+                                            $deliveryTypeSortOrder = ['tps', 'ridicare', 'nemo', 'fan'];
+                                        @endphp
+                                        @foreach ($day['orders']->sortBy(function($item) use($deliveryTypeSortOrder){
+                                            return array_search($item->delivery_type, $deliveryTypeSortOrder);
+                                        }) as $data)
                                         <tr  class="tr--list--off" >
                                             @foreach ($columns as $column)
                                                 @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)

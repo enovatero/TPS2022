@@ -48,7 +48,7 @@ class Offer extends Model
     7 => 'N/A',
   ];
 
-    protected $perPage = 200;
+    protected $perPage = 300;
 
     protected $casts = [];
     public function distribuitor(){
@@ -104,5 +104,8 @@ class Offer extends Model
     }
     public function _packing(){
         return $this->hasOne(Packing::class, 'id', 'packing');
+    }
+    public function _ductTape(){
+        return $this->hasOne(DuctTape::class, 'id', 'transparent_band');
     }
 }

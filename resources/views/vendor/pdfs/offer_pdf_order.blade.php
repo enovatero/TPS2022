@@ -138,9 +138,9 @@
                     </p>
                 @endif
             @endif
-            @if($offer->transparent_band == 1 && !$twoColumns)
+            @if($offer->transparent_band && $offer->transparent_band !=4  && !$twoColumns)
                 <p style="text-align: left; font-size: 12pt; border: 1.5px solid #000000; padding: 5px;width: max-content;">
-                    <strong>Banda transparenta</strong>
+                    <strong>Banda {{$offer->_ductTape->title}}</strong>
                 </p>
             @endif
             <br>

@@ -557,13 +557,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $not_delivered_statuses = [
                 //1, // noua
                 2, // finalizata
-                // 3, // anulata
+                //3, // anulata
                 //4, // retur
                 5, // asteptare
                 6, // productie
-                // 7, // livrata
-                // 8, // expediata
-                // pe stoc
+                //7, // livrata
+                //8, // expediata
+                10, // pe stoc
                 11, // intarziere
                 12, // incarcata
                 13, // urgent
@@ -1674,30 +1674,33 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
 
         // modific toate campurile pe care le-am editat din frotend
-        $offer->type = $request->input('type');
+        if ($offer->numar_comanda == null) {
+            $offer->serie = $request->input('serie');
+            $offer->type = $request->input('type');
+            $offer->custom_off_type = $request->input('custom_off_type');
+            $offer->client_id = $request->input('client_id');
+            $offer->distribuitor_id = $request->input('distribuitor_id');
+            $offer->price_grid_id = $request->input('price_grid_id') != null ? $request->input(
+                'price_grid_id'
+            ) : 6; // default Lista
+            $offer->curs_eur = $request->input('curs_eur');
+            $offer->external_number = $request->input('external_number');
+        }
         //$offer->offer_date = $request->input('offer_date'); // asta nu se suprascrie
-        $offer->client_id = $request->input('client_id');
-        $offer->distribuitor_id = $request->input('distribuitor_id');
-        $offer->price_grid_id = $request->input('price_grid_id') != null ? $request->input(
-            'price_grid_id'
-        ) : 6; // default Lista
-        $offer->curs_eur = $request->input('curs_eur');
         //$offer->agent_id = $request->input('agent_id'); // asta nu mai trebuie suprascris
+        $offer->title = $request->input('title');
         $offer->delivery_address_user = $request->input('delivery_address_user');
         $offer->payment_type = $request->input('payment_type');
-        $offer->external_number = $request->input('external_number');
-        $offer->custom_off_type = $request->input('custom_off_type');
         $offer->delivery_date = $request->input('delivery_date') != null ? Carbon::parse(
             $request->input('delivery_date')
         )->format('Y-m-d') : null;
         $offer->actual_delivery_date = $offer->delivery_date;
         $offer->observations = $request->input('observations');
-        $offer->created_at = $request->input('created_at');
-        $offer->updated_at = $request->input('updated_at');
+        //$offer->created_at = $request->input('created_at');
+        //$offer->updated_at = $request->input('updated_at');
         if ($request->input('status') != null) {
             $offer->status = $request->input('status');
         }
-        $offer->serie = $request->input('serie');
         $offer->total_general = $request->input('totalGeneral') != null ? number_format(
             floatval($request->input('totalGeneral')),
             2,
@@ -2017,6 +2020,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             }
             if (!$offer->client_id) {
                 return ['success' => false, 'msg' => 'Selecteaza un client pentru a putea lansa comanda!'];
+            }
+            if (!$offer->delivery_address_user) {
+                return ['success' => false, 'msg' => 'Selecteaza o adresa de livrare pentru a putea lansa comanda!'];
             }
             $lastStatus = $offer->status;
             $offer->status = 5; // comanda lansata in productie -> in asteptare

@@ -150,16 +150,17 @@
                                         <div class="flex__box--cont">
                                             <div class="flex__box1--1 flex-first-box">
 
-                                                <!-- || $row->display_name == 'Client' -->
                                                 @foreach($dataTypeRows as $row)
                                                     @if(
                                                        $row->display_name == 'Serie'
+                                                       || $row->display_name == 'Denumire'
                                                        || $row->display_name == 'Tip oferta'
                                                        || $row->display_name == 'Data oferta'
                                                        || $row->display_name == 'Sursa'
+                                                       || $row->display_name == 'Nr comanda distribuitor'
                                                        || $row->display_name == 'Curs EURO'
-                                                       || $row->display_name == 'Agent'
                                                        || $row->display_name == 'Grila pret'
+                                                       || $row->display_name == 'Agent'
                                                        || ($row->display_name == 'Tip oferta custom' && $offerType->tile_fence == 1)
                                                        )
                                                         @php
@@ -174,11 +175,8 @@
                                                                 style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
                                                         @endif
 
-                                                        <div
-                                                            @if($row->display_name == 'Tip oferta' || $row->display_name == 'Tip oferta custom' || $row->display_name == 'Sursa') style="width: 100% !important;"
-                                                            @endif
-                                                            class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}"
-                                                        @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif
+                                                        <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}"
+                                                            @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif
                                                         >
                                                             {{ $row->slugify }}
                                                             @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
@@ -206,7 +204,6 @@
                                                                     {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
                                                                 @endif
                                                             @endif
-
                                                             @foreach (app('voyager')->afterFormFields($row, $dataType, $dataTypeContent) as $after)
                                                                 {!! $after->handle($row, $dataType, $dataTypeContent) !!}
                                                             @endforeach
@@ -216,20 +213,6 @@
                                                                 @endforeach
                                                             @endif
                                                         </div>
-                                                        @if($row->display_name == 'Serie')
-                                                            @php
-                                                                $isOrder = $dataTypeContent->numar_comanda != null ? true : false;
-                                                            @endphp
-                                                            <div class="form-group col-md-12">
-                                                                <label class="control-label" for="name">
-                                                                    @if($isOrder) Numar comanda @else Numaroferta @endif
-                                                                </label>
-                                                                <input type="text" class="form-control"
-                                                                       @if($isOrder != null) value="{{$dataTypeContent->numar_comanda}}"
-                                                                       @else value="{{$dataTypeContent->id}}"
-                                                                       @endif disabled="disabled">
-                                                            </div>
-                                                        @endif
                                                     @endif
                                                 @endforeach
                                                 <div class="form-group col-md-12" style="width: 100% !important;">
@@ -249,13 +232,6 @@
                                                             </option>
                                                         @endforeach
                                                     </select>
-                                                </div>
-                                                <div class="form-group col-md-12" style="width: 100% !important;">
-                                                    <label class="control-label" for="name">
-                                                        Numar comanda distribuitor
-                                                    </label>
-                                                    <input type="text" class="form-control" name="external_number"
-                                                           value="{{$dataTypeContent->external_number}}">
                                                 </div>
                                             </div>
                                             @if($edit)
@@ -388,167 +364,174 @@
 
                                         <div class="flex__box third-box">
                                             @foreach($dataTypeRows as $row)
-                                                @if($row->display_name == 'Observatii' || (($row->display_name == 'Ambalare' || $row->display_name == 'Banda transparenta') && $offerType->tile_fence == 1) )
+                                                @if(
+                                                    $row->display_name == 'Observatii'
+                                                    || (($row->display_name == 'Ambalare' || $row->display_name == 'Banda') && $offerType->tile_fence == 1)
+                                                    || $row->display_name == 'Serie'
+                                                    || $row->display_name == 'Denumire'
+                                                    || $row->display_name == 'Tip oferta'
+                                                    || $row->display_name == 'Data oferta'
+                                                    || $row->display_name == 'Sursa'
+                                                    || $row->display_name == 'Nr comanda distribuitor'
+                                                    || $row->display_name == 'Curs EURO'
+                                                    || $row->display_name == 'Grila pret'
+                                                    || $row->display_name == 'Agent'
+                                                    || $row->display_name == 'Tip oferta custom'
+                                                )
 
                                                 @else
 
-                                                    @if($row->display_name == 'Serie' || $row->display_name == 'Tip oferta'  || $row->display_name == 'Data oferta' || $row->display_name == 'Sursa' || $row->display_name == 'Curs EURO' || $row->display_name == 'Agent' || $row->display_name == 'Grila pret' || $row->display_name == 'External Number' || $row->display_name == 'Tip oferta custom' )
+                                                    @php
+                                                        $display_options = $row->details->display ?? null;
+                                                        if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
+                                                            $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
+                                                        }
+                                                    @endphp
+                                                    @if (isset($row->details->legend) && isset($row->details->legend->text))
+                                                        <legend
+                                                            class="text-{{ $row->details->legend->align ?? 'center' }}"
+                                                            style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
+                                                    @endif
 
-                                                    @else
-                                                        @php
-                                                            $display_options = $row->details->display ?? null;
-                                                            if ($dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')}) {
-                                                                $dataTypeContent->{$row->field} = $dataTypeContent->{$row->field.'_'.($edit ? 'edit' : 'add')};
-                                                            }
-                                                        @endphp
-                                                        @if (isset($row->details->legend) && isset($row->details->legend->text))
-                                                            <legend
-                                                                class="text-{{ $row->details->legend->align ?? 'center' }}"
-                                                                style="background-color: {{ $row->details->legend->bgcolor ?? '#f0f0f0' }};padding: 5px;">{{ $row->details->legend->text }}</legend>
+                                                    <div class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
+                                                        {{ $row->slugify }}
+                                                        @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
+                                                            <label class="control-label"
+                                                                   for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
                                                         @endif
-
-                                                        <div
-                                                            @if($row->display_name == 'Ambalare' || $row->display_name == 'Banda transparenta') style="width: 49% !important;"
-                                                            @endif class="form-group @if($row->type == 'hidden') hidden @endif col-md-{{ $display_options->width ?? 12 }} {{ $errors->has($row->field) ? 'has-error' : '' }}" @if(isset($display_options->id)){{ "id=$display_options->id" }}@endif >
-                                                            {{ $row->slugify }}
+                                                        @if($row->field != "offer_belongsto_status_relationship")
+                                                            <label class="control-label"
+                                                                   for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+                                                        @endif
+                                                        @include('voyager::multilingual.input-hidden-bread-edit-add')
+                                                        @if (isset($row->details->view))
+                                                            @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add'), 'view' => ($edit ? 'edit' : 'add'), 'options' => $row->details])
+                                                        @elseif ($row->type == 'relationship')
                                                             @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
-                                                                <label class="control-label"
-                                                                       for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+                                                                @include('voyager::formfields.relationship', ['options' => $row->details])
                                                             @endif
                                                             @if($row->field != "offer_belongsto_status_relationship")
-                                                                <label class="control-label"
-                                                                       for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
+                                                                @include('voyager::formfields.relationship', ['options' => $row->details])
                                                             @endif
-                                                            @include('voyager::multilingual.input-hidden-bread-edit-add')
-                                                            @if (isset($row->details->view))
-                                                                @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add'), 'view' => ($edit ? 'edit' : 'add'), 'options' => $row->details])
-                                                            @elseif ($row->type == 'relationship')
-                                                                @if((Auth::user()->hasRole('developer') || Auth::user()->hasRole('admin')) && $row->field == "offer_belongsto_status_relationship")
-                                                                    @include('voyager::formfields.relationship', ['options' => $row->details])
-                                                                @endif
-                                                                @if($row->field != "offer_belongsto_status_relationship")
-                                                                    @include('voyager::formfields.relationship', ['options' => $row->details])
-                                                                @endif
+                                                        @else
+                                                            @if($row->field == 'price_grid_id')
+                                                                {!! $select_html_grids !!}
                                                             @else
-                                                                @if($row->field == 'price_grid_id')
-                                                                    {!! $select_html_grids !!}
-                                                                @else
-                                                                    {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
-                                                                @endif
+                                                                {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
                                                             @endif
-
-                                                            @foreach (app('voyager')->afterFormFields($row, $dataType, $dataTypeContent) as $after)
-                                                                {!! $after->handle($row, $dataType, $dataTypeContent) !!}
-                                                            @endforeach
-                                                            @if ($errors->has($row->field))
-                                                                @foreach ($errors->get($row->field) as $error)
-                                                                    <span class="help-block">{{ $error }}</span>
-                                                                @endforeach
-                                                            @endif
-                                                        </div>
-
-                                                        @if($row->display_name == 'Client' && $edit)
-                                                            <div class="form-group  col-md-12">
-                                                                <label class="control-label">Adresa livrare</label>
-                                                                <select name="delivery_address_user"
-                                                                        class="form-control">
-                                                                    <option value="-1" selected disabled>Alege adresa de
-                                                                        livrare
-                                                                    </option>
-                                                                    <option value="-2">Adauga adresa noua</option>
-                                                                    @if(count($userAddresses) > 0)
-                                                                        @foreach($userAddresses as $address)
-                                                                            @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
-                                                                                @php
-                                                                                    $address = $selectedAddress;
-                                                                                @endphp
-                                                                                <option selected
-                                                                                        value="{{$address->id}}"
-                                                                                        country="{{$address->country}}"
-                                                                                        state_code="{{$address->state}}"
-                                                                                        state_name="{{$address->state_name}}"
-                                                                                        city_id="{{$address->city}}"
-                                                                                        city_name="{{$address->city_name}}"
-                                                                                        address="{{$address->address}}"
-                                                                                        phone="{{$address->phone}}"
-                                                                                        contact="{{$address->name}}">{{$address->address}}
-                                                                                    , {{$address->city_name}}
-                                                                                    , {{$address->state_name}}</option>
-                                                                            @else
-                                                                                <option value="{{$address->id}}"
-                                                                                        country="{{$address->country}}"
-                                                                                        state_code="{{$address->state}}"
-                                                                                        state_name="{{$address->state_name()}}"
-                                                                                        city_id="{{$address->city}}"
-                                                                                        city_name="{{$address->city_name()}}"
-                                                                                        address="{{$address->address}}"
-                                                                                        phone="{{$address->phone}}"
-                                                                                        contact="{{$address->name}}">{{$address->address}}
-                                                                                    , {{$address->city_name()}}
-                                                                                    , {{$address->state_name()}}</option>
-                                                                            @endif
-                                                                        @endforeach
-                                                                    @endif
-                                                                </select>
-                                                            </div>
-                                                            <div
-                                                                class="form-group  col-md-12 container-elements-addresses"
-                                                                style="width: 100%; display: none;">
-                                                                <div class="panel-body container-box-adresa">
-                                                                    <input class="trick-addr-id" value=""
-                                                                           type="hidden"/>
-                                                                    <div
-                                                                        class="form-group col-md-12 column-element-address"
-                                                                        style="width: 100%">
-                                                                        <label class="control-label">Tara</label>
-                                                                        @include('vendor.voyager.formfields.countries', ['selected' => null])
-                                                                    </div>
-                                                                    <div
-                                                                        class="form-group col-md-12 column-element-address">
-                                                                        <label class="control-label" for="state">Judet/Regiune</label>
-                                                                        <select name="state"
-                                                                                class="form-control select-state"></select>
-                                                                    </div>
-                                                                    <div
-                                                                        class="form-group col-md-12 column-element-address">
-                                                                        <label class="control-label">Oras/Localitate/Sector</label>
-                                                                        <select name="city"
-                                                                                class="form-control select-city"></select>
-                                                                    </div>
-                                                                    <div
-                                                                        class="form-group col-md-12 column-element-address"
-                                                                        style="width: 100%;">
-                                                                        <label class="control-label">Introdu
-                                                                            adresa(strada, nr, bloc, etaj, ap)</label>
-                                                                        <input class="control-label" type="text"
-                                                                               name="delivery_address"
-                                                                               data-google-address autocomplete="off"
-                                                                               style="padding: 5px;"/>
-                                                                    </div>
-                                                                    <div
-                                                                        class="form-group col-md-12 column-element-address">
-                                                                        <label class="control-label"
-                                                                               for="state">Telefon</label>
-                                                                        <input name="delivery_phone" type="text"
-                                                                               style="padding: 5px;"/>
-                                                                    </div>
-                                                                    <div
-                                                                        class="form-group col-md-12 column-element-address">
-                                                                        <label class="control-label">Persoana de
-                                                                            contact</label>
-                                                                        <input name="delivery_contact" type="text"
-                                                                               style="padding: 5px;"/>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-12 panel-footer"
-                                                                     style="    justify-content: flex-end;display: flex;width: 100%;">
-                                                                    <button type="button"
-                                                                            class="btn btn-primary btnGreenNew btnSalveazaAdresa">
-                                                                        Salveaza adresa noua
-                                                                    </button>
-                                                                </div>
-                                                            </div>
                                                         @endif
+
+                                                        @foreach (app('voyager')->afterFormFields($row, $dataType, $dataTypeContent) as $after)
+                                                            {!! $after->handle($row, $dataType, $dataTypeContent) !!}
+                                                        @endforeach
+                                                        @if ($errors->has($row->field))
+                                                            @foreach ($errors->get($row->field) as $error)
+                                                                <span class="help-block">{{ $error }}</span>
+                                                            @endforeach
+                                                        @endif
+                                                    </div>
+
+                                                    @if($row->display_name == 'Client' && $edit)
+                                                        <div class="form-group  col-md-12">
+                                                            <label class="control-label">Adresa livrare</label>
+                                                            <select name="delivery_address_user"
+                                                                    class="form-control">
+                                                                <option value="-1" selected disabled>Alege adresa de
+                                                                    livrare
+                                                                </option>
+                                                                <option value="-2">Adauga adresa noua</option>
+                                                                @if(count($userAddresses) > 0)
+                                                                    @foreach($userAddresses as $address)
+                                                                        @if(($selectedAddress != null && $selectedAddress->id == $address->id) || ($dataTypeContent->delivery_address_user == $address->id))
+                                                                            @php
+                                                                                $address = $selectedAddress;
+                                                                            @endphp
+                                                                            <option selected
+                                                                                    value="{{$address->id}}"
+                                                                                    country="{{$address->country}}"
+                                                                                    state_code="{{$address->state}}"
+                                                                                    state_name="{{$address->state_name}}"
+                                                                                    city_id="{{$address->city}}"
+                                                                                    city_name="{{$address->city_name}}"
+                                                                                    address="{{$address->address}}"
+                                                                                    phone="{{$address->phone}}"
+                                                                                    contact="{{$address->name}}">{{$address->address}}
+                                                                                , {{$address->city_name}}
+                                                                                , {{$address->state_name}}</option>
+                                                                        @else
+                                                                            <option value="{{$address->id}}"
+                                                                                    country="{{$address->country}}"
+                                                                                    state_code="{{$address->state}}"
+                                                                                    state_name="{{$address->state_name()}}"
+                                                                                    city_id="{{$address->city}}"
+                                                                                    city_name="{{$address->city_name()}}"
+                                                                                    address="{{$address->address}}"
+                                                                                    phone="{{$address->phone}}"
+                                                                                    contact="{{$address->name}}">{{$address->address}}
+                                                                                , {{$address->city_name()}}
+                                                                                , {{$address->state_name()}}</option>
+                                                                        @endif
+                                                                    @endforeach
+                                                                @endif
+                                                            </select>
+                                                        </div>
+                                                        <div
+                                                            class="form-group  col-md-12 container-elements-addresses"
+                                                            style="width: 100%; display: none;">
+                                                            <div class="panel-body container-box-adresa">
+                                                                <input class="trick-addr-id" value=""
+                                                                       type="hidden"/>
+                                                                <div
+                                                                    class="form-group col-md-12 column-element-address"
+                                                                    style="width: 100%">
+                                                                    <label class="control-label">Tara</label>
+                                                                    @include('vendor.voyager.formfields.countries', ['selected' => null])
+                                                                </div>
+                                                                <div
+                                                                    class="form-group col-md-12 column-element-address">
+                                                                    <label class="control-label" for="state">Judet/Regiune</label>
+                                                                    <select name="state"
+                                                                            class="form-control select-state"></select>
+                                                                </div>
+                                                                <div
+                                                                    class="form-group col-md-12 column-element-address">
+                                                                    <label class="control-label">Oras/Localitate/Sector</label>
+                                                                    <select name="city"
+                                                                            class="form-control select-city"></select>
+                                                                </div>
+                                                                <div
+                                                                    class="form-group col-md-12 column-element-address"
+                                                                    style="width: 100%;">
+                                                                    <label class="control-label">Introdu
+                                                                        adresa(strada, nr, bloc, etaj, ap)</label>
+                                                                    <input class="control-label" type="text"
+                                                                           name="delivery_address"
+                                                                           data-google-address autocomplete="off"
+                                                                           style="padding: 5px;"/>
+                                                                </div>
+                                                                <div
+                                                                    class="form-group col-md-12 column-element-address">
+                                                                    <label class="control-label"
+                                                                           for="state">Telefon</label>
+                                                                    <input name="delivery_phone" type="text"
+                                                                           style="padding: 5px;"/>
+                                                                </div>
+                                                                <div
+                                                                    class="form-group col-md-12 column-element-address">
+                                                                    <label class="control-label">Persoana de
+                                                                        contact</label>
+                                                                    <input name="delivery_contact" type="text"
+                                                                           style="padding: 5px;"/>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-12 panel-footer"
+                                                                 style="    justify-content: flex-end;display: flex;width: 100%;">
+                                                                <button type="button"
+                                                                        class="btn btn-primary btnGreenNew btnSalveazaAdresa">
+                                                                    Salveaza adresa noua
+                                                                </button>
+                                                            </div>
+                                                        </div>
                                                     @endif
                                                 @endif
                                             @endforeach
@@ -753,7 +736,6 @@
 
                                                                 @endif
 
-
                                                             @endforeach
 
                                                         </div>
@@ -775,17 +757,11 @@
                                                     </div>
                                                 @endif
 
-
-
-
-
                                                 @if($edit)
                                                     <div style="width: 70%;margin: 0;" class="flex__box">
                                                         @foreach($dataTypeRows as $row)
 
                                                             @if($row->display_name == 'Observatii')
-
-
 
                                                             @else
 
@@ -1667,8 +1643,10 @@
                             $("select[name=delivery_address_user]").html(html_user_addresses);
 //                         var transparent_band = res.transparent_band == 1 ? true : false;
 //                         $("input[name=transparent_band]").prop("checked", transparent_band).trigger("click");
-                            console.log(res.transparent_band);
-                            $('select[name=transparent_band] option[value=' + res.transparent_band + ']').prop('selected', true).trigger("change");
+                            //console.log(res.transparent_band);
+                            if (res.transparent_band == 1 || res.transparent_band == 2) {
+                                $('select[name=transparent_band] option[value=' + res.transparent_band + ']').prop('selected', true).trigger("change");
+                            }
                         }
                     })
                         .fail(function (xhr, status, error) {
@@ -2352,6 +2330,7 @@
                             $(vthis).remove();
                             var html_append = '';
                             if (resp.status == 'asteptare') {
+                                $(".btnAcceptOffer").remove();
                                 $(".page-content.edit-add.container-fluid").addClass("comanda-productie");
                                 $("body .comanda-productie .selectAttribute").prop("disabled", true).css("cursor", "no-drop");
                                 $("body .comanda-productie input[name=curs_eur]").prop("disabled", true).css("cursor", "no-drop");
