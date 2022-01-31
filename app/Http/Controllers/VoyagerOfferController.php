@@ -577,9 +577,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 if ($delivery_date->lt($today)) {
                     $order->intarziere = $delivery_date->diffInDays($today) . 'Z';
                     $order->actual_delivery_date = $today->format('Y-m-d');
+                    if ($order->status == 5) {
+                        $order->status = 11;
+                    }
 
                     $orderToUpdate = Offer::find($order->id);
                     $orderToUpdate->actual_delivery_date = $order->actual_delivery_date;
+                    $orderToUpdate->status = $order->status;
                     $orderToUpdate->save();
                 }
             }
