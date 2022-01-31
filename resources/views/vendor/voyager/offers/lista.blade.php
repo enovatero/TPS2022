@@ -34,7 +34,7 @@
                 <div class="panel panel-bordered">
                     <div class="panel-body">
 
-                        <div class="custom-table-filters overflow__list-1" >
+                        <div class="custom-table-filters overflow__list-1">
                             @foreach ($columns as $column)
                                 @if ($column['key'] == 'agent')
                                     <div class="filter-item">
@@ -421,12 +421,11 @@
                                                         @if (isset(App\Offer::$delivery_types[$data->delivery_type]))
                                                             @if( App\Offer::$delivery_types[$data->delivery_type] == 'Fan Courier')
                                                                     Fan
-
-                                                            @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Nemo Express')
-                                                             Nemo
-                                                            @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Livrare TPS' )
-                                                            TPS
-                                                            @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Ridicare personala' )
+                                                                @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Nemo Express')
+                                                                    Nemo
+                                                                @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Livrare TPS' )
+                                                                    TPS
+                                                                @elseif( App\Offer::$delivery_types[$data->delivery_type] == 'Ridicare personala' )
                                                                     ridicare
                                                             @else
                                                                     {{ App\Offer::$delivery_types[$data->delivery_type] }}
@@ -438,8 +437,8 @@
                                                     @elseif ($column['key'] == 'tip_comanda')
                                                         {{ $data->offerType ? $data->offerType->title : '-' }}
 
-                                                    @elseif ($column['key'] == 'client')
-                                                        {{ $data->client ? mb_strimwidth($data->client->name, 0, 15, '..') : '-' }}
+                                                        @elseif ($column['key'] == 'client')
+                                                            <span title="{{$data->client->name}}">{{ $data->client ? mb_strimwidth($data->client->name, 0, 15, '..') : '-' }}</span>
 
                                                     @elseif ($column['key'] == 'print_awb')
                                                         <input
@@ -576,11 +575,11 @@
                                                     @elseif ($column['key'] == 'intarziere')
                                                         {!! $data->intarziere ? '<b style="color:red;font-size:16px">'.$data->intarziere.'</b>' : '-' !!}
 
-                                                    @elseif ($column['key'] == 'judet')
-                                                        {{ $data->delivery_address ? $data->delivery_address->state_name() : '-' }}
+                                                        @elseif ($column['key'] == 'judet')
+                                                            <span title="{{$data->delivery_address->state_name()}}">{{ $data->delivery_address ? mb_strimwidth($data->delivery_address->state_name(), 0, 15, '..') : '-' }}</span>
 
-                                                    @elseif ($column['key'] == 'oras')
-                                                        {{ $data->delivery_address ? $data->delivery_address->city_name() : '-' }}
+                                                        @elseif ($column['key'] == 'oras')
+                                                            <span title="{{$data->delivery_address->city_name()}}">{{ $data->delivery_address ? mb_strimwidth($data->delivery_address->city_name(), 0, 15, '..') : '-' }}</span>
 
                                                     @elseif ($column['key'] == 'telefon')
                                                         @php
@@ -645,8 +644,8 @@
                                                             Fisiere
                                                         </button>
 
-                                                    @elseif ($column['key'] == 'delivery_details')
-                                                        {{ $data->delivery_details ? $data->delivery_details : '-' }}
+                                                        @elseif ($column['key'] == 'delivery_details')
+                                                            <span title="{{$data->delivery_details}}">{{ $data->delivery_details ? mb_strimwidth($data->delivery_details, 0, 15, '..') : '-' }}</span>
 
                                                     @elseif ($column['key'] == '')
 
@@ -877,9 +876,6 @@
         $(document).ready(function() {
 
             $(".tooltipMessage").tooltip();
-
-
-
 
             $('[data-toggle="popover"]').popover({
                 container: 'body',

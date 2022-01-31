@@ -285,43 +285,43 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             // ],
             [
                 'key' => 'nr_com',
-                'order_by' => 'serie',
+                'order_by' => null, //'serie',
                 'label' => 'Nr Comanda',
                 'width' => '113px',
             ],
             [
                 'key' => 'tip_comanda',
-                'order_by' => 'type',
+                'order_by' => null, //'type',
                 'label' => 'Tip Comanda',
                 'width' => '110px',
             ],
             [
                 'key' => 'client',
-                'order_by' => 'client_id',
+                'order_by' => null, //'client_id',
                 'label' => 'Client',
                 'width' => '110px',
             ],
             [
                 'key' => 'print_awb',
-                'order_by' => 'print_awb',
+                'order_by' => null, //'print_awb',
                 'label' => 'Print AWB',
                 'width' => '47px',
             ],
             [
                 'key' => 'ml',
-                'order_by' => 'prod_ml',
+                'order_by' => null, //'prod_ml',
                 'label' => 'Metri liniari',
                 'width' => '52px',
             ],
             [
                 'key' => 'accesorii',
-                'order_by' => 'accesories',
+                'order_by' => null, //'accesories',
                 'label' => 'Accesorii',
                 'width' => '70px',
             ],
             [
                 'key' => 'livrare',
-                'order_by' => 'delivery_type',
+                'order_by' => null, //'delivery_type',
                 'label' => 'Mod Livrare',
                 'width' => '110px',
             ],
@@ -345,37 +345,37 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'data_expediere',
-                'order_by' => 'delivery_date',
+                'order_by' => null, //'delivery_date',
                 'label' => 'Data Expediere',
                 'width' => '95px',
             ],
             [
                 'key' => 'data_actuala_expediere',
-                'order_by' => 'actual_delivery_date',
+                'order_by' => null, //'actual_delivery_date',
                 'label' => 'Data Expediere Reala',
                 'width' => '95px',
             ],
             [
                 'key' => 'status',
-                'order_by' => 'status',
+                'order_by' => null, //'status',
                 'label' => 'Stare',
                 'width' => '80px',
             ],
             [
                 'key' => 'p',
-                'order_by' => 'attr_p',
+                'order_by' => null, //'attr_p',
                 'label' => 'P.',
                 'width' => '100px',
             ],
             [
                 'key' => 'pjal',
-                'order_by' => 'attr_pjal',
+                'order_by' => null, //'attr_pjal',
                 'label' => 'P. JAL.',
                 'width' => '100px',
             ],
             [
                 'key' => 'pu',
-                'order_by' => 'attr_pu',
+                'order_by' => null, //'attr_pu',
                 'label' => 'P. U.',
                 'width' => '100px',
             ],
@@ -387,7 +387,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'pacc',
-                'order_by' => 'attr_pacc',
+                'order_by' => null, //'attr_pacc',
                 'label' => 'P. Acc.',
                 'width' => '100px',
             ],
@@ -417,25 +417,25 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'plata',
-                'order_by' => 'payment_type',
+                'order_by' => null, //'payment_type',
                 'label' => 'Plata',
                 'width' => '128px',
             ],
             [
                 'key' => 'contabilitate',
-                'order_by' => 'billing_status',
+                'order_by' => null, //'billing_status',
                 'label' => 'Contabilitate',
                 'width' => '155px',
             ],
             [
                 'key' => 'agent',
-                'order_by' => 'agent_id',
+                'order_by' => null, //'agent_id',
                 'label' => 'Agent',
                 'width' => '110px',
             ],
             [
                 'key' => 'comanda_distribuitor',
-                'order_by' => 'external_number',
+                'order_by' => null, //'external_number',
                 'label' => 'Comanda Distribuitor',
                 'width' => '100px',
             ],
@@ -447,13 +447,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'print_comanda',
-                'order_by' => 'listed',
+                'order_by' => null, //'listed',
                 'label' => 'Listat',
                 'width' => '50px',
             ],
             [
                 'key' => 'awb',
-                'order_by' => 'awb_id',
+                'order_by' => null, //'awb_id',
                 'label' => 'AWB',
                 'width' => '160px',
             ],
@@ -465,13 +465,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'sursa',
-                'order_by' => 'distribuitor_id',
+                'order_by' => null, //'distribuitor_id',
                 'label' => 'Sursa',
                 'width' => '126px',
             ],
             [
                 'key' => 'valoare',
-                'order_by' => 'total_final',
+                'order_by' => null, //'total_final',
                 'label' => 'Valoare (RON)',
                 'width' => '80px',
             ],
@@ -608,7 +608,10 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 //                        $order->prod_ml += $prod->qty * $prod->getParent->dimension;
 //                    }
                     if ($prod->qty > 0 && $prod->getParent->dimension > 0) {
-                        $order->prod_ml += $prod->qty * $prod->getParent->dimension * (strpos($prod->getParent->title, 'SET 25') !== false ? 25 : 1);
+                        $order->prod_ml += $prod->qty * $prod->getParent->dimension * (strpos(
+                                $prod->getParent->title,
+                                'SET 25'
+                            ) !== false ? 25 : 1);
                     }
                 }
                 $updateOrder = $order->fresh();
@@ -1672,14 +1675,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 
         // modific toate campurile pe care le-am editat din frotend
         $offer->type = $request->input('type');
-        $offer->offer_date = $request->input('offer_date');
+        //$offer->offer_date = $request->input('offer_date'); // asta nu se suprascrie
         $offer->client_id = $request->input('client_id');
         $offer->distribuitor_id = $request->input('distribuitor_id');
         $offer->price_grid_id = $request->input('price_grid_id') != null ? $request->input(
             'price_grid_id'
         ) : 6; // default Lista
         $offer->curs_eur = $request->input('curs_eur');
-        //$offer->agent_id = Auth::user()->id; // asta nu mai trebuie suprascris
+        //$offer->agent_id = $request->input('agent_id'); // asta nu mai trebuie suprascris
         $offer->delivery_address_user = $request->input('delivery_address_user');
         $offer->payment_type = $request->input('payment_type');
         $offer->external_number = $request->input('external_number');
@@ -1831,11 +1834,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 //            if($offProd->getParent->um == 1 && $offProd->getParent->dimension > 0){
 //              $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
 //            }
-                        $dimension += $offProd->getParent->dimension > 0 ? $offProd->getParent->dimension * $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1) : 0;
+                        $dimension += $offProd->getParent->dimension > 0 ? $offProd->getParent->dimension * $offProd->qty * (strpos(
+                                $offProd->getParent->title,
+                                'SET 25'
+                            ) !== false ? 25 : 1) : 0;
                         //$totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
                     }
                 }
-                if($offProd->getParent->um == 1 && $offProd->getParent->category_id == 5) {
+                if ($offProd->getParent->um == 1 && $offProd->getParent->category_id == 5) {
                     $totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
                 }
                 $boxes = intval(ceil($totalQty / 25)); // rotunjire la urmatoarea valoare
@@ -1854,7 +1860,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $message = "a generat PDF oferta";
             (new self())->createEvent($offer, $message);
 
-            return $pdf->download("Oferta_{$offer->serieName->name}_{$offer->id}_" . ($offer->numar_comanda ? 'C'.$offer->numar_comanda.'_' : '') . "{$offer->offer_date}.pdf");
+            return $pdf->download(
+                "Oferta_{$offer->serieName->name}_{$offer->id}_" . ($offer->numar_comanda ? 'C' . $offer->numar_comanda . '_' : '') . "{$offer->offer_date}.pdf"
+            );
         }
         return ['success' => false];
     }
@@ -1892,12 +1900,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
 //                              $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension * $offProd->qty : $offProd->qty;
 //                          }
 //                          $dimension += $offProd->getParent->dimension != null && $offProd->getParent->dimension != 0 ? $offProd->getParent->dimension*$offProd->qty : $offProd->qty;
-                        $dimension += $offProd->getParent->dimension > 0 ? $offProd->getParent->dimension * $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1) : 0;
-
+                        $dimension += $offProd->getParent->dimension > 0 ? $offProd->getParent->dimension * $offProd->qty * (strpos(
+                                $offProd->getParent->title,
+                                'SET 25'
+                            ) !== false ? 25 : 1) : 0;
                         //$totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
                     }
                 }
-                if($offProd->getParent->um == 1 && $offProd->getParent->category_id == 5) {
+                if ($offProd->getParent->um == 1 && $offProd->getParent->category_id == 5) {
                     $totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
                 }
                 $boxes = intval(ceil($totalQty / 25)); // rotunjire la urmatoarea valoare
@@ -1913,7 +1923,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             // return $pdf->stream();
             $message = "a generat Fisa PDF oferta";
             (new self())->createEvent($offer, $message);
-            return $pdf->download("Fisa_Comanda_{$offer->serieName->name}_{$offer->numar_comanda}_{$offer->offer_date}.pdf");
+            return $pdf->download(
+                "Fisa_Comanda_{$offer->serieName->name}_{$offer->numar_comanda}_{$offer->offer_date}.pdf"
+            );
         }
         return ['success' => false];
     }
@@ -1972,6 +1984,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
         try {
             $offer = Offer::find($request->input('order_id'));
+
             if ($offer->payment_type == 1) {
                 return ['succes' => false, 'msg' => 'Comanda nu a putut fi lansata pentru ca este NEACHITATA!'];
             }
@@ -1993,19 +2006,29 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                     'msg' => 'Comanda nu a putut fi lansata pentru ca nu are selectat campul Tip Oferta Custom!'
                 ];
             }
+            if ($offer->offerType->tile_fence == 0 && !$offer->transparent_band) {
+                return [
+                    'succes' => false,
+                    'msg' => 'Comanda nu a putut fi lansata pentru ca nu are selectat campul Banda!'
+                ];
+            }
+            if (!$offer->serie) {
+                return ['success' => false, 'msg' => 'Selecteaza o serie pentru a putea lansa comanda!'];
+            }
+            if (!$offer->client_id) {
+                return ['success' => false, 'msg' => 'Selecteaza un client pentru a putea lansa comanda!'];
+            }
             $lastStatus = $offer->status;
-            $offer->status = 5; // comanda lansata in productie
+            $offer->status = 5; // comanda lansata in productie -> in asteptare
             // generez un numar de comanda pe baza comenzilor create anterior. Ex: count(comenzi) + 1
             $nextOrderNumber = Offer::where('numar_comanda', '!=', null)->where('serie', $offer->serie)->max(
                 'numar_comanda'
             );
             if ($nextOrderNumber == 0) {
-                if ($offer->serie == null) {
-                    return ['success' => false, 'msg' => 'Selecteaza o serie pentru a putea lansa comanda!'];
-                }
                 $nextOrderNumber = OfferSerial::find($offer->serie)->from;
+            } else {
+                $nextOrderNumber += 1;
             }
-            $nextOrderNumber += 1;
             $offer->numar_comanda = $nextOrderNumber;
             $offer->save();
             $checkSync = (new self())->syncOrderToWinMentor($offer->id);
@@ -2335,6 +2358,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             }
             fclose($fp);
         } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'msg' => '[WinMentor] Nu s-a putut conecta la serverul WinMentor! - '.$e->getMessage(),
+                'warning' => false
+            ];
         }
 
         $url = "http://" . config('winmentor.host') . ":" . config(
@@ -2485,8 +2513,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $newStatus = $statusId ? Status::find($statusId) : null;
         $message = "
             a schimbat statusul comenzii
-            din <strong>". ($oldStatus ? $oldStatus->title : $oldStatusId) ."</strong>
-            in <strong>". ($newStatus ? $newStatus->title : $statusId) ."</strong>
+            din <strong>" . ($oldStatus ? $oldStatus->title : $oldStatusId) . "</strong>
+            in <strong>" . ($newStatus ? $newStatus->title : $statusId) . "</strong>
         ";
         (new self())->createEvent($order, $message);
 

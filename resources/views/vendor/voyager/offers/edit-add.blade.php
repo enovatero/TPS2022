@@ -18,10 +18,10 @@
     <h1 class="page-title">
         <i class="{{ $dataType->icon }}"></i>
         @if($edit && $dataTypeContent->numar_comanda != null)
-            <div class="page-title-text">Comanda #{{$dataTypeContent->numar_comanda}}</div>
+            <div class="page-title-text">Oferta {{$dataTypeContent->id}} - Comanda {{$dataTypeContent->numar_comanda}}</div>
         @else
             <div class="page-title-text">
-                Oferta {{$edit ? '#'.$dataTypeContent->id : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
+                Oferta {{$edit ? $dataTypeContent->id : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
             </div>
         @endif
     </h1>
@@ -2351,7 +2351,7 @@
                         if (resp.success) {
                             $(vthis).remove();
                             var html_append = '';
-                            if (resp.status == 'noua') {
+                            if (resp.status == 'asteptare') {
                                 $(".page-content.edit-add.container-fluid").addClass("comanda-productie");
                                 $("body .comanda-productie .selectAttribute").prop("disabled", true).css("cursor", "no-drop");
                                 $("body .comanda-productie input[name=curs_eur]").prop("disabled", true).css("cursor", "no-drop");

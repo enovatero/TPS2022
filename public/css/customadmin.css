@@ -1954,7 +1954,7 @@ textarea {
 }
 
 .flex__box1--1 > div {
-  width: 50% !important;
+  /*width: 50% !important;*/
 }
 .hideElement {
   display: none !important;
