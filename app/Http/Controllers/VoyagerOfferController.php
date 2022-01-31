@@ -138,8 +138,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                     $query1->where('external_number', $master)
                         ->orWhere('id', $master)
                         ->orWhere('numar_comanda', $master)
+                        ->orWhere('title', 'like', '%' . $master . '%')
                         ->orWhereHas('client', function (Builder $qr) use ($master) {
-                            $qr->where('phone', $master);
+                            $qr->where('phone', 'like', '%' . $master . '%');
                         })
                         ->orWhereHas('client', function (Builder $qr) use ($master) {
                             $qr->where('name', 'like', '%' . $master . '%');
@@ -516,8 +517,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 $query1->where('external_number', $master)
                     ->orWhere('id', $master)
                     ->orWhere('numar_comanda', $master)
+                    ->orWhere('title', 'like', '%' . $master . '%')
                     ->orWhereHas('client', function (Builder $qr) use ($master) {
-                        $qr->where('phone', $master);
+                        $qr->where('phone', 'like', '%' . $master . '%');
                     })
                     ->orWhereHas('client', function (Builder $qr) use ($master) {
                         $qr->where('name', 'like', '%' . $master . '%');
