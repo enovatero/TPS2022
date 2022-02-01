@@ -1848,13 +1848,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                                 'SET 25'
                             ) !== false ? 25 : 1) : 0;
                         //$totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
+                        if ($offProd->getParent->um == 1 && $offProd->getParent->category_id == 5) {
+                            $totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
+                        } elseif ($offProd->getParent->um == 18 && $offProd->getParent->category_id == 7) {
+                            $totalQty += $offProd->qty * 25;
+                        }
                     }
                 }
-                if ($offProd->getParent->um == 1 && $offProd->getParent->category_id == 5) {
-                    $totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
-                } elseif ($offProd->getParent->um == 18 && $offProd->getParent->category_id == 7) {
-                    $totalQty += $offProd->qty * 25;
-                }
+
                 $boxes = intval(ceil($totalQty / 25)); // rotunjire la urmatoarea valoare
                 $offer->prices = $newPrices;
             }
@@ -1916,15 +1917,15 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                                 'SET 25'
                             ) !== false ? 25 : 1) : 0;
                         //$totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
+                        if ($offProd->getParent->um == 1 && $offProd->getParent->category_id == 5) {
+                            $totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
+                        } elseif ($offProd->getParent->um == 18 && $offProd->getParent->category_id == 7) {
+                            $totalQty += $offProd->qty * 25;
+                        }
                     }
                 }
-                if ($offProd->getParent->um == 1 && $offProd->getParent->category_id == 5) {
-                    $totalQty += $offProd->qty * (strpos($offProd->getParent->title, 'SET 25') !== false ? 25 : 1);
-                } elseif ($offProd->getParent->um == 18 && $offProd->getParent->category_id == 7) {
-                    $totalQty += $offProd->qty * 25;
-                }
-                $boxes = intval(ceil($totalQty / 25)); // rotunjire la urmatoarea valoare
 
+                $boxes = intval(ceil($totalQty / 25)); // rotunjire la urmatoarea valoare
             }
             $offer->dimension = $dimension;
             $offer->boxes = $boxes;
