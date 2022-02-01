@@ -58,7 +58,10 @@
                                             </select>
                                         </label>
                                     </div>
-                                @elseif ($column['key'] == 'plata')
+                                @endif
+                            @endforeach
+                            @foreach ($columns as $column)
+                                @if ($column['key'] == 'plata')
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>

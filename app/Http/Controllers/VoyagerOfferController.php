@@ -322,7 +322,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'livrare',
-                'order_by' => null, //'delivery_type',
+                'order_by' => 'delivery_type',
                 'label' => 'Mod Livrare',
                 'width' => '110px',
             ],
@@ -358,25 +358,25 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'status',
-                'order_by' => null, //'status',
+                'order_by' => 'status',
                 'label' => 'Stare',
                 'width' => '80px',
             ],
             [
                 'key' => 'p',
-                'order_by' => null, //'attr_p',
+                'order_by' => 'attr_p',
                 'label' => 'P.',
                 'width' => '100px',
             ],
             [
                 'key' => 'pjal',
-                'order_by' => null, //'attr_pjal',
+                'order_by' => 'attr_pjal',
                 'label' => 'P. JAL.',
                 'width' => '100px',
             ],
             [
                 'key' => 'pu',
-                'order_by' => null, //'attr_pu',
+                'order_by' => 'attr_pu',
                 'label' => 'P. U.',
                 'width' => '100px',
             ],
@@ -388,7 +388,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'pacc',
-                'order_by' => null, //'attr_pacc',
+                'order_by' => 'attr_pacc',
                 'label' => 'P. Acc.',
                 'width' => '100px',
             ],
@@ -418,19 +418,19 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'plata',
-                'order_by' => null, //'payment_type',
+                'order_by' => 'payment_type',
                 'label' => 'Plata',
                 'width' => '128px',
             ],
             [
                 'key' => 'contabilitate',
-                'order_by' => null, //'billing_status',
+                'order_by' => 'billing_status',
                 'label' => 'Contabilitate',
                 'width' => '155px',
             ],
             [
                 'key' => 'agent',
-                'order_by' => null, //'agent_id',
+                'order_by' => 'agent_id',
                 'label' => 'Agent',
                 'width' => '110px',
             ],
@@ -466,7 +466,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'sursa',
-                'order_by' => null, //'distribuitor_id',
+                'order_by' => 'distribuitor_id',
                 'label' => 'Sursa',
                 'width' => '126px',
             ],
@@ -511,6 +511,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 $query->where($column['order_by'], $request->get($column['order_by'], false));
             }
         }
+
         $master = $request->get('master');
         if ($master) {
             $query->where(function ($query1) use ($master) {
