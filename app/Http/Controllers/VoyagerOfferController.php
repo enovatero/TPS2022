@@ -2175,9 +2175,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 $changedField = 'packing';
                 break;
             case $newObj->wasChanged('transparent_band'):
-                $fromValue = $oldObj->transparent_band == 0 ? 'Nu' : 'Da';
-                $toValue = $newObj->transparent_band == 0 ? 'Nu' : 'Da';
-                $resultField = 'Banda transparenta';
+                $fromValue = $oldObj->transparent_band;
+                $toValue = $newObj->transparent_band;
+                $resultField = 'Banda';
                 $changedField = 'transparent_band';
                 break;
             case $newObj->wasChanged('reducere'):

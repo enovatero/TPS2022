@@ -1989,7 +1989,7 @@
                         var html_awb_addresses = html_addr[1];
                         $("#deliveryAddressAWB").html(html_awb_addresses);
                         $("select[name=delivery_address_user]").html(html_user_addresses);
-                        $('select[name=transparent_band] option[value=' + res.transparent_band + ']').prop('selected', true).trigger("change");
+                        //$('select[name=transparent_band] option[value=' + res.transparent_band + ']').prop('selected', true).trigger("change");
                         $('select[name=delivery_address_user]').val(res.userAddresses[0].id).trigger('change');
                     } else {
                         var html_err = '';
