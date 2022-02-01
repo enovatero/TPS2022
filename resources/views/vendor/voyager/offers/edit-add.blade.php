@@ -1145,7 +1145,7 @@
     <div class="col-md-12" id="awb" style="display: none;">
         <div class="panel panel-delivery-method">
             <form class="panel-body form-fan-courier delivery-method delivery-fan" method="POST"
-                  @if($edit && $dataTypeContent->delivery_type == 'fan' || $dataTypeContent->delivery_type == null) style="display: block;"
+                  @if($edit && $dataTypeContent->delivery_type == 'fan') style="display: block;"
                   @else style="display: none;" @endif>
                 {{csrf_field()}}
                 <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
@@ -1326,6 +1326,22 @@
                                 <option
                                     @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->client_id == '2') selected
                                     @endif value="2">Top Profil Sistem Berceni
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row col-md-3" style="margin-right: 3px !important;">
+                        <div class="form-group">
+                            <label for="packageType">Tip colet</label>
+                            <select name="packageType" class="form-control">
+                                <option disabled="" selected="">Alege...</option>
+                                <option
+                                    @if($edit && $dataTypeContent->nemoData && ($dataTypeContent->nemoData->type == 'package' || $dataTypeContent->nemoData->type == null)) selected
+                                    @endif value="package">COLET
+                                </option>
+                                <option
+                                    @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->type == 'palet') selected
+                                    @endif value="palet">PALET
                                 </option>
                             </select>
                         </div>

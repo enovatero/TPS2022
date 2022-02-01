@@ -35,7 +35,7 @@ class NemoExpressController extends Controller
     {
         return (new self())->callApi($apiKey, self::CREATE_AWB_ENDPOINT, $data);
     }
-  
+
   // creez awb-ul pentru NEMO
       public static function generateAwbNemo(Request $request){
         $form_data = $request->only([
@@ -64,7 +64,7 @@ class NemoExpressController extends Controller
             'latime_pachet'   => ['required'],
             'lungime_pachet'  => ['required'],
             'continut_pachet' => ['required'],
-        ]; 
+        ];
         $validationMessages = [
             'order_id.required'        => 'Selectati o comanda pentru a genera awb-ul',
             'deliveryAccount.required' => 'Selectati un cont pentru Nemo',
@@ -89,8 +89,8 @@ class NemoExpressController extends Controller
           $legalEntity = $userAddress->legal_entities;
           // creez array-ul cu catele pe care le trimit catre NEMO
           $date_awb = [
-              'type' => 'package', 
-              'service_type' => 'standard', 
+              'type' => $form_data['packageType'] ?: 'package',
+              'service_type' => 'standard',
               'ramburs' => floatval($totalPlata),
               'ramburs_type' => $totalPlata > 0 ? 'cont' : 'cash',
               'payer' => $form_data['plata_expeditie'],
@@ -123,7 +123,7 @@ class NemoExpressController extends Controller
               return ['success' => false, 'msg' => [0 => $nemo['error']]];
             }
             $created_at = date("Y-m-d H:i:s");
-            
+
             // creez obiectul $nemoOrder cu datele pe care le-am trimis catre Nemo
             if($offer->awb_id != null && $offer->delivery_type == 'nemo'){
               $nemoOrder = NemoOrder::find($offer->awb_id);
@@ -131,7 +131,7 @@ class NemoExpressController extends Controller
               $nemoOrder = new NemoOrder();
             }
             $nemoResponse = json_decode($nemo['response'], true);
-            
+
             $nemoOrder->order_id = $offer->id;
             $nemoOrder->cont_id = $form_data['deliveryAccount'];
             $nemoOrder->plata_expeditie = $form_data['plata_expeditie'];
@@ -150,7 +150,7 @@ class NemoExpressController extends Controller
             $nemoOrder->status = $nemoResponse['data']['status'];
             $nemoOrder->hash = hash_hmac('ripemd160', $nemoResponse['data']['no'], $apiKey);
             $nemoOrder->save();
-  
+
             // updatez awb-ul in baza de date la oferta pentru care am generat awb-ul
             $offer->awb_id = $nemoOrder->id;
             $offer->save();
@@ -170,7 +170,7 @@ class NemoExpressController extends Controller
         $response = (new self())->callApi(self::PRICE_AWB_ENDPOINT, $data);
         return json_decode($response);
     }
-  
+
   // printez awb-ul pe baza unui numar de awb, a unui id de client nemo si a unui hash generat si salvat in baza de date in nemo_orders
     public function printAwbNemo($awb_no, $client_id, $hash){
       if ($client_id != null && $awb_no != null && $hash != null) {
@@ -233,7 +233,7 @@ class NemoExpressController extends Controller
         $response = (new self())->callApi(self::GET_SERVICES_LIST . $type);
         return json_decode($response);
     }
-  
+
       /**
      * @param string $awbNo
      * @param string $full
