@@ -52,6 +52,7 @@ class NemoExpressController extends Controller
             'plata_expeditie',
             'deliveryAddressAWB',
             'fragil',
+            'packageType'
           ]);
         $validationRules = [
             'order_id'        => ['required'],
