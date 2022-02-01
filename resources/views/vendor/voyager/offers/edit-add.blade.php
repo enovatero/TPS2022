@@ -1292,12 +1292,12 @@
                             <select name="plata_expeditie" class="form-control">
                                 <option value="client"
                                         @if($edit && (($dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'client') || $dataTypeContent->nemoData == null)) selected @endif>
-                                    Client
-                                </option>
-                                <option value="expeditor"
-                                        @if($edit && (($dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'expeditor') || $dataTypeContent->nemoData == null)) selected @endif>
                                     Expeditor
                                 </option>
+{{--                                <option value="expeditor"--}}
+{{--                                        @if($edit && (($dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'expeditor') || $dataTypeContent->nemoData == null)) selected @endif>--}}
+{{--                                    Expeditor--}}
+{{--                                </option>--}}
                                 <option
                                     value="destinatar" @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'destinatar') @endif>
                                     Destinatar
