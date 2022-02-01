@@ -135,6 +135,7 @@ class NemoExpressController extends Controller
             $nemoOrder->order_id = $offer->id;
             $nemoOrder->cont_id = $form_data['deliveryAccount'];
             $nemoOrder->plata_expeditie = $form_data['plata_expeditie'];
+            $nemoOrder->type = $form_data['packageType'];
             $nemoOrder->numar_colete = $form_data['numar_colete'];
             $nemoOrder->greutate_totala = $form_data['greutate_totala'];
             $nemoOrder->ramburs_numerar = floatval($totalPlata);
