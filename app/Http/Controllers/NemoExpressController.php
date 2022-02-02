@@ -115,6 +115,7 @@ class NemoExpressController extends Controller
               'to_extra' => '',
               'to_cui' => $legalEntity != null ? $legalEntity->cui : '',
               'to_regcom' => $legalEntity != null ? $legalEntity->reg_com : '',
+              'service_1' => $form_data['openOnDelivery'] == 1,
           ];
           try{
             // creez obiectul nemo cu deliveryAccount
@@ -151,6 +152,7 @@ class NemoExpressController extends Controller
             $nemoOrder->awb = $nemoResponse['data']['no'];
             $nemoOrder->status = $nemoResponse['data']['status'];
             $nemoOrder->hash = hash_hmac('ripemd160', $nemoResponse['data']['no'], $apiKey);
+            $nemoOrder->open_on_delivery = $form_data['openOnDelivery'] ?: 0;
             $nemoOrder->save();
 
             // updatez awb-ul in baza de date la oferta pentru care am generat awb-ul

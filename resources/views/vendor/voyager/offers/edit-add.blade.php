@@ -1371,6 +1371,22 @@
                                    @if($edit) value="{{$dataTypeContent->total_final}}" @endif>
                         </div>
                     </div>
+                    <div class="row col-md-3" style="margin-right: 3px !important;">
+                        <div class="form-group">
+                            <label for="openOnDelivery">Deschide la livrare</label>
+                            <select name="openOnDelivery" class="form-control">
+                                <option disabled="" selected="">Alege...</option>
+                                <option
+                                    @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->open_on_delivery) selected
+                                    @endif value="1">DA
+                                </option>
+                                <option
+                                    @if($edit && $dataTypeContent->nemoData && !$dataTypeContent->nemoData->open_on_delivery) selected
+                                    @endif value="0">NU
+                                </option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-12">
                     <div class="row col-md-3" style="margin-right: 3px !important;">
