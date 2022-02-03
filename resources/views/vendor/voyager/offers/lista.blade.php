@@ -317,7 +317,15 @@
                                                 @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
                                                   @continue
                                                 @endif
-                                                <td class="overflow__list-1 column_{{ $column['key'] }} @if($column['key'] == 'status') statusTd @endif">
+                                                <td class="overflow__list-1 column_{{ $column['key'] }} @if($column['key'] == 'status') statusTd @endif"
+                                                    style="
+                                                    @if ($column['key'] == 'tip_comanda')
+                                                        background-color: {{$data->offerTypeCustom ? $data->offerTypeCustom->bg_color : $data->offerType->bg_color}}; color: {{$data->offerTypeCustom ? $data->offerTypeCustom->text_color : $data->offerType->text_color}};
+                                                    @elseif ($column['key'] == 'culoare')
+
+                                                    @endif
+                                                        "
+                                                >
                                                     @if ($column['key'] == 'nr_com')
                                                         <a href="/admin/offers/{{ $data->id }}/edit">
                                                             {{ $data->numar_comanda }}
