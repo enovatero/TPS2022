@@ -52,7 +52,8 @@ class NemoExpressController extends Controller
             'plata_expeditie',
             'deliveryAddressAWB',
             'fragil',
-            'packageType'
+            'packageType',
+            'openOnDelivery'
           ]);
         $validationRules = [
             'order_id'        => ['required'],
@@ -65,6 +66,8 @@ class NemoExpressController extends Controller
             'latime_pachet'   => ['required'],
             'lungime_pachet'  => ['required'],
             'continut_pachet' => ['required'],
+            'packageType' => ['required'],
+            'openOnDelivery' => ['required'],
         ];
         $validationMessages = [
             'order_id.required'        => 'Selectati o comanda pentru a genera awb-ul',
@@ -77,6 +80,9 @@ class NemoExpressController extends Controller
             'latime_pachet.required'    => 'Adaugati latimea pachetului',
             'lungime_pachet.required'   => 'Adaugati lungimea pachetului',
             'continut_pachet.required'  => 'Adaugati continutul pachetului',
+            'packageType.required'      => 'Alegeti tipul de pachet',
+            'openOnDelivery.required'   => 'Alegeti optiune deschidere colet',
+
         ];
         $validator = Validator::make($form_data, $validationRules, $validationMessages);
         if ($validator->fails()){
@@ -115,7 +121,7 @@ class NemoExpressController extends Controller
               'to_extra' => '',
               'to_cui' => $legalEntity != null ? $legalEntity->cui : '',
               'to_regcom' => $legalEntity != null ? $legalEntity->reg_com : '',
-              'service_1' => $form_data['openOnDelivery'] == 1,
+              'service_1' => (isset($form_data['openOnDelivery']) && $form_data['openOnDelivery'] == 1),
           ];
           try{
             // creez obiectul nemo cu deliveryAccount
@@ -152,7 +158,7 @@ class NemoExpressController extends Controller
             $nemoOrder->awb = $nemoResponse['data']['no'];
             $nemoOrder->status = $nemoResponse['data']['status'];
             $nemoOrder->hash = hash_hmac('ripemd160', $nemoResponse['data']['no'], $apiKey);
-            $nemoOrder->open_on_delivery = $form_data['openOnDelivery'] ?: 0;
+            $nemoOrder->open_on_delivery = isset($form_data['openOnDelivery']) ? $form_data['openOnDelivery'] : 0;
             $nemoOrder->save();
 
             // updatez awb-ul in baza de date la oferta pentru care am generat awb-ul
