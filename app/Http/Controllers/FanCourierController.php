@@ -29,8 +29,8 @@ class FanCourierController extends Controller
     $counties = array_values(array_unique($counties));
     cache(['fancourier_counties' => $counties], now()->addWeeks(4));
     return $counties;
-  }  
-  
+  }
+
   // Preiau toate orasele pe baza id-ului localitatii FAN
   public static function getCitiesWithId(Request $request){
     if(empty($request->input('county'))){
@@ -38,11 +38,11 @@ class FanCourierController extends Controller
     }
     $county = $request->input('county');
     $cities_with_id = cache('fancourier_cities_with_id_'.$county);
-    
+
     if($cities_with_id){
       return $cities_with_id;
     }
-    
+
     $city_by_county = FanCourier::city(['judet'=>$county, 'language'=>'RO']);
     $cities_with_id = [];
     foreach($city_by_county as $item){
@@ -54,7 +54,7 @@ class FanCourierController extends Controller
     cache(['fancourier_cities_with_id_'.$county => $cities_with_id], now()->addWeeks(4));
     return $cities_with_id;
   }
-  
+
     // Preiau toate orasele pe baza agentiei si judetului
   public static function getCitiesAgency(Request $request){
     if(empty($request->input('county'))){
@@ -62,11 +62,11 @@ class FanCourierController extends Controller
     }
     $county = $request->input('county');
     $cities_agency = cache('fancourier_cities_agency_'.$county);
-    
+
     if($cities_agency){
       return $cities_agency;
     }
-    
+
     $city_by_county = FanCourier::LocalitatiSedii(['id'=>$county, 'tip'=>'agentie', 'request_type' => 'get']);
     $city_by_county = json_decode($city_by_county, true);
     $cities_agency = [];
@@ -79,7 +79,7 @@ class FanCourierController extends Controller
     cache(['fancourier_cities_agency_'.$county => $cities_agency], now()->addWeeks(4));
     return $cities_agency;
   }
-  
+
   // Preiau toate orasele pe baza judetului
   public static function getCities(Request $request){
     if(empty($request->input('county'))){
@@ -90,7 +90,7 @@ class FanCourierController extends Controller
     if($cities){
       return $cities;
     }
-    
+
     $city_by_county = FanCourier::city(['judet'=>$county, 'language'=>'RO']);
     $cities = [];
     foreach($city_by_county as $item){
@@ -106,7 +106,7 @@ class FanCourierController extends Controller
     ]);
     print_r($awb);
   }
-  
+
   // functie pentru printarea awb-ului generat, pentru care am numar awb si un id de client fan
   public static function printAwb($awb, $client_id){
     // schimb config-ul pentru request-ul asta cu noul id de client
@@ -122,7 +122,7 @@ class FanCourierController extends Controller
     }
       echo $awb_file;
   }
-  
+
   // preiau sediile
   public static function getSedii($localitate = null){
      $sedii = FanCourier::SediiFAN([
@@ -132,7 +132,7 @@ class FanCourierController extends Controller
     ]);
     return $sedii;
   }
-  
+
   // preiau km exteriori pe baza localitatii de destinatie
   public static function getKmExteriori($localitate){
     $km_exteriori = FanCourier::KmExteriori([
@@ -141,7 +141,7 @@ class FanCourierController extends Controller
     ]);
     return ['success' => true, 'km' => $km_exteriori];
   }
-  
+
   // preiau pretul - nefolosita pentru ca nu adaugam niciun pret pe comanda facuta
   public function getPrice(){
     $price = FanCourier::price([
@@ -160,7 +160,7 @@ class FanCourierController extends Controller
     ]);
     return $price;
   }
-  
+
   // generez awb-ul in contul FAN
   public static function generateAwb(Request $request){
        $form_data = $request->only([
@@ -188,7 +188,7 @@ class FanCourierController extends Controller
           'latime_pachet'   => ['required'],
           'lungime_pachet'  => ['required'],
           'continut_pachet' => ['required'],
-      ]; 
+      ];
       $validationMessages = [
           'order_id.required'        => 'Selectati o comanda pentru a genera awb-ul',
           'deliveryAccount.required' => 'Selectati un cont pentru FanCourier',
@@ -208,16 +208,16 @@ class FanCourierController extends Controller
       if ($validator->fails()){
         return ['success' => false, 'msg' => $validator->errors()->toArray()];
       } else{
-        
+
         $offer = Offer::with('fanData')->find($form_data['order_id']);
         $agent = User::find($offer->agent_id);
         $userAddress = UserAddress::find($form_data['deliveryAddressAWB']);
         $userData = $userAddress->userData();
         $totalPlata = $form_data['ramburs_numerar'];
-        
+
         // completez array-ul pentru a-l trimite catre FAN
         $date_awb = [
-            'tip_serviciu' => $totalPlata > 0 ? 'cont colector' : 'standard', 
+            'tip_serviciu' => $totalPlata > 0 ? 'cont colector' : 'standard',
             'banca' => '',
             'iban' =>  'RO24BTRL04501202U46323XX', // de pus in settings in admin
             'nr_plicuri' => 0,
@@ -237,7 +237,7 @@ class FanCourierController extends Controller
             'fax' => '',
             'email' => $userAddress->email ?: $userData->email,
             'judet' => $userAddress->state_name(),
-            'localitate' => $userAddress->city_name(),
+            'localitate' => (strtolower($userAddress->state_name()) == 'bucuresti') ? 'Bucuresti': $userAddress->city_name(),
             'strada' => $userAddress->address,
             'nr' => '',
             'cod_postal' => '000000',
@@ -258,7 +258,7 @@ class FanCourierController extends Controller
           // schimb config-ul local cu id-ul de client pe care l-am selectat
           config(['fancourier.client_id' => $form_data['deliveryAccount']]);
           app()->bind('fancourier','SeniorProgramming\FanCourier\Services\ApiService');
-          
+
           // generez AWB-ul
           $awb = FanCourier::generateAwb(['fisier' => [$date_awb]]);
           $created_at = date("Y-m-d H:i:s");
@@ -271,7 +271,7 @@ class FanCourierController extends Controller
           } else{
             $fanOrder = new FanOrder();
           }
-          
+
           $fanOrder->order_id = $offer->id;
           $fanOrder->cont_id = $form_data['deliveryAccount'];
           $fanOrder->plata_expeditie = $form_data['plata_expeditie'];
@@ -290,10 +290,10 @@ class FanCourierController extends Controller
           // updatez oferta cu numarul awb pe care l-am generat
           $offer->awb_id = $fanOrder->id;
           $offer->save();
-          
+
           $message = "a generat awb-ul FanCourier";
           \App\Http\Controllers\VoyagerOfferController::createEvent($offer, $message);
-          
+
           return ['success' => true, 'msg' => 'AWB-ul s-a generat cu succes!', 'awb' => $fanOrder->awb, 'id' => $offer->id, 'client_id' => $fanOrder->cont_id, 'html_log' => \App\Http\Controllers\VoyagerOfferController::getHtmlLog($offer)];
         } catch(Exception $e){
           return ['success' => false, 'msg' => [0 => 'Eroare: '.$e->getMessage()]];
