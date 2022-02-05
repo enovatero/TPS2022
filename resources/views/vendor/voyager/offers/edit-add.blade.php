@@ -18,12 +18,17 @@
     <h1 class="page-title">
         <i class="{{ $dataType->icon }}"></i>
         @if($edit && $dataTypeContent->numar_comanda != null)
-            <div class="page-title-text">Oferta {{$dataTypeContent->id}} - Comanda {{$dataTypeContent->numar_comanda}}</div>
+            Oferta {{$dataTypeContent->id}} - Comanda {{$dataTypeContent->numar_comanda}}
         @else
-            <div class="page-title-text">
-                Oferta {{$edit ? $dataTypeContent->id : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
-            </div>
+            Oferta {{$edit ? $dataTypeContent->id : 'noua'}} {{$edit && $dataTypeContent->status_name->title == 'retur' ? ' - RETUR' : ''}}
         @endif
+        @can('add', app($dataType->model_name))
+            <div style="float: right">
+            <a href="{{ route('voyager.'.$dataType->slug.'.create') }}" class="btn btn-success btn-add-new">
+                <i class="voyager-plus"></i> <span>{{ __('tps.add_new_offer') }}</span>
+            </a>
+            </div>
+        @endcan
     </h1>
     @include('voyager::multilingual.language-selector')
 @stop
@@ -108,7 +113,6 @@
                 @endif
             @endif
             <div class="col-md-12" id="oferta">
-
                 <div class="panel panel-bordered" style="border: none; box-shadow: none;">
                     <!-- form start -->
                     <form role="form"
@@ -1141,311 +1145,312 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-12" id="awb" style="display: none;">
-        <div class="panel panel-delivery-method">
-            <form class="panel-body form-fan-courier delivery-method delivery-fan" method="POST"
-                  @if($edit && $dataTypeContent->delivery_type == 'fan') style="display: block;"
-                  @else style="display: none;" @endif>
-                {{csrf_field()}}
-                <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
-                <div class="col-md-12">
-                    <div class="form-group">
-                        <label for="deliveryAccount">Cont FAN</label>
-                        <select name="deliveryAccount" id="deliveryAccount" class="form-control">
-                            <option disabled="" selected="">Alege...</option>
-                            <option
-                                @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7155019') selected
-                                @endif value="7155019">BERCENI
-                            </option>
-                            <option
-                                @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7165267') selected
-                                @endif value="7165267">MPOS
-                            </option>
-                            <option
-                                @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7177309') selected
-                                @endif value="7177309">IASI
-                            </option>
-                            <option
-                                @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7038192') selected
-                                @endif value="7038192">STANDARD
-                            </option>
-                        </select>
-                    </div>
-                    <!--                   <div class="row col-md-3" style="margin-right: 3px !important;">
-                                        <div class="form-group">
-                                          <label for="on">Ridicare sediu FAN</label>
-                                          <select name="ridicare_sediu_fan" class="form-control">
-                                            <option value="off" selected>Nu</option>
-                                            <option value="on">Da</option>
-                                          </select>
-                                        </div>
-                                        <div class="form-group">
-                                          <div class="sediu"></div>
-                                        </div>
-                                      </div> -->
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label>Plata expeditie</label>
-                            <select name="plata_expeditie" class="form-control">
-                                <option value="expeditor"
-                                        @if($edit && (($dataTypeContent->fanData && $dataTypeContent->fanData->plata_expeditie == 'expeditor') || $dataTypeContent->fanData == null)) selected @endif>
-                                    Expeditor
-                                </option>
-                                <option
-                                    value="destinatar" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->plata_expeditie == 'destinatar') @endif>
-                                    Destinatar
-                                </option>
-                            </select>
+        <div class="row">
+            <div class="col-md-12" id="awb" style="display: none;">
+                <div class="panel panel-delivery-method">
+                    <form class="panel-body form-fan-courier delivery-method delivery-fan" method="POST"
+                          @if($edit && $dataTypeContent->delivery_type == 'fan') style="display: block;"
+                          @else style="display: none;" @endif>
+                        {{csrf_field()}}
+                        <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="deliveryAccount">Cont FAN</label>
+                                <select name="deliveryAccount" id="deliveryAccount" class="form-control">
+                                    <option disabled="" selected="">Alege...</option>
+                                    <option
+                                        @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7155019') selected
+                                        @endif value="7155019">BERCENI
+                                    </option>
+                                    <option
+                                        @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7165267') selected
+                                        @endif value="7165267">MPOS
+                                    </option>
+                                    <option
+                                        @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7177309') selected
+                                        @endif value="7177309">IASI
+                                    </option>
+                                    <option
+                                        @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->fan_client_id == '7038192') selected
+                                        @endif value="7038192">STANDARD
+                                    </option>
+                                </select>
+                            </div>
+                            <!--                   <div class="row col-md-3" style="margin-right: 3px !important;">
+                                                <div class="form-group">
+                                                  <label for="on">Ridicare sediu FAN</label>
+                                                  <select name="ridicare_sediu_fan" class="form-control">
+                                                    <option value="off" selected>Nu</option>
+                                                    <option value="on">Da</option>
+                                                  </select>
+                                                </div>
+                                                <div class="form-group">
+                                                  <div class="sediu"></div>
+                                                </div>
+                                              </div> -->
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label>Plata expeditie</label>
+                                    <select name="plata_expeditie" class="form-control">
+                                        <option value="expeditor"
+                                                @if($edit && (($dataTypeContent->fanData && $dataTypeContent->fanData->plata_expeditie == 'expeditor') || $dataTypeContent->fanData == null)) selected @endif>
+                                            Expeditor
+                                        </option>
+                                        <option
+                                            value="destinatar" @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->plata_expeditie == 'destinatar') @endif>
+                                            Destinatar
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="packages">Nr. colete</label>
-                            <input type="number" name="numar_colete" id="packages" class="form-control"
-                                   @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->numar_colete) value="{{$dataTypeContent->fanData->numar_colete}}"
-                                   @else value="1" @endif>
+                        <div class="col-md-12">
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="packages">Nr. colete</label>
+                                    <input type="number" name="numar_colete" id="packages" class="form-control"
+                                           @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->numar_colete) value="{{$dataTypeContent->fanData->numar_colete}}"
+                                           @else value="1" @endif>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="weight">Greutate (kg)</label>
+                                    <input type="number" name="greutate_totala" id="weight" class="form-control"
+                                           @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->greutate_totala) value="{{$dataTypeContent->fanData->greutate_totala}}"
+                                           @else value="1" @endif>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="cashback">Ramburs (ex: 2542.26)</label>
+                                    <input type="number" name="ramburs_numerar" id="cashback" class="form-control"
+                                           @if($edit) value="{{$dataTypeContent->total_final}}" @endif>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="weight">Greutate (kg)</label>
-                            <input type="number" name="greutate_totala" id="weight" class="form-control"
-                                   @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->greutate_totala) value="{{$dataTypeContent->fanData->greutate_totala}}"
-                                   @else value="1" @endif>
+                        <div class="col-md-12">
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="height">Inaltime (cm)</label>
+                                    <input type="number" name="inaltime_pachet" id="height" class="form-control"
+                                           @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->inaltime_pachet) value="{{$dataTypeContent->fanData->inaltime_pachet}}" @endif>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="Width">Latime (cm)</label>
+                                    <input type="number" name="latime_pachet" id="Width" class="form-control"
+                                           @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->latime_pachet) value="{{$dataTypeContent->fanData->latime_pachet}}" @endif>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="lenght">Lungime (cm)</label>
+                                    <input type="number" name="lungime_pachet" id="lenght" class="form-control"
+                                           @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->lungime_pachet) value="{{$dataTypeContent->fanData->lungime_pachet}}" @endif>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="cashback">Ramburs (ex: 2542.26)</label>
-                            <input type="number" name="ramburs_numerar" id="cashback" class="form-control"
-                                   @if($edit) value="{{$dataTypeContent->total_final}}" @endif>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="contents">Continut</label>
+                                <input type="text" name="continut_pachet" id="contents" class="form-control"
+                                       @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->continut_pachet) value="{{$dataTypeContent->fanData->continut_pachet}}" @endif>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="height">Inaltime (cm)</label>
-                            <input type="number" name="inaltime_pachet" id="height" class="form-control"
-                                   @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->inaltime_pachet) value="{{$dataTypeContent->fanData->inaltime_pachet}}" @endif>
-                        </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="Width">Latime (cm)</label>
-                            <input type="number" name="latime_pachet" id="Width" class="form-control"
-                                   @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->latime_pachet) value="{{$dataTypeContent->fanData->latime_pachet}}" @endif>
-                        </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="lenght">Lungime (cm)</label>
-                            <input type="number" name="lungime_pachet" id="lenght" class="form-control"
-                                   @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->lungime_pachet) value="{{$dataTypeContent->fanData->lungime_pachet}}" @endif>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="form-group">
-                        <label for="contents">Continut</label>
-                        <input type="text" name="continut_pachet" id="contents" class="form-control"
-                               @if($edit && $dataTypeContent->fanData && $dataTypeContent->fanData->continut_pachet) value="{{$dataTypeContent->fanData->continut_pachet}}" @endif>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <label for="deliveryAddressAWB">Adresa de livrare</label>
-                    <select name="deliveryAddressAWB" id="deliveryAddressAWB" class="form-control">
-                        <option disabled="" selected="">Alege...</option>
-                        @if($userAddresses != null && count($userAddresses) > 0)
-                            @foreach($userAddresses as $address)
-                                <option value="{{$address->id}}"
-                                        @if($edit && $dataTypeContent && $dataTypeContent->fanData && $dataTypeContent->fanData->adresa_livrare_id == $address->id) selected @endif>
-                                    {{$address->name}} -
-                                    {{$address->address}},
-                                    {{$address->city_name}},
-                                    {{$address->state_name}},
-                                    {{$address->phone}}
-                                </option>
-                            @endforeach
-                        @endif
-                    </select>
-                </div>
-                <div class="col-md-12 panel-footer">
-                    <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwb"
-                            already_generated="{{$dataTypeContent->awb_id && $dataTypeContent->delivery_type == 'fan' ? 1 : 0}}">
-                        Genereaza AWB
-                    </button>
-                </div>
-            </form>
-            <form class="panel-body form-fan-courier delivery-method delivery-nemo" method="POST"
-                  @if($edit && $dataTypeContent->delivery_type == 'nemo') style="display: block;"
-                  @else style="display: none;" @endif>
-                {{csrf_field()}}
-                <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
-                <div class="col-md-12">
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label>Plata expeditie</label>
-                            <select name="plata_expeditie" class="form-control">
-                                <option value="client"
-                                        @if($edit && (($dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'client') || $dataTypeContent->nemoData == null)) selected @endif>
-                                    Expeditor
-                                </option>
-{{--                                <option value="expeditor"--}}
-{{--                                        @if($edit && (($dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'expeditor') || $dataTypeContent->nemoData == null)) selected @endif>--}}
-{{--                                    Expeditor--}}
-{{--                                </option>--}}
-                                <option
-                                    value="destinatar" @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'destinatar') @endif>
-                                    Destinatar
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="on">Fragil?</label>
-                            <select name="fragil" class="form-control">
-                                <option value="nu" selected>Nu</option>
-                                <option value="da">Da</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="deliveryAccount">Cont Nemo</label>
-                            <select name="deliveryAccount" class="form-control">
+                        <div class="col-md-12">
+                            <label for="deliveryAddressAWB">Adresa de livrare</label>
+                            <select name="deliveryAddressAWB" id="deliveryAddressAWB" class="form-control">
                                 <option disabled="" selected="">Alege...</option>
-                                <option
-                                    @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->client_id == '1') selected
-                                    @endif value="1">Top Profil Sistem Iasi
-                                </option>
-                                <option
-                                    @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->client_id == '2') selected
-                                    @endif value="2">Top Profil Sistem Berceni
-                                </option>
+                                @if($userAddresses != null && count($userAddresses) > 0)
+                                    @foreach($userAddresses as $address)
+                                        <option value="{{$address->id}}"
+                                                @if($edit && $dataTypeContent && $dataTypeContent->fanData && $dataTypeContent->fanData->adresa_livrare_id == $address->id) selected @endif>
+                                            {{$address->name}} -
+                                            {{$address->address}},
+                                            {{$address->city_name}},
+                                            {{$address->state_name}},
+                                            {{$address->phone}}
+                                        </option>
+                                    @endforeach
+                                @endif
                             </select>
                         </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="packageType">Tip colet</label>
-                            <select name="packageType" class="form-control">
+                        <div class="col-md-12 panel-footer">
+                            <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwb"
+                                    already_generated="{{$dataTypeContent->awb_id && $dataTypeContent->delivery_type == 'fan' ? 1 : 0}}">
+                                Genereaza AWB
+                            </button>
+                        </div>
+                    </form>
+                    <form class="panel-body form-fan-courier delivery-method delivery-nemo" method="POST"
+                          @if($edit && $dataTypeContent->delivery_type == 'nemo') style="display: block;"
+                          @else style="display: none;" @endif>
+                        {{csrf_field()}}
+                        <input type="hidden" name="order_id" id="order_id" value="{{$dataTypeContent->id}}">
+                        <div class="col-md-12">
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label>Plata expeditie</label>
+                                    <select name="plata_expeditie" class="form-control">
+                                        <option value="client"
+                                                @if($edit && (($dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'client') || $dataTypeContent->nemoData == null)) selected @endif>
+                                            Expeditor
+                                        </option>
+                                        {{--                                <option value="expeditor"--}}
+                                        {{--                                        @if($edit && (($dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'expeditor') || $dataTypeContent->nemoData == null)) selected @endif>--}}
+                                        {{--                                    Expeditor--}}
+                                        {{--                                </option>--}}
+                                        <option
+                                            value="destinatar" @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->plata_expeditie == 'destinatar') @endif>
+                                            Destinatar
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="on">Fragil?</label>
+                                    <select name="fragil" class="form-control">
+                                        <option value="nu" selected>Nu</option>
+                                        <option value="da">Da</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="deliveryAccount">Cont Nemo</label>
+                                    <select name="deliveryAccount" class="form-control">
+                                        <option disabled="" selected="">Alege...</option>
+                                        <option
+                                            @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->client_id == '1') selected
+                                            @endif value="1">Top Profil Sistem Iasi
+                                        </option>
+                                        <option
+                                            @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->client_id == '2') selected
+                                            @endif value="2">Top Profil Sistem Berceni
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="packageType">Tip colet</label>
+                                    <select name="packageType" class="form-control">
+                                        <option disabled="" selected="">Alege...</option>
+                                        <option
+                                            @if($edit && $dataTypeContent->nemoData && ($dataTypeContent->nemoData->type == 'package' || $dataTypeContent->nemoData->type == null)) selected
+                                            @endif value="package">COLET
+                                        </option>
+                                        <option
+                                            @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->type == 'palet') selected
+                                            @endif value="palet">PALET
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="packages">Nr. colete</label>
+                                    <input type="number" name="numar_colete" class="form-control"
+                                           @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->numar_colete) value="{{$dataTypeContent->nemoData->numar_colete}}"
+                                           @else value="1" @endif>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="weight">Greutate (kg)</label>
+                                    <input type="number" name="greutate_totala" class="form-control"
+                                           @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->greutate_totala) value="{{$dataTypeContent->nemoData->greutate_totala}}"
+                                           @else value="1" @endif>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="cashback">Ramburs (ex: 2542.26)</label>
+                                    <input type="number" name="ramburs_numerar" class="form-control"
+                                           @if($edit) value="{{$dataTypeContent->total_final}}" @endif>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="openOnDelivery">Deschide la livrare</label>
+                                    <select name="openOnDelivery" class="form-control">
+                                        <option disabled="" selected="">Alege...</option>
+                                        <option
+                                            @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->open_on_delivery) selected
+                                            @endif value="1">DA
+                                        </option>
+                                        <option
+                                            @if($edit && $dataTypeContent->nemoData && !$dataTypeContent->nemoData->open_on_delivery) selected
+                                            @endif value="0">NU
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="height">Inaltime (cm)</label>
+                                    <input type="number" name="inaltime_pachet" class="form-control"
+                                           @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->inaltime_pachet) value="{{$dataTypeContent->nemoData->inaltime_pachet}}" @endif>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="Width">Latime (cm)</label>
+                                    <input type="number" name="latime_pachet" class="form-control"
+                                           @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->latime_pachet) value="{{$dataTypeContent->nemoData->latime_pachet}}" @endif>
+                                </div>
+                            </div>
+                            <div class="row col-md-3" style="margin-right: 3px !important;">
+                                <div class="form-group">
+                                    <label for="lenght">Lungime (cm)</label>
+                                    <input type="number" name="lungime_pachet" class="form-control"
+                                           @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->lungime_pachet) value="{{$dataTypeContent->nemoData->lungime_pachet}}" @endif>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="contents">Continut</label>
+                                <input type="text" name="continut_pachet" class="form-control"
+                                       @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->continut_pachet) value="{{$dataTypeContent->nemoData->continut_pachet}}" @endif>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="deliveryAddressAWB">Adresa de livrare</label>
+                            <select name="deliveryAddressAWB" class="form-control">
                                 <option disabled="" selected="">Alege...</option>
-                                <option
-                                    @if($edit && $dataTypeContent->nemoData && ($dataTypeContent->nemoData->type == 'package' || $dataTypeContent->nemoData->type == null)) selected
-                                    @endif value="package">COLET
-                                </option>
-                                <option
-                                    @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->type == 'palet') selected
-                                    @endif value="palet">PALET
-                                </option>
+                                @if($userAddresses != null && count($userAddresses) > 0)
+                                    @foreach($userAddresses as $address)
+                                        <option value="{{$address->id}}"
+                                                @if($edit && $dataTypeContent && $dataTypeContent->nemoData && $dataTypeContent->nemoData->adresa_livrare_id == $address->id) selected @endif>
+                                            {{$address->name}} -
+                                            {{$address->address}},
+                                            {{$address->city_name}},
+                                            {{$address->state_name}},
+                                            {{$address->phone}}
+                                        </option>
+                                    @endforeach
+                                @endif
                             </select>
                         </div>
-                    </div>
+                        <div class="col-md-12 panel-footer">
+                            <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwbNemo"
+                                    already_generated="{{$dataTypeContent->awb_id && $dataTypeContent->delivery_type == 'nemo' ? 1 : 0}}">
+                                Genereaza AWB
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="col-md-12">
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="packages">Nr. colete</label>
-                            <input type="number" name="numar_colete" class="form-control"
-                                   @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->numar_colete) value="{{$dataTypeContent->nemoData->numar_colete}}"
-                                   @else value="1" @endif>
-                        </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="weight">Greutate (kg)</label>
-                            <input type="number" name="greutate_totala" class="form-control"
-                                   @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->greutate_totala) value="{{$dataTypeContent->nemoData->greutate_totala}}"
-                                   @else value="1" @endif>
-                        </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="cashback">Ramburs (ex: 2542.26)</label>
-                            <input type="number" name="ramburs_numerar" class="form-control"
-                                   @if($edit) value="{{$dataTypeContent->total_final}}" @endif>
-                        </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="openOnDelivery">Deschide la livrare</label>
-                            <select name="openOnDelivery" class="form-control">
-                                <option disabled="" selected="">Alege...</option>
-                                <option
-                                    @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->open_on_delivery) selected
-                                    @endif value="1">DA
-                                </option>
-                                <option
-                                    @if($edit && $dataTypeContent->nemoData && !$dataTypeContent->nemoData->open_on_delivery) selected
-                                    @endif value="0">NU
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="height">Inaltime (cm)</label>
-                            <input type="number" name="inaltime_pachet" class="form-control"
-                                   @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->inaltime_pachet) value="{{$dataTypeContent->nemoData->inaltime_pachet}}" @endif>
-                        </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="Width">Latime (cm)</label>
-                            <input type="number" name="latime_pachet" class="form-control"
-                                   @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->latime_pachet) value="{{$dataTypeContent->nemoData->latime_pachet}}" @endif>
-                        </div>
-                    </div>
-                    <div class="row col-md-3" style="margin-right: 3px !important;">
-                        <div class="form-group">
-                            <label for="lenght">Lungime (cm)</label>
-                            <input type="number" name="lungime_pachet" class="form-control"
-                                   @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->lungime_pachet) value="{{$dataTypeContent->nemoData->lungime_pachet}}" @endif>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="form-group">
-                        <label for="contents">Continut</label>
-                        <input type="text" name="continut_pachet" class="form-control"
-                               @if($edit && $dataTypeContent->nemoData && $dataTypeContent->nemoData->continut_pachet) value="{{$dataTypeContent->nemoData->continut_pachet}}" @endif>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <label for="deliveryAddressAWB">Adresa de livrare</label>
-                    <select name="deliveryAddressAWB" class="form-control">
-                        <option disabled="" selected="">Alege...</option>
-                        @if($userAddresses != null && count($userAddresses) > 0)
-                            @foreach($userAddresses as $address)
-                                <option value="{{$address->id}}"
-                                        @if($edit && $dataTypeContent && $dataTypeContent->nemoData && $dataTypeContent->nemoData->adresa_livrare_id == $address->id) selected @endif>
-                                    {{$address->name}} -
-                                    {{$address->address}},
-                                    {{$address->city_name}},
-                                    {{$address->state_name}},
-                                    {{$address->phone}}
-                                </option>
-                            @endforeach
-                        @endif
-                    </select>
-                </div>
-                <div class="col-md-12 panel-footer">
-                    <button type="button" class="btn btn-primary btnGreenNew btnGenerateAwbNemo"
-                            already_generated="{{$dataTypeContent->awb_id && $dataTypeContent->delivery_type == 'nemo' ? 1 : 0}}">
-                        Genereaza AWB
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
-
     <div class="modal fade modal-danger" id="confirm_delete_modal">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -1621,9 +1626,7 @@
             var isNewClient = {!! $isNewClient != "" && $isNewClient == true ? 'true' : 'false' !!};
             //console.log(isNewClient);
             if (isNewClient && !isEdit) {
-                var newOption = new Option("Adauga client nou", -1, false, false);
-                $("select[name=client_id]").append(newOption).val(-1).trigger('change');
-            }
+             }
             $(".btnOferta").click(function () {
                 $("#oferta").show();
                 $("#awb").hide();

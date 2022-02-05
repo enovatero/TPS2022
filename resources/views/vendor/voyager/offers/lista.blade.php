@@ -7,19 +7,22 @@
         <form method="get" class="form-search form-search-master">
             <div id="search-input">
                 <div class="input-group col-md-12">
-                    <input type="text" class="form-control" placeholder="{{ __('voyager::generic.search') }}" name="master">
+                    <input type="text" class="form-control" placeholder="{{ __('voyager::generic.search') }}" name="master" value="{{request()->get('master')}}">
                     <button class="btn btn-info btn-lg" type="submit">
                         <i class="voyager-search"></i>
                     </button>
                 </div>
             </div>
         </form>
-        <h1 class="page-title">{{ $title }} @if ($tileFence == 1) acoperis @else garduri @endif</h1>
-        @can('add', app($model))
-            <a href="{{ route('voyager.'.$slug.'.create') }}" class="btn btn-success btn-add-new">
-                <i class="voyager-plus"></i> <span>{{ __('voyager::generic.add_new') }}</span>
-            </a>
-        @endcan
+        <h1 class="page-title">{{ $title }} @if ($tileFence == 1) acoperis @else garduri @endif
+            @can('add', app($model))
+                <div style="float: right">
+                <a href="{{ route('voyager.'.$slug.'.create') }}" class="btn btn-success btn-add-new">
+                    <i class="voyager-plus"></i> <span>{{ __('tps.add_new_offer') }}</span>
+                </a>
+                </div>
+            @endcan
+        </h1>
         @can('delete', app($model))
             {{-- @include('voyager::partials.bulk-delete') --}}
         @endcan

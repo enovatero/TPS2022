@@ -92,7 +92,6 @@
   border-top-right-radius: 1rem;
   border-bottom-right-radius: 1rem;
   color: #ebac15;
-  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
   margin-right: 1.2rem !important;
 }
 .btn.btn-success.btn-add-new .voyager-plus {
@@ -111,8 +110,8 @@
 
 .container-fluid .page-title {
   padding-left: 0 !important;
-  height: 0px !important;
-  margin-bottom: 3.4rem !important;
+  /*height: 0px !important;*/
+  /*margin-bottom: 3.4rem !important;*/
   font-size: 1.7rem;
   color: #292f4c;
   width: 100%;
@@ -295,12 +294,12 @@ ul.radio li .check {
   align-items: center;
   justify-content: center;
   min-width: 11rem !important;
-  height: 4rem;
+  height: 3rem;
   justify-content: space-around;
   border-top-right-radius: 1rem;
   border-bottom-right-radius: 1rem;
   color: #ebac15;
-  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  box-shadow: rgba(100, 100, 111, 0.2) 2px 2px 2px 0px;
   margin-right: 1.2rem !important;
 }
 .voyager .btn.btn-danger {
@@ -1722,7 +1721,7 @@ textarea {
 
 .butoane-oferta {
   padding-left: 0 !important;
-  margin-bottom: 1rem;
+  margin-bottom: 0 !important;
 }
 
 .toggle {

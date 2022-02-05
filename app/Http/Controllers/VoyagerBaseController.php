@@ -93,7 +93,7 @@ class VoyagerBaseController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCon
                 if($options->model == "App\Client"){
                   $results[] = [
                         'id'   => '-1',
-                        'text' => "Adauga client nou",
+                        'text' => "--ADAUGA CLIENT NOU--",
                     ];
                 }
                 usort($results, function ($item1, $item2) {
