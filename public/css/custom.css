@@ -694,7 +694,7 @@ td.xStickyColumn {
     position: -webkit-sticky;
     position: sticky;
     left: 0;
-    z-index: 99;
+    z-index: 999 !important;
 }
 
 .xStickyHeader th {
@@ -702,10 +702,12 @@ td.xStickyColumn {
     text-align: center;
     vertical-align: middle !important;
     font-weight: bold;
+    z-index: 99;
 }
 
 .xStickyHeader th.grouped {
     background: white !important;
     border-top: solid 2px lightgray !important;
     border-bottom: solid 1px lightgray !important;
+    z-index: 99;
 }
