@@ -588,7 +588,7 @@ td {
   z-index: 999999999999 !important;
 }
 .jquery-gdakram-tooltip label {
-  color: #ffffff;
+  font-weight: bold;
 }
 .tooltipMessage {
   color: #671329;
@@ -672,4 +672,40 @@ td {
   width: 1rem !important;
   min-width: 1rem !important;
   max-width: 1rem !important;
+}
+
+/*table.xStickyTable {*/
+/*    position: relative !important;*/
+/*}*/
+
+.xStickyHeader th {
+    position: -webkit-sticky;
+    position: sticky !important;
+    top: 1px !important; /* Don't forget this, required for the stickiness */
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+    z-index: 9;
+}
+
+td.xStickyColumn {
+    background: #f8fafc !important;
+}
+
+.xStickyColumn {
+    position: -webkit-sticky;
+    position: sticky;
+    left: 0;
+    z-index: 99;
+}
+
+.xStickyHeader th {
+    background: #f8fafc !important;
+    text-align: center;
+    vertical-align: middle !important;
+    font-weight: bold;
+}
+
+.xStickyHeader th.grouped {
+    background: white !important;
+    border-top: solid 2px lightgray !important;
+    border-bottom: solid 1px lightgray !important;
 }

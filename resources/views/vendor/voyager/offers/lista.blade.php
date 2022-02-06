@@ -249,22 +249,11 @@
                         {{-- @php (dump($orderGroups)) @endphp --}}
 
                         <div class="table-responsive">
-                            @foreach ($orderGroups as $day)
+
                             <div class="table-day">
-                                <div class="table-group-details">
-                                    <div class="item">
-                                        Comenzi din data:
-                                        <b style="text-transform: uppercase;">{{ \Carbon\Carbon::parse($day['date'])->format('d M') }}</b>
-                                    </div>
-                                    <div class="item additional">
-                                        @if (Auth::user()->hasPermission("offer_column_valoare")) Subtotal: <span>{{ $day['subtotal_price'] }} lei</span> @endif
-                                    </div>
-                                    <div class="item additional">
-                                        Subtotal: <span>{{ $day['subtotal_ml'] }} @if($tileFence == 1) MP @else ML @endif</span>
-                                    </div>
-                                </div>
-                                <table id="dataTable" class="table table-hover">
-                                    <thead>
+
+                                <table id="dataTable" class="table table-hover xStickyHeader">
+                                    <thead style="display: none">
                                         <tr class="overflow__list-1">
                                             @foreach ($columns as $column)
                                               @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
@@ -273,7 +262,7 @@
                                               @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
                                                 @continue
                                               @endif
-                                             <th class="column_{{ $column['key'] }}" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
+                                             <th class=" column_{{ $column['key'] }}  @if($column['key'] == 'nr_com') xStickyColumn @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
                                                     @if ($column['order_by'])
                                                     <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
                                                         'order_by' => $column['order_by'],
@@ -281,7 +270,7 @@
                                                     ])) }}">
                                                     @endif
                                                         @if($column['label'] == 'Nr Comanda')
-                                                            #Comanda
+                                                            Comanda
                                                         @elseif($column['label'] == 'Metri liniari')
                                                             @if($tileFence == 1) MP @else ML @endif
                                                         @else
@@ -306,6 +295,62 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                    @foreach ($orderGroups as $day)
+                                            <tr>
+                                                <th colspan="{{ count($columns) }}" class="grouped">
+                                                    <div class="table-group-details xStickyColumn">
+                                                        <div class="item">
+                                                            Comenzi din data:
+                                                            <b style="text-transform: uppercase;">{{ \Carbon\Carbon::parse($day['date'])->format('d M') }}</b>
+                                                        </div>
+                                                        <div class="item additional">
+                                                            @if (Auth::user()->hasPermission("offer_column_valoare")) Subtotal: <span>{{ $day['subtotal_price'] }} lei</span> @endif
+                                                        </div>
+                                                        <div class="item additional">
+                                                            Subtotal: <span>{{ $day['subtotal_ml'] }} @if($tileFence == 1) MP @else ML @endif</span>
+                                                        </div>
+                                                    </div>
+                                                </th>
+                                            </tr>
+                                            <tr class="overflow__list-1">
+                                                @foreach ($columns as $column)
+                                                    @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
+                                                        @continue
+                                                    @endif
+                                                    @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
+                                                        @continue
+                                                    @endif
+                                                    <th class="column_{{ $column['key'] }}  @if($column['key'] == 'nr_com') xStickyColumn @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
+                                                        @if ($column['order_by'])
+                                                            <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                        'order_by' => $column['order_by'],
+                                                        'sort_order' => $orderColumn[0] == $column['order_by'] && $orderColumn[1] == 'asc' ? 'desc' : 'asc',
+                                                    ])) }}">
+                                                                @endif
+                                                                @if($column['label'] == 'Nr Comanda')
+                                                                    Comanda
+                                                                @elseif($column['label'] == 'Metri liniari')
+                                                                    @if($tileFence == 1) MP @else ML @endif
+                                                                @else
+                                                                    {{ $column['label'] }}
+                                                                @endif
+
+                                                                @if ($orderColumn[0] == $column['order_by'])
+                                                                    @if ($orderColumn[1] == 'asc')
+                                                                        <i class="voyager-angle-up pull-right"></i>
+                                                                    @else
+                                                                        <i class="voyager-angle-down pull-right"></i>
+                                                                    @endif
+                                                                @endif
+                                                                @if ($column['order_by'])
+                                                            </a>
+                                                        @endif
+                                                    </th>
+                                                @endforeach
+                                                <th class="actions text-right dt-not-orderable">
+                                                    {{ __('voyager::generic.actions') }}
+                                                </th>
+                                            </tr>
                                         @php
                                             $deliveryTypeSortOrder = ['tps', 'ridicare', 'nemo', 'fan'];
                                         @endphp
@@ -320,7 +365,7 @@
                                                 @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
                                                   @continue
                                                 @endif
-                                                <td class="overflow__list-1 column_{{ $column['key'] }} @if($column['key'] == 'status') statusTd @endif"
+                                                <td class="overflow__list-1 column_{{ $column['key'] }} @if($column['key'] == 'status') statusTd @endif  @if($column['key'] == 'nr_com') xStickyColumn @endif"
                                                     style="
                                                     @if ($column['key'] == 'tip_comanda')
                                                         background-color: {{$data->offerTypeCustom ? $data->offerTypeCustom->bg_color : $data->offerType->bg_color}}; color: {{$data->offerTypeCustom ? $data->offerTypeCustom->text_color : $data->offerType->text_color}};
@@ -331,14 +376,14 @@
                                                 >
                                                     @if ($column['key'] == 'nr_com')
                                                         <a href="/admin/offers/{{ $data->id }}/edit">
-                                                            {{ $data->numar_comanda }}
+                                                            <b style="font-weight: bold">{{ $data->numar_comanda }}</b>
                                                         </a>
                                                         @php
                                                             $ordermessages = $data->numar_comanda != null ? \App\Http\Controllers\VoyagerOfferController::getHtmlLogMentions($data->id,5) : null;
                                                         @endphp
                                                         @if ($ordermessages != null)
                                                             <span class="tooltipMessage icon voyager-chat">
-                                                                <div class="tooltip_description" style="display:none" title="Mesaje comanda">
+                                                                <div class="tooltip_description" style="display:none; background-color: #dddddd !important" title="Mesaje comanda">
                                                                     {!! $ordermessages !!}
                                                                 </div>
                                                             </span>
@@ -689,10 +734,10 @@
 
                                         </tr>
                                         @endforeach
+                                    @endforeach
                                     </tbody>
                                 </table>
                             </div>
-                            @endforeach
                         </div>
 
                         <div class="browse-footer-table" style="margin-top: 20px;">

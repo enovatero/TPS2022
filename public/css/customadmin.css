@@ -221,7 +221,7 @@ tbody > tr > td {
   color: #292f4c;
 }
 
-.voyager .table > thead > tr > th:not(:first-child) {
+.voyager .table > thead > tr > th {
   text-align: center;
 }
 
@@ -2074,4 +2074,5 @@ input[readonly] {
 td.overflow__list-1 {
     white-space: nowrap;
 }
+
 

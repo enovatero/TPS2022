@@ -1,5 +1,5 @@
 @foreach($offerEvents as $event)
   <label class="control-label">
-    {{\Carbon\Carbon::parse($event->created_at)->format('Y.m.d - H:i')}} --- <strong>{{$event->user_name}}</strong> {!! $event->message !!}
+      <span style="font-weight: bold">{{\Carbon\Carbon::parse($event->created_at)->format('Y.m.d - H:i')}} --- {{$event->user_name}}</span><br> {!! $event->message !!}
   </label>
 @endforeach

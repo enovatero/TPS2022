@@ -9,7 +9,7 @@
                 <div id="search-input">
                     <div class="input-group col-md-12">
                         <input type="text" class="form-control" placeholder="{{ __('voyager::generic.search') }}"
-                               name="master" value="{{ $search->value }}">
+                               name="master" value="{{request()->get('master')}}">
                         <button class="btn btn-info btn-lg" type="submit">
                             <i class="voyager-search"></i>
                         </button>
@@ -64,7 +64,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="panel panel-bordered">
-                    <div class="panel-body">
+                    <div class="panel-body" style="padding-top: 0">
                         <div class="table-responsive-start">
                             {{-- acest div este folosit ca sa activez/dezactivez modul sticky --}}
                         </div>
@@ -73,7 +73,7 @@
                         </div>
                         <div class="table-responsive">
                             <table id="dataTable" class="table table-hover">
-                                <thead>
+                                <thead style="display: none">
                                 <tr class="tr__delete-col">
                                     @if($showCheckboxColumn)
                                         <th class="dt-not-orderable">
@@ -104,7 +104,7 @@
                                     <th class="actions text-right dt-not-orderable">{{ __('voyager::generic.actions') }}</th>
                                 </tr>
                                 </thead>
-                                <thead class="thead-sticky">
+                                <thead class="thead-sticky" style="display: none">
                                 <tr>
                                     @if($showCheckboxColumn)
                                         <th class="dt-not-orderable">
