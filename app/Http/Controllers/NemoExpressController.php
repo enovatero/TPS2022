@@ -115,7 +115,7 @@ class NemoExpressController extends Controller
               'to_city' => $userAddress->city_name(),
               'to_county' => $userAddress->state_name(),
               'to_country' => $userAddress->country,
-              'to_zipcode' => "000000",
+//              'to_zipcode' => "000000",
               'to_email' => $userAddress->email ?: $userData->email,
               'to_phone' => $userAddress->phone ?: $userData->phone,
               'to_extra' => '',
