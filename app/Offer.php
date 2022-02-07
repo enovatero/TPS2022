@@ -147,4 +147,14 @@ class Offer extends Model
     {
         return $this->hasOne(DuctTape::class, 'id', 'transparent_band');
     }
+
+    public function _billingType()
+    {
+        return $this->belongsTo(BillingType::class, 'billing_status');
+    }
+
+    public function _paymentType()
+    {
+        return $this->belongsTo(PaymentType::class, 'payment_type');
+    }
 }

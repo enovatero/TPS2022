@@ -369,8 +369,8 @@
                                                     style="
                                                     @if ($column['key'] == 'tip_comanda')
                                                         background-color: {{$data->offerTypeCustom ? $data->offerTypeCustom->bg_color : $data->offerType->bg_color}}; color: {{$data->offerTypeCustom ? $data->offerTypeCustom->text_color : $data->offerType->text_color}};
-                                                    @elseif ($column['key'] == 'culoare')
-
+                                                    @elseif ($column['key'] == '__contabilitate')
+                                                        background-color: {{$data->_billingStatus ? $data->_billingStatus->bg_color : 'none'}};
                                                     @endif
                                                         "
                                                 >
@@ -532,6 +532,7 @@
                                                         <select
                                                             class="custom-table-select form-control"
                                                             onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'payment_type')"
+                                                            style="background: {{$data->_paymentType ? $data->_paymentType->bg_color : 'none'}}; {{$data->_paymentType ? 'color: '.$data->_paymentType->text_color : ''}};"
                                                         >
                                                             <option value=""> - </option>
                                                             @foreach (App\Offer::$payment_types as $pkey => $payment_type)
@@ -548,7 +549,7 @@
                                                         <select
                                                             class="custom-table-select form-control"
                                                             onchange="window.tableChangeSelectField(this, {{ $data->id }}, 'billing_status')"
-                                                        >
+                                                        style="background: {{$data->_billingType ? $data->_billingType->bg_color : 'none'}}; {{$data->_billingType ? 'color: '.$data->_billingType->text_color : ''}};">
                                                             <option value=""> - </option>
                                                             @foreach (App\Offer::$billing_statuses as $bkey => $billing_status)
                                                                 <option
