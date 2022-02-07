@@ -132,6 +132,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                     }
                 }
             }
+
             $master = $request->get('master');
             if ($master) {
                 $query->where(function ($query1) use ($master) {
@@ -152,6 +153,10 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                             $qr->where('awb', $master);
                         });
                 });
+            }
+            $filterAgent = $request->get('filter_agent');
+            if ($filterAgent) {
+                $query->where('agent_id', $filterAgent);
             }
 
 //             $query->where('numar_comanda', '=', null);
