@@ -233,7 +233,7 @@ class FanCourierController extends Controller
             'continut' => $form_data['continut_pachet'] ?: 'Sisteme acoperis',
             'nume_destinar' => $userAddress->delivery_contact ?: $userData->name,
             'persoana_contact' => $userAddress->delivery_contact ?: $userData->name,
-            'telefon' => $userAddress->phone ?: $userData->phone,
+            'telefon' => $userAddress->delivery_phone ?: $userData->phone,
             'fax' => '',
             'email' => $userAddress->email ?: $userData->email,
             'judet' => $userAddress->state_name(),
