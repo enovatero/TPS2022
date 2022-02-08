@@ -252,8 +252,8 @@
             @endif
         @endforeach
         @php
-            if($newProductsLeft && count($newProductsLeft) > 0 && $newProductsRight && count($newProductsRight) > 0){
-          //dd([$newProductsLeft, $newProductsRight]);
+            if(($newProductsLeft && count($newProductsLeft) > 0) && ($newProductsRight && count($newProductsRight) > 0)) {
+                //dd([$newProductsLeft, $newProductsRight]);
                 foreach($newProductsLeft as $key => $item){
                   if(array_key_exists($key, $newProductsRight)){
                     array_push($newProducts, $item);
@@ -264,7 +264,7 @@
                 }
                 if (count($newProductsRight) > count($newProductsLeft)) {
                     foreach($newProductsRight as $key => $item) {
-                      if($key > (count($newProductsLeft) - 1)){
+                      if($key > (count($newProductsLeft) - 1) ){
                           $parentMock = new stdClass();
                           $parentMock->title = "";
                           $umMock = new stdClass();
@@ -275,13 +275,27 @@
                       }
                     }
                   }
-              } else if($newProductsLeft && count($newProductsLeft) > 0){
+            } else if($newProductsLeft && count($newProductsLeft) > 0){
                 $newProducts = $newProductsLeft;
-              } else{
-                $newProducts = $newProductsRight;
-              }
-              $counterLeft = 1;
-              $counterRight = 1;
+            } else{
+                if (count($newProductsRight) > count($newProductsLeft)) {
+                    foreach($newProductsRight as $key => $item) {
+                      if($key > (count($newProductsLeft) - 1) ){
+                          $parentMock = new stdClass();
+                          $parentMock->title = "";
+                          $umMock = new stdClass();
+                          $umMock->title = "";
+                          $parentMock->um_title = $umMock;
+                        array_push($newProducts, ['two_columns' => 0, 'qty' => "", 'parent' => $parentMock]);
+                        array_push($newProducts, $item);
+                      }
+                    }
+                } else {
+                    $newProducts = $newProductsRight;
+                }
+            }
+            $counterLeft = 1;
+            $counterRight = 1;
         @endphp
     @endif
     <div class="row">
@@ -362,7 +376,9 @@
                         <td align="center" class="bold"
                             style="font-size: 14px;">{{$offerProduct->getParent->um_title->title}}</td>
                         <td align="center" class="bold" style="font-size: 14px;">{{$offerProduct->qty}}</td>
-                        <td align="center" width="5%" style="border: none; color: darkred; font-weight: bold; padding:2px 8px; font-size: 14px; white-space: nowrap">@if(strpos($offerProduct->getParent->title, 'SET 25') !== false) ({{($offerProduct->qty * 25)}} buc) @endif</td>
+                        <td align="center" width="5%"
+                            style="border: none; color: darkred; font-weight: bold; padding:2px 8px; font-size: 14px; white-space: nowrap">@if(strpos($offerProduct->getParent->title, 'SET 25') !== false)
+                                ({{($offerProduct->qty * 25)}} buc) @endif</td>
                     </tr>
                 @endif
             @endforeach
@@ -382,7 +398,8 @@
                 </td>
                 <td style="border: none; background: none">
                     <p style="text-align: right; font-size: 12pt">
-                        <strong>Responsabil @if($offer->offerType->tile_fence == 0) ambalare @else incarcare @endif :</strong>
+                        <strong>Responsabil @if($offer->offerType->tile_fence == 0) ambalare @else incarcare @endif
+                            :</strong>
                     </p>
                 </td>
             </tr>
