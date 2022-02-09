@@ -1349,7 +1349,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                               FROM product_attributes
                               JOIN attributes ON product_attributes.attribute_id = attributes.id
                               LEFT JOIN colors ON product_attributes.color_id = colors.id
-                              WHERE product_attributes.color_id IS NOT NULL AND product_attributes.product_id IN (' . $idsString . ') GROUP BY attr_title, color_value, color_ral'
+                              WHERE product_attributes.color_id IS NOT NULL AND product_attributes.product_id IN (' . $idsString . ') GROUP BY attr_title, color_ral ORDER BY attributes.item_order, colors.ral'
                     )
                 );
                 $dimensions = DB::select(
@@ -1819,6 +1819,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     {
         // iau oferta pe baza id-ului de oferta
         $offer = Offer::with(['distribuitor', 'client', 'delivery_address'])->find($offer_id);
+        if (!$offer->client_id) {
+            return ['success' => false, 'msg' => 'Oferta trebuie sa aiba un client pentru a putea genera PDF!'];
+        }
         $dimension = 0;
         $boxes = 0;
         $totalQty = 0;
