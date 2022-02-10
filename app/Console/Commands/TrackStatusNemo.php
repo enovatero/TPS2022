@@ -63,7 +63,7 @@ class TrackStatusNemo extends Command
                 $nemoData->status_date = $statusDate->format($datetimeFormat);
                 $nemoData->status_message = 'AWB-ul a fost ' . $nemoData->status . ' in data de ' . $nemoData->status_date . ', ' . $status_response['message'] . ' - ' . $status_response['status'];
                 $nemoData->save();
-                sleep(1);
+                //sleep(1);
             }
         }
         return 0;
