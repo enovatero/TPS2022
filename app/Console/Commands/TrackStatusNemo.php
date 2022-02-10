@@ -58,12 +58,9 @@ class TrackStatusNemo extends Command
                 $statusDate = new \DateTime();
                 $statusDate->setTimestamp($timestamp);
 
-                $now = (new \DateTime())->format($datetimeFormat);
-
                 $nemoData = NemoOrder::find($offer->awb_id);
                 $nemoData->status = $status_response['data']['status'];
                 $nemoData->status_date = $statusDate->format($datetimeFormat);
-                $nemoData->updated_at = $now;
                 $nemoData->status_message = 'AWB-ul a fost ' . $nemoData->status . ' in data de ' . $nemoData->status_date . ', ' . $status_response['message'] . ' - ' . $status_response['status'];
                 $nemoData->save();
                 //sleep(1);
