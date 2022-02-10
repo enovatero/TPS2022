@@ -2,9 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Http\Controllers\NemoExpressController;
 use Illuminate\Console\Command;
 use App\Offer;
 use App\NemoOrder;
+use Illuminate\Database\Eloquent\Builder;
 
 class TrackStatusNemo extends Command
 {
@@ -39,18 +41,31 @@ class TrackStatusNemo extends Command
      */
     public function handle()
     {
-      $offers = Offer::whereNotNull('awb_id')->where('delivery_type', 'nemo')->get();
-      if(count($offers) > 0){
-        foreach($offers as $offer){
-          $apiKey = $offer->cont_id == 1 ? env('NEMO_API_KEY_IASI') : env('NEMO_API_KEY_BERCENI');
-          $status = \App\Http\Controllers\NemoExpressController::getStatus($apiKey, $offer->nemoData->awb);
-          $status = json_decode($status['response'], true);
-          
-          $nemoData = NemoOrder::find($offer->awb_id);
-          $nemoData->status = 'AWB-ul a fost '.$status['data']['status'].' in data de '.\Carbon\Carbon::parse()->format('Y-m-d H:i').', '.$status['message'].' - '.$status['status'];
-          $nemoData->save();
+        $offers = Offer::whereNotNull('awb_id')
+            ->where('delivery_type', 'nemo')
+            ->whereHas('nemoData', function (Builder $qr) {
+                $qr->where('status', '!=', 'livrat');
+            })
+            ->take(50)->get();
+        if (count($offers) > 0) {
+            foreach ($offers as $offer) {
+                $apiKey = $offer->cont_id == 1 ? env('NEMO_API_KEY_IASI') : env('NEMO_API_KEY_BERCENI');
+                $status_response = NemoExpressController::getStatus($apiKey, $offer->nemoData->awb);
+                $status_response = json_decode($status_response['response'], true);
+
+                $timestamp = $status_response['data']['date'];
+                $datetimeFormat = 'Y-m-d H:i:s';
+                $statusDate = new \DateTime();
+                $statusDate->setTimestamp($timestamp);
+
+                $nemoData = NemoOrder::find($offer->awb_id);
+                $nemoData->status = $status_response['data']['status'];
+                $nemoData->status_date = $statusDate->format($datetimeFormat);
+                $nemoData->status_message = 'AWB-ul a fost ' . $nemoData->status . ' in data de ' . $nemoData->status_date . ', ' . $status_response['message'] . ' - ' . $status_response['status'];
+                $nemoData->save();
+                sleep(1);
+            }
         }
-      }
-      return 0;
+        return 0;
     }
 }
