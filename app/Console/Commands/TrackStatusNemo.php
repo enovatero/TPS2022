@@ -45,7 +45,7 @@ class TrackStatusNemo extends Command
     {
         $offers = Offer::whereNotNull('awb_id')
             ->where('delivery_type', 'nemo')
-            ->where('status', '!=', 7)
+            ->whereNotIn('status', [3, 7])
 //            ->whereHas('nemoData', function (Builder $qr) {
 //                $qr->where('status', '!=', 'livrat');
 //            })
