@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Http\Controllers\NemoExpressController;
+use App\Http\Controllers\VoyagerOfferController;
+use App\Status;
 use Illuminate\Console\Command;
 use App\Offer;
 use App\NemoOrder;
@@ -43,9 +45,9 @@ class TrackStatusNemo extends Command
     {
         $offers = Offer::whereNotNull('awb_id')
             ->where('delivery_type', 'nemo')
-            ->whereHas('nemoData', function (Builder $qr) {
-                $qr->where('status', '!=', 'livrat');
-            })
+//            ->whereHas('nemoData', function (Builder $qr) {
+//                $qr->where('status', '!=', 'livrat');
+//            })
             ->take(100)->get();
         if (count($offers) > 0) {
             foreach ($offers as $offer) {
@@ -58,14 +60,62 @@ class TrackStatusNemo extends Command
                 $statusDate = new \DateTime();
                 $statusDate->setTimestamp($timestamp);
 
-                $nemoData = NemoOrder::find($offer->awb_id);
+                $nemoData = $offer->nemoData;
+                if ($nemoData->status == $status_response['data']['status']) {
+
+                    $this->updateOfferStatusAccordingToNemoStatus($nemoData, $offer);
+
+                    continue;
+                }
+
                 $nemoData->status = $status_response['data']['status'];
                 $nemoData->status_date = $statusDate->format($datetimeFormat);
                 $nemoData->status_message = 'AWB-ul a fost ' . $nemoData->status . ' in data de ' . $nemoData->status_date . ', ' . $status_response['message'] . ' - ' . $status_response['status'];
                 $nemoData->save();
                 //sleep(1);
+
+                $this->updateOfferStatusAccordingToNemoStatus($nemoData, $offer);
             }
         }
         return 0;
+    }
+
+    public static function getNewOfferStatus(string $nemoStatus): ?int
+    {
+        switch ($nemoStatus) {
+            case 'in_curs':
+                $offerStatus = 8; //expediata
+            case 'livrat':
+                $offerStatus = 7; // livrata
+            default:
+                $offerStatus = null;
+        }
+
+        return $offerStatus;
+    }
+
+    /**
+     * @param $nemoData
+     * @param $offer
+     * @return void
+     */
+    public function updateOfferStatusAccordingToNemoStatus($nemoData, $offer): void
+    {
+        $newOfferStatusID = static::getNewOfferStatus($nemoData->status);
+
+        if ($newOfferStatusID) {
+            if ($offer->status == $newOfferStatusID) {
+
+                return;
+            }
+
+            $oldOfferStatus = Status::find($offer->status);
+            $newOfferStatus = Status::find($newOfferStatusID);
+            $offer->status = $newOfferStatus->id;
+            $offer->save();
+
+            $message = "a schimbat statusul din " . $oldOfferStatus->title . ' in ' . $newOfferStatus->title;
+            VoyagerOfferController::createEvent($offer, $message, true);
+        }
     }
 }

@@ -2083,15 +2083,15 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
     }
 
     // creez evenimentul pe care-l salvez in log-uri
-    public static function createEvent($offer, $message, $is_mention = false)
+    public static function createEvent($offer, $message, $is_mention = false, $isCronJob = false)
     {
         try {
             $created_at = date("Y-m-d H:i");
             $is_mention = $is_mention ? 1 : 0;
             $offerEvent = new OfferEvent();
             $offerEvent->offer_id = $offer->id;
-            $offerEvent->user_name = Auth::user()->name;
-            $offerEvent->user_id = Auth::user()->id;
+            $offerEvent->user_name = $isCronJob ? 'CRON' : Auth::user()->name;
+            $offerEvent->user_id = $isCronJob ? 1 : Auth::user()->id;
             $offerEvent->message = $message;
             $offerEvent->is_mention = $is_mention;
             $offerEvent->created_at = $created_at;
