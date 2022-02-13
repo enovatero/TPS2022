@@ -45,10 +45,11 @@ class TrackStatusNemo extends Command
     {
         $offers = Offer::whereNotNull('awb_id')
             ->where('delivery_type', 'nemo')
+            ->where('status', '!=', 7)
 //            ->whereHas('nemoData', function (Builder $qr) {
 //                $qr->where('status', '!=', 'livrat');
 //            })
-            ->take(100)->get();
+            ->take(200)->get();
         if (count($offers) > 0) {
             foreach ($offers as $offer) {
                 $apiKey = $offer->cont_id == 1 ? env('NEMO_API_KEY_IASI') : env('NEMO_API_KEY_BERCENI');
@@ -101,10 +102,11 @@ class TrackStatusNemo extends Command
      */
     public function updateOfferStatusAccordingToNemoStatus($nemoData, $offer): void
     {
+        $ignoredStatuses = [3];
         $newOfferStatusID = static::getNewOfferStatus($nemoData->status);
 
         if ($newOfferStatusID) {
-            if ($offer->status == $newOfferStatusID) {
+            if ($offer->status == $newOfferStatusID || in_array($offer->status, $ignoredStatuses)) {
 
                 return;
             }
