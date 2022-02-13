@@ -86,8 +86,10 @@ class TrackStatusNemo extends Command
         switch ($nemoStatus) {
             case 'in_curs':
                 $offerStatus = 8; //expediata
+                break;
             case 'livrat':
                 $offerStatus = 7; // livrata
+                break;
             default:
                 $offerStatus = null;
         }
