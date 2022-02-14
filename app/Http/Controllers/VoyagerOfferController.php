@@ -1697,6 +1697,24 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ) : 6; // default Lista
             $offer->curs_eur = $request->input('curs_eur');
             $offer->external_number = $request->input('external_number');
+            $offer->total_general = $request->input('totalGeneral') != null ? number_format(
+                floatval($request->input('totalGeneral')),
+                2,
+                '.',
+                ''
+            ) : 0;
+            $offer->reducere = $request->input('reducere') != null ? number_format(
+                floatval(abs($request->input('reducere'))),
+                2,
+                '.',
+                ''
+            ) : 0;
+            $offer->total_final = $request->input('totalCalculatedPrice') != null ? number_format(
+                floatval($request->input('totalCalculatedPrice')),
+                2,
+                '.',
+                ''
+            ) : 0;
         }
         //$offer->offer_date = $request->input('offer_date'); // asta nu se suprascrie
         //$offer->agent_id = $request->input('agent_id'); // asta nu mai trebuie suprascris
@@ -1713,24 +1731,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if ($request->input('status') != null) {
             $offer->status = $request->input('status');
         }
-        $offer->total_general = $request->input('totalGeneral') != null ? number_format(
-            floatval($request->input('totalGeneral')),
-            2,
-            '.',
-            ''
-        ) : 0;
-        $offer->reducere = $request->input('reducere') != null ? number_format(
-            floatval(abs($request->input('reducere'))),
-            2,
-            '.',
-            ''
-        ) : 0;
-        $offer->total_final = $request->input('totalCalculatedPrice') != null ? number_format(
-            floatval($request->input('totalCalculatedPrice')),
-            2,
-            '.',
-            ''
-        ) : 0;
+
         $offer->transparent_band = $request->input('transparent_band');
         $offer->packing = $request->input('packing');
         $offer->delivery_details = $request->input('delivery_details');
