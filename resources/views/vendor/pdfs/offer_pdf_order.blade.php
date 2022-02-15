@@ -322,7 +322,7 @@
                         @if($item['two_columns'] == 1)
                             continue;
                         @else
-                            @if($item['qty'] > 0 || $item['qty'] == "")
+                            @if($item['qty'] != 0 || $item['qty'] == "")
                                 <tr class="items">
                                     <td align="center">{{$counterLeft++}}</td>
                                     <td>{{$item['parent']->title}}</td>
@@ -369,7 +369,7 @@
 
         @if($offerProducts)
             @foreach($offerProducts as $offerProduct)
-                @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
+                @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty != 0)
                     <tr class="items">
                         <td align="center" style="font-size: 14px;">{{$counter++}}</td>
                         <td style="font-size: 14px;">{{$offerProduct->getParent->title}}</td>
