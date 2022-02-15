@@ -35,7 +35,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="panel panel-bordered">
-                    <div class="panel-body">
+                    <div class="panel-body" style="overflow: visible !important;">
 
                         <div class="custom-table-filters overflow__list-1">
                             @foreach ($columns as $column)
@@ -237,6 +237,8 @@
                             @endforeach
                         </div>
 
+                        <!-- Nu -->
+
                         <div class="table-responsive-start">
                             {{-- acest div este folosit ca sa activez/dezactivez modul sticky --}}
                         </div>
@@ -250,9 +252,9 @@
 
                         <div class="table-responsive">
 
-                            <div class="table-day">
+                            <div class="table-day"  >
 
-                                <table id="dataTable" class="table table-hover xStickyHeader">
+                                <table  id="dataTable" class="table table-hover xStickyHeader">
                                     <thead style="display: none">
                                         <tr class="overflow__list-1">
                                             @foreach ($columns as $column)
@@ -294,11 +296,11 @@
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody  >
                                     @foreach ($orderGroups as $day)
-                                            <tr>
+                                            <tr style="position: sticky;top: 60px;z-index: 9997; overflow-x: scroll !important;">
                                                 <th colspan="{{ count($columns) }}" class="grouped">
-                                                    <div class="table-group-details xStickyColumn">
+                                                    <div class="table-group-details ">
                                                         <div class="item">
                                                             Comenzi din data:
                                                             <b style="text-transform: uppercase;">{{ \Carbon\Carbon::parse($day['date'])->format('d M') }}</b>
@@ -312,7 +314,9 @@
                                                     </div>
                                                 </th>
                                             </tr>
-                                            <tr class="overflow__list-1">
+
+                                            <!-- Thisssss -->
+                                            <tr class="overflow__list-1 sticky__element" style="position: sticky;top: 119px;z-index: 9998; overflow-x: scroll !important;">
                                                 @foreach ($columns as $column)
                                                     @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
                                                         @continue
@@ -320,7 +324,7 @@
                                                     @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
                                                         @continue
                                                     @endif
-                                                    <th class="column_{{ $column['key'] }}  @if($column['key'] == 'nr_com') xStickyColumn @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
+                                                    <th class="column_{{ $column['key'] }}  @if($column['key'] == 'nr_com')  @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}; position: fixed;">
                                                         @if ($column['order_by'])
                                                             <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
                                                         'order_by' => $column['order_by'],
@@ -351,6 +355,8 @@
                                                     {{ __('voyager::generic.actions') }}
                                                 </th>
                                             </tr>
+
+                                            <!-- Thisss -->
                                         @php
                                             $deliveryTypeSortOrder = ['tps', 'ridicare', 'nemo', 'fan'];
                                         @endphp
@@ -789,7 +795,7 @@
     <style>
         /* table scrollabil orizontal */
         .table-responsive {
-            overflow: auto;
+            overflow: visible;
         }
         .table-responsive .table {
             width: auto !important;
@@ -1093,6 +1099,14 @@
     </script>
 
     <script>
+
+
+
+
+
+
+
+
         window.tableChangeCheckboxField = function (el, id, field) {
             $.ajax({
                 method: 'POST',
