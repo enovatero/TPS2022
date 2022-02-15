@@ -176,7 +176,7 @@
 
                     @if($offerProducts)
                         @foreach($offerProducts as $offerProduct)
-                            @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
+                            @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty != 0)
                                 @php
                                     $checkRule = $offerProduct->prices->filter(function($item) use($offer){
                                         return $item->rule_id == $offer->price_grid_id;
