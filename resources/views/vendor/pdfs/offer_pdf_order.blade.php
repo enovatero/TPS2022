@@ -220,7 +220,7 @@
 
     @if($offerProducts)
         @foreach($offerProducts as $index => $offerProduct)
-            @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty > 0)
+            @if($offerProduct->product && $offerProduct->product != null && $offerProduct->qty != 0)
                 @php
                     // nu stiu de ce e bazat pe categorie ?
                     if($offerProduct->getParent->category->two_columns == 1){
