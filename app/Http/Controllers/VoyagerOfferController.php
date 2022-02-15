@@ -1141,6 +1141,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             $data->delivery_address_user = $request->input('delivery_address_user') == -2 ? null : $request->input(
                 'delivery_address_user'
             );
+            //asta nu cred ca mai trebuie
+            /*
             $data->total_general = $request->input('totalGeneral') != null ? number_format(
                 floatval($request->input('totalGeneral')),
                 2,
@@ -1159,6 +1161,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 '.',
                 ''
             ) : 0;
+            */
             $data->save();
         }
 

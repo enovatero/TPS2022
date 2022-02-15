@@ -49,7 +49,7 @@ class Offer extends Model
         7 => 'N/A',
     ];
 
-    protected $perPage = 300;
+    protected $perPage = 200;
 
     protected $casts = [];
 
