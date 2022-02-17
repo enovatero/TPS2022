@@ -254,7 +254,7 @@
 
                             <div class="table-day"  >
 
-                                <table  id="dataTable" class="table table-hover xStickyHeader">
+                                <table  id="dataTable" class="table table-hover xStickyHeader" style="background: white">
                                     <thead style="display: none">
                                         <tr class="overflow__list-1">
                                             @foreach ($columns as $column)
