@@ -324,7 +324,7 @@
                                                     @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
                                                         @continue
                                                     @endif
-                                                    <th class="column_{{ $column['key'] }}  @if($column['key'] == 'nr_com')  @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}; position: fixed;">
+                                                    <th class="column_{{ $column['key'] }}  @if($column['key'] == 'nr_com') xStickyColumn @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}; position: fixed;">
                                                         @if ($column['order_by'])
                                                             <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
                                                         'order_by' => $column['order_by'],
