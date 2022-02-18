@@ -2101,4 +2101,6 @@ td.overflow__list-1 {
 /* .table-responsive {
   overflow: visible !important;
 } */
-
+.navbar-fixed-top {
+  background: hsla(0, 0%, 98%, 1) !important;
+}

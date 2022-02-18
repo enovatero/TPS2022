@@ -2,19 +2,94 @@
 
 @section('page_title', __('voyager::generic.viewing').' '.$title)
 
-@section('page_header')
-    <div class="container-fluid">
+
+
+@section('content')
+    <div class="page-content browse container-fluid">
+        @include('voyager::alerts')
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-bordered">
+                    <div class="panel-body" style="overflow: visible !important;padding-top: 0 !important;">
+
+                       
+
+                        <!-- Nu -->
+
+                        <div class="table-responsive-start">
+                            {{-- acest div este folosit ca sa activez/dezactivez modul sticky --}}
+                        </div>
+                        <div class="table-responsive-fake" style="display:none">
+                            {{-- acest div este un placeholder pentru tabel, ca sa pastrez inaltimea paginii cand intru in modul sticky --}}
+                        </div>
+
+                        {{-- @php (dump($columns)) @endphp --}}
+                        {{-- @php (dump($orders)) @endphp --}}
+                        {{-- @php (dump($orderGroups)) @endphp --}}
+
+                        <div class="table-responsive">
+
+                            <div class="table-day"  >
+
+                                <table  id="dataTable" class="table table-hover xStickyHeader">
+                                    
+                                    <thead style="display: none">
+                                        <tr class="overflow__list-1">
+                                            @foreach ($columns as $column)
+                                              @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
+                                                @continue
+                                              @endif
+                                              @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
+                                                @continue
+                                              @endif
+                                             <th class=" column_{{ $column['key'] }}  @if($column['key'] == 'nr_com') xStickyColumn @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
+                                                    @if ($column['order_by'])
+                                                    <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                        'order_by' => $column['order_by'],
+                                                        'sort_order' => $orderColumn[0] == $column['order_by'] && $orderColumn[1] == 'asc' ? 'desc' : 'asc',
+                                                    ])) }}">
+                                                    @endif
+                                                        @if($column['label'] == 'Nr Comanda')
+                                                            Comanda
+                                                        @elseif($column['label'] == 'Metri liniari')
+                                                            @if($tileFence == 1) MP @else ML @endif
+                                                        @else
+                                                        {{ $column['label'] }}
+                                                        @endif
+
+                                                        @if ($orderColumn[0] == $column['order_by'])
+                                                            @if ($orderColumn[1] == 'asc')
+                                                                <i class="voyager-angle-up pull-right"></i>
+                                                            @else
+                                                                <i class="voyager-angle-down pull-right"></i>
+                                                            @endif
+                                                        @endif
+                                                    @if ($column['order_by'])
+                                                    </a>
+                                                    @endif
+                                                </th>
+                                            @endforeach
+                                            <th class="actions text-right dt-not-orderable">
+                                                {{ __('voyager::generic.actions') }}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody  >
+                                    <tr >
+                                                <th colspan="{{ count($columns) }}" class="grouped" style="padding-left:0">
+
+                                    <div class="custom-table-filters overflow__list-1 expanded__left" style="position: sticky;left: 55px;width: 90vw;flex-direction: column;padding-left:0;">
         <form method="get" class="form-search form-search-master">
             <div id="search-input">
                 <div class="input-group col-md-12">
-                    <input type="text" class="form-control" placeholder="{{ __('voyager::generic.search') }}" name="master" value="{{request()->get('master')}}">
+                    <input style="margin-left: 9px;" type="text" class="form-control" placeholder="{{ __('voyager::generic.search') }}" name="master" value="{{request()->get('master')}}">
                     <button class="btn btn-info btn-lg" type="submit">
                         <i class="voyager-search"></i>
                     </button>
                 </div>
             </div>
         </form>
-        <h1 class="page-title">{{ $title }} @if ($tileFence == 1) acoperis @else garduri @endif
+        <h1 style="display: flex;width: 97%; justify-content: space-between;" class="page-title">{{ $title }} @if ($tileFence == 1) acoperis @else garduri @endif
             @can('add', app($model))
                 <div style="float: right">
                 <a href="{{ route('voyager.'.$slug.'.create') }}" class="btn btn-success btn-add-new">
@@ -27,17 +102,11 @@
             {{-- @include('voyager::partials.bulk-delete') --}}
         @endcan
     </div>
-@stop
-
-@section('content')
-    <div class="page-content browse container-fluid">
-        @include('voyager::alerts')
-        <div class="row">
-            <div class="col-md-12">
-                <div class="panel panel-bordered">
-                    <div class="panel-body" style="overflow: visible !important;">
-
-                        <div class="custom-table-filters overflow__list-1">
+    </th>
+                                            </tr>
+                                    <tr >
+                                                <th colspan="{{ count($columns) }}" class="grouped" style="padding-left:0">
+                                    <div class="custom-table-filters overflow__list-1 expanded__left" style="position: sticky;left: 55px;width: 90vw;">
                             @foreach ($columns as $column)
                                 @if ($column['key'] == 'agent')
                                     <div class="filter-item">
@@ -236,71 +305,12 @@
                                 @endif
                             @endforeach
                         </div>
-
-                        <!-- Nu -->
-
-                        <div class="table-responsive-start">
-                            {{-- acest div este folosit ca sa activez/dezactivez modul sticky --}}
-                        </div>
-                        <div class="table-responsive-fake" style="display:none">
-                            {{-- acest div este un placeholder pentru tabel, ca sa pastrez inaltimea paginii cand intru in modul sticky --}}
-                        </div>
-
-                        {{-- @php (dump($columns)) @endphp --}}
-                        {{-- @php (dump($orders)) @endphp --}}
-                        {{-- @php (dump($orderGroups)) @endphp --}}
-
-                        <div class="table-responsive">
-
-                            <div class="table-day"  >
-
-                                <table  id="dataTable" class="table table-hover xStickyHeader">
-                                    <thead style="display: none">
-                                        <tr class="overflow__list-1">
-                                            @foreach ($columns as $column)
-                                              @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
-                                                @continue
-                                              @endif
-                                              @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
-                                                @continue
-                                              @endif
-                                             <th class=" column_{{ $column['key'] }}  @if($column['key'] == 'nr_com') xStickyColumn @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
-                                                    @if ($column['order_by'])
-                                                    <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                        'order_by' => $column['order_by'],
-                                                        'sort_order' => $orderColumn[0] == $column['order_by'] && $orderColumn[1] == 'asc' ? 'desc' : 'asc',
-                                                    ])) }}">
-                                                    @endif
-                                                        @if($column['label'] == 'Nr Comanda')
-                                                            Comanda
-                                                        @elseif($column['label'] == 'Metri liniari')
-                                                            @if($tileFence == 1) MP @else ML @endif
-                                                        @else
-                                                        {{ $column['label'] }}
-                                                        @endif
-
-                                                        @if ($orderColumn[0] == $column['order_by'])
-                                                            @if ($orderColumn[1] == 'asc')
-                                                                <i class="voyager-angle-up pull-right"></i>
-                                                            @else
-                                                                <i class="voyager-angle-down pull-right"></i>
-                                                            @endif
-                                                        @endif
-                                                    @if ($column['order_by'])
-                                                    </a>
-                                                    @endif
-                                                </th>
-                                            @endforeach
-                                            <th class="actions text-right dt-not-orderable">
-                                                {{ __('voyager::generic.actions') }}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody  >
+                        </th>
+                                            </tr>
                                     @foreach ($orderGroups as $day)
                                             <tr style="position: sticky;top: 60px;z-index: 9997; overflow-x: scroll !important;">
                                                 <th colspan="{{ count($columns) }}" class="grouped">
-                                                    <div class="table-group-details ">
+                                                    <div class="table-group-details expanded__left" style="position: sticky;left: 55px;width: 90vw;">
                                                         <div class="item">
                                                             Comenzi din data:
                                                             <b style="text-transform: uppercase;">{{ \Carbon\Carbon::parse($day['date'])->format('d M') }}</b>
@@ -833,6 +843,11 @@
         .app-container.expanded .table-fixed-header {
             left: 266px !important;
             width: calc(100% - 266px - 30px) !important;
+        }
+        .app-container.expanded .expanded__left{
+            left: 266px !important;
+            width: 83vw !important;
+
         }
         .table-responsive .table {
             margin: 0 !important;
