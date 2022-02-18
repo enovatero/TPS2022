@@ -305,8 +305,72 @@
                                 @endif
                             @endforeach
                         </div>
+<<<<<<< HEAD
                         </th>
                                             </tr>
+=======
+
+                        <!-- Nu -->
+
+                        <div class="table-responsive-start">
+                            {{-- acest div este folosit ca sa activez/dezactivez modul sticky --}}
+                        </div>
+                        <div class="table-responsive-fake" style="display:none">
+                            {{-- acest div este un placeholder pentru tabel, ca sa pastrez inaltimea paginii cand intru in modul sticky --}}
+                        </div>
+
+                        {{-- @php (dump($columns)) @endphp --}}
+                        {{-- @php (dump($orders)) @endphp --}}
+                        {{-- @php (dump($orderGroups)) @endphp --}}
+
+                        <div class="table-responsive">
+
+                            <div class="table-day"  >
+
+                                <table  id="dataTable" class="table table-hover xStickyHeader" style="background: white">
+                                    <thead style="display: none">
+                                        <tr class="overflow__list-1">
+                                            @foreach ($columns as $column)
+                                              @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
+                                                @continue
+                                              @endif
+                                              @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
+                                                @continue
+                                              @endif
+                                             <th class=" column_{{ $column['key'] }}  @if($column['key'] == 'nr_com') xStickyColumn @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
+                                                    @if ($column['order_by'])
+                                                    <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                        'order_by' => $column['order_by'],
+                                                        'sort_order' => $orderColumn[0] == $column['order_by'] && $orderColumn[1] == 'asc' ? 'desc' : 'asc',
+                                                    ])) }}">
+                                                    @endif
+                                                        @if($column['label'] == 'Nr Comanda')
+                                                            Comanda
+                                                        @elseif($column['label'] == 'Metri liniari')
+                                                            @if($tileFence == 1) MP @else ML @endif
+                                                        @else
+                                                        {{ $column['label'] }}
+                                                        @endif
+
+                                                        @if ($orderColumn[0] == $column['order_by'])
+                                                            @if ($orderColumn[1] == 'asc')
+                                                                <i class="voyager-angle-up pull-right"></i>
+                                                            @else
+                                                                <i class="voyager-angle-down pull-right"></i>
+                                                            @endif
+                                                        @endif
+                                                    @if ($column['order_by'])
+                                                    </a>
+                                                    @endif
+                                                </th>
+                                            @endforeach
+                                            <th class="actions text-right dt-not-orderable">
+                                                {{ __('voyager::generic.actions') }}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody  >
+>>>>>>> 9d454e1f184d034b845d0bf176ddaf47d31a8246
                                     @foreach ($orderGroups as $day)
                                             <tr style="position: sticky;top: 60px;z-index: 9997; overflow-x: scroll !important;">
                                                 <th colspan="{{ count($columns) }}" class="grouped">
@@ -334,7 +398,7 @@
                                                     @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
                                                         @continue
                                                     @endif
-                                                    <th class="column_{{ $column['key'] }}  @if($column['key'] == 'nr_com')  @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}; position: fixed;">
+                                                    <th class="column_{{ $column['key'] }}  @if($column['key'] == 'nr_com') xStickyColumn @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}; position: fixed;">
                                                         @if ($column['order_by'])
                                                             <a href="{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
                                                         'order_by' => $column['order_by'],
