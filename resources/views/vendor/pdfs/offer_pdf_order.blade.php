@@ -119,7 +119,7 @@
             @if ($offer->external_number) <p style="font-size: 12pt">Comanda
                 distribuitor: {{$offer->external_number}}</p><br> @endif
             <p style="text-align: left;">
-                <strong>Data livrare:</strong> {{$offer->delivery_date}}
+                <strong>Data livrare:</strong> {{date_format(date_create($offer->delivery_date), "d-m-Y")}}
             </p>
             <p style="text-align: left; ">
                 <strong>Tip livrare:</strong> {{$offer->delivery_type}}

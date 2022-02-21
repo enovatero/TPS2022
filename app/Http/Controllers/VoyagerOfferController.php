@@ -2045,7 +2045,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             if (!$offer->client_id) {
                 return ['success' => false, 'msg' => 'Selecteaza un client pentru a putea lansa comanda!'];
             }
-            if (!$offer->delivery_address_user) {
+            if (!$offer->delivery_address_user || $offer->delivery_address_user < 0) {
                 return ['success' => false, 'msg' => 'Selecteaza o adresa de livrare pentru a putea lansa comanda!'];
             }
             $lastStatus = $offer->status;
