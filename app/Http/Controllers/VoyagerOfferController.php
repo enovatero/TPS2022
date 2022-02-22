@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use SeniorProgramming\Fancourier\Requests\Order;
 use TCG\Voyager\Database\Schema\SchemaManager;
 use TCG\Voyager\Events\BreadDataAdded;
 use TCG\Voyager\Events\BreadDataDeleted;
@@ -571,7 +572,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 6, // productie
                 //7, // livrata
                 //8, // expediata
-                10, // pe stoc
+                //10, // pe stoc
                 11, // intarziere
                 12, // incarcata
                 13, // urgent
@@ -600,16 +601,16 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         foreach ($orders->groupBy('actual_delivery_date') as $day => $dayOrders) {
             $subtotalPrice = 0;
             $subtotalMl = 0;
-            $subtotalPrice = round(
-                Offer::where('actual_delivery_date', $day)
-                    ->where('numar_comanda', '!=', null)
-                    ->whereHas('offerType', function (Builder $qr) use ($tileFence) {
-                        $qr->where('tile_fence', $tileFence);
-                    })
-                    ->sum('total_final')
-                ,
-                2
-            );
+//            $subtotalPrice = round(
+//                Offer::where('actual_delivery_date', $day)
+//                    ->where('numar_comanda', '!=', null)
+//                    ->whereHas('offerType', function (Builder $qr) use ($tileFence) {
+//                        $qr->where('tile_fence', $tileFence);
+//                    })
+//                    ->sum('total_final')
+//                ,
+//                2
+//            );
             foreach ($dayOrders->all() as $order) {
                 $order->prod_ml = 0;
                 foreach ($order->products as $prod) {
@@ -629,7 +630,11 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 $updateOrder = $order->fresh();
                 $updateOrder->prod_ml = $order->prod_ml;
                 $updateOrder->save();
+                if ($order->status == 3) {
+                    continue;
+                }
                 $subtotalMl += $order->prod_ml;
+                $subtotalPrice += $order->total_final;
             }
 
             $orderGroups[] = [
