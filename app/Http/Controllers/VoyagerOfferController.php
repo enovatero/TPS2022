@@ -298,7 +298,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ],
             [
                 'key' => 'tip_comanda',
-                'order_by' => null, //'type',
+                'order_by' => 'type',
+                'label' => 'Tip Comanda',
+                'width' => '110px',
+            ],
+            [
+                'key' => 'tip_comanda_custom',
+                'order_by' => 'custom_off_type',
                 'label' => 'Tip Comanda',
                 'width' => '110px',
             ],

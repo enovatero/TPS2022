@@ -64,7 +64,51 @@
                                 @endif
                             @endforeach
                             @foreach ($columns as $column)
-                                @if ($column['key'] == 'plata')
+                                @if ($column['key'] == 'tip_comanda_custom' && $tileFence == 1)
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru {{ $column['label'] }}</div>
+                                            <select
+                                                class="custom-table-select form-control"
+                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                                'custom_off_type' => 'value'
+                                            ])) }}').replace('value', this.value)"
+                                            >
+                                                <option value=""> - </option>
+                                                @foreach (App\CofferType::pluck('title', 'id') as $offerTypeId => $offerTypeTitle)
+                                                    <option
+                                                        value="{{ $offerTypeId }}"
+                                                        {{ request()->custom_off_type == $offerTypeId ? 'selected' : '' }}
+                                                    >
+                                                        {{ $offerTypeTitle }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+                                @elseif ($column['key'] == 'tip_comanda' && $tileFence == 0)
+                                    <div class="filter-item">
+                                        <label>
+                                            <div>Filtru {{ $column['label'] }}</div>
+                                            <select
+                                                class="custom-table-select form-control"
+                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
+                                        'type' => 'value'
+                                    ])) }}').replace('value', this.value)"
+                                            >
+                                                <option value=""> - </option>
+                                                @foreach (App\OfferType::pluck('title', 'id') as $offerTypeId => $offerTypeTitle)
+                                                    <option
+                                                        value="{{ $offerTypeId }}"
+                                                        {{ request()->type == $offerTypeId ? 'selected' : '' }}
+                                                    >
+                                                        {{ $offerTypeTitle }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+                                @elseif ($column['key'] == 'plata')
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
@@ -300,24 +344,24 @@
                                                 <th colspan="{{ count($columns) }}" class="grouped">
                                                     <div class="table-group-details xStickyColumn">
                                                         <div class="item">
-                                                            Comenzi din data:
-                                                            <b style="text-transform: uppercase;">{{ \Carbon\Carbon::parse($day['date'])->format('d M') }}</b>
+{{--                                                            Comenzi din data:--}}
+                                                            <b style="text-transform: capitalize;">{{__('custom.ro_date.day')[\Carbon\Carbon::parse($day['date'])->format('N')]}}, {{ \Carbon\Carbon::parse($day['date'])->format('d M') }}</b>
                                                         </div>
                                                         <div class="item additional">
-                                                            @if (Auth::user()->hasPermission("offer_column_valoare")) Subtotal: <span>{{ $day['subtotal_price'] }} lei</span> @endif
+                                                            @if (Auth::user()->hasPermission("offer_column_valoare")) - Subtotal: <span>{{ number_format($day['subtotal_price'], 2) }} lei</span> @endif
                                                         </div>
                                                         <div class="item additional">
-                                                            Subtotal: <span>{{ $day['subtotal_ml'] }} @if($tileFence == 1) MP @else ML @endif</span>
+                                                            - Subtotal: <span>{{ number_format($day['subtotal_ml'], 2) }} @if($tileFence == 1) MP @else ML @endif</span>
                                                         </div>
                                                     </div>
                                                 </th>
                                             </tr>
                                             <tr class="overflow__list-1">
                                                 @foreach ($columns as $column)
-                                                    @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
+                                                    @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina', 'tip_comanda_custom']) && $tileFence == 0)
                                                         @continue
                                                     @endif
-                                                    @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
+                                                    @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p', 'tip_comanda_custom']) && $tileFence == 1)
                                                         @continue
                                                     @endif
                                                     <th class="column_{{ $column['key'] }}  @if($column['key'] == 'nr_com') xStickyColumn @endif" style="min-width: {{ optional($column)['width'] ?: 'auto' }}; max-width: {{ optional($column)['width'] ?: 'auto' }}">
@@ -359,10 +403,10 @@
                                         }) as $data)
                                         <tr  class="tr--list--off" >
                                             @foreach ($columns as $column)
-                                                @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina']) && $tileFence == 0)
+                                                @if(in_array($column['key'],['delivery_details', 'ptabla', 'pacc', 'sofer', 'masina', 'tip_comanda_custom']) && $tileFence == 0)
                                                   @continue
                                                 @endif
-                                                @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p']) && $tileFence == 1)
+                                                @if(in_array($column['key'],['accesorii', 'print_awb', 'awb', 'pjal', 'pu', 'p', 'tip_comanda_custom']) && $tileFence == 1)
                                                   @continue
                                                 @endif
                                                 <td class="overflow__list-1 column_{{ $column['key'] }} @if($column['key'] == 'status') statusTd @endif  @if($column['key'] == 'nr_com') xStickyColumn @endif"

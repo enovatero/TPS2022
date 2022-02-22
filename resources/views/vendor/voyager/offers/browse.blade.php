@@ -178,19 +178,21 @@
                                             // $subtotalPriceDay = $dataTypeContent->where('offer_date', $data->offer_date)->sum('total_final');
 
                                             // asta e metoda mai corecta, dar face query-uri in plus
-                                            $subtotalPriceDay = round(app($dataType->model_name)->where('offer_date', $data->offer_date)->sum('total_final'), 2);
+                                            $subtotalPriceDay = round(app($dataType->model_name)->where('offer_date', $data->offer_date)->where('status', '!=', 3)->sum('total_final'), 2);
 
                                             // calc subtotal ml - metru linear
-                                            foreach ($dataTypeContent->where('offer_date', $data->offer_date)->all() as $dayOffer) {
+                                            /*
+                                            foreach ($dataTypeContent->where('offer_date', $data->offer_date)->where('status', '!=', 3)->all() as $dayOffer) {
                                                 foreach ($dayOffer->products()->with('getParent')->get() as $prod) {
-                                                    if ($prod->qty > 0 && $prod->getParent->um == 8) {
-                                                        $subtotalMlDay += $prod->qty;
-                                                    }
-                                                    if ($prod->qty > 0 && $prod->getParent->um == 1 && $prod->getParent->dimension > 0) {
-                                                        $subtotalMlDay += $prod->qty * $prod->getParent->dimension;
+                                                    if ($prod->qty > 0 && $prod->getParent->dimension > 0) {
+                                                        $subtotalMlDay += $prod->qty * $prod->getParent->dimension * (strpos(
+                                                                $prod->getParent->title,
+                                                                'SET 25'
+                                                            ) !== false ? 25 : 1);
                                                     }
                                                 }
                                             }
+                                            */
                                         }
                                     @endphp
                                     @if ($showDateGroupRow)
@@ -198,16 +200,18 @@
                                             <td colspan="{{ count($dataType->browseRows) + ($showCheckboxColumn ? 2 : 1) }}">
                                                 <div class="table-group-details">
                                                     <div class="item">
-                                                        {{ $is_order_page ? 'Comenzi' : 'Oferte' }} din data:
-                                                        <b>{{ $data->offer_date }}</b>
+                                                        <b style="text-transform: capitalize;">{{__('custom.ro_date.day')[\Carbon\Carbon::parse($data->offer_date)->format('N')]}}, {{ \Carbon\Carbon::parse($data->offer_date)->format('d M') }}</b>
                                                     </div>
                                                     <div class="item additional">
                                                         @if (Auth::user()->hasPermission("offer_column_valoare"))
-                                                            Subtotal: <span>{{ $subtotalPriceDay }} lei</span> @endif
+                                                            - Subtotal: <span>{{ number_format($subtotalPriceDay, 2) }} lei</span>
+                                                        @endif
                                                     </div>
+                                                    {{--
                                                     <div class="item additional">
-                                                        Subtotal: <span>{{ $subtotalMlDay }} ml</span>
+                                                        - Subtotal: <span>{{ number_format($subtotalMlDay, 2) }} ml</span>
                                                     </div>
+                                                    --}}
                                                 </div>
                                             </td>
                                         </tr>
