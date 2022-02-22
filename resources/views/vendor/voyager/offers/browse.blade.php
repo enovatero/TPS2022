@@ -350,7 +350,7 @@
                                                               style="background-color: {{ $data->{$row->field} }}">{{ $data->{$row->field} }}</span>
                                                     @elseif($row->type == 'text')
                                                         @include('voyager::multilingual.input-hidden-bread-browse')
-                                                        @if($row->field == "serie" || $row->field == "id" || $row->display_name == 'Print Awb')
+                                                        @if($row->field == "id")
                                                             <a href="/admin/offers/{{$data->id}}/edit">{{ mb_strlen( $data->{$row->field} ) > 200 ? mb_substr($data->{$row->field}, 0, 200) . ' ...' : $data->{$row->field} }}</a>
                                                             @php
                                                                 $ordermessages = $data->id != null ? \App\Http\Controllers\VoyagerOfferController::getHtmlLogMentions($data->id) : null;
@@ -363,48 +363,48 @@
                                                           </div>
                                                         </span>
                                                             @endif
+                                                        @elseif($row->field == "numar_comanda")
+                                                            <div>{{ $data->numar_comanda != null ? $data->numar_comanda : '-' }}</div>
+                                                        @elseif($row->field == "offer_date")
+                                                            <div>{{ \Carbon\Carbon::parse($data->{$row->field})->format('d M') }}</div>
                                                         @else
-                                                            @if($row->field == "numar_comanda")
-                                                                <div>{{ $data->numar_comanda != null ? $data->numar_comanda : '-' }}</div>
-                                                            @else
-                                                                @if($row->field == "attributes")
-                                                                    @php
-                                                                        $attributes = json_decode($data->attributes, true);
-                                                                        $colors = [];
-                                                                        if($attributes && count($attributes) > 0){
-                                                                          foreach($attributes as $attr){
-                                                                            $elems = explode("_", $attr);
-                                                                            $isColor = count($elems) == 3 ? true : false;
-                                                                            if($isColor){
-                                                                              $colorCode = $elems[1];
-                                                                              $colorName = $elems[2];
-                                                                              $arrCol = [
-                                                                                'color' => $colorCode,
-                                                                                'colorName' => $colorName
-                                                                              ];
-                                                                              if(!in_array($arrCol, $colors)){
-                                                                                array_push($colors, $arrCol);
-                                                                              }
-                                                                            }
+                                                            @if($row->field == "attributes")
+                                                                @php
+                                                                    $attributes = json_decode($data->attributes, true);
+                                                                    $colors = [];
+                                                                    if($attributes && count($attributes) > 0){
+                                                                      foreach($attributes as $attr){
+                                                                        $elems = explode("_", $attr);
+                                                                        $isColor = count($elems) == 3 ? true : false;
+                                                                        if($isColor){
+                                                                          $colorCode = $elems[1];
+                                                                          $colorName = $elems[2];
+                                                                          $arrCol = [
+                                                                            'color' => $colorCode,
+                                                                            'colorName' => $colorName
+                                                                          ];
+                                                                          if(!in_array($arrCol, $colors)){
+                                                                            array_push($colors, $arrCol);
                                                                           }
                                                                         }
-                                                                    @endphp
-                                                                    @if(count($colors) > 0)
-                                                                        @foreach($colors as $key => $color)
-                                                                            <div class="color__color-code--cont"
-                                                                                 style="margin-bottom:3px; justify-content: flex-start; margin-left: 10px;">
-                                                                                <span class="color__square"
-                                                                                      style="background-color: {{ $color['color'] }}"></span>
-                                                                                <span class="edit__color-code"
-                                                                                      style="text-transform: uppercase;">{{ $color['colorName'] }} </span>
-                                                                            </div>
-                                                                        @endforeach
-                                                                    @else
-                                                                        <div>-</div>
-                                                                    @endif
+                                                                      }
+                                                                    }
+                                                                @endphp
+                                                                @if(count($colors) > 0)
+                                                                    @foreach($colors as $key => $color)
+                                                                        <div class="color__color-code--cont"
+                                                                             style="margin-bottom:3px; justify-content: flex-start; margin-left: 10px;">
+                                                                            <span class="color__square"
+                                                                                  style="background-color: {{ $color['color'] }}"></span>
+                                                                            <span class="edit__color-code"
+                                                                                  style="text-transform: uppercase;">{{ $color['colorName'] }} </span>
+                                                                        </div>
+                                                                    @endforeach
                                                                 @else
-                                                                    <div>{{ mb_strlen( $data->{$row->field} ) > 200 ? mb_substr($data->{$row->field}, 0, 200) . ' ...' : $data->{$row->field} }}</div>
+                                                                    <div>-</div>
                                                                 @endif
+                                                            @else
+                                                                <div>{{ mb_strlen( $data->{$row->field} ) > 200 ? mb_substr($data->{$row->field}, 0, 200) . ' ...' : $data->{$row->field} }}</div>
                                                             @endif
                                                         @endif
                                                     @elseif($row->type == 'text_area')
