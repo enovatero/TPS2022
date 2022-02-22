@@ -22,7 +22,7 @@
         @else
             Oferta {{$edit ? $dataTypeContent->id : 'noua'}}
         @endif
-        - <span style="background: {{$dataTypeContent->status_name->bg_color}}; color: {{$dataTypeContent->status_name->text_color}}; font-size: 18px; padding: 5px">{{strtoupper($dataTypeContent->status_name->title)}}</span>
+        @if($edit) - <span style="background: {{$dataTypeContent->status_name->bg_color}}; color: {{$dataTypeContent->status_name->text_color}}; font-size: 18px; padding: 5px">{{strtoupper($dataTypeContent->status_name->title)}}</span> @endif
         @can('add', app($dataType->model_name))
             <div style="float: right">
             <a href="{{ route('voyager.'.$dataType->slug.'.create') }}" class="btn btn-success btn-add-new">
