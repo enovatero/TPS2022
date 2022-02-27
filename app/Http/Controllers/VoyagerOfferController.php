@@ -1083,7 +1083,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             // acum valoare este un sir concatenat cu _ dupa care iau id-ul de culoare
             $selectedColor = explode('_', $selectedColor)[1];
             // iau culorile preselectate pentru tipul de oferta selectat
-            $colors = OffertypePreselectedColor::with('selectedcolor')->where(
+            $colors = OffertypePreselectedColor::with('selectedcolor', 'selectedDimension')->where(
                 ['color_id' => $selectedColor, 'offer_type_id' => $offerType]
             )->get();
             // daca am culori trec prin fiecare

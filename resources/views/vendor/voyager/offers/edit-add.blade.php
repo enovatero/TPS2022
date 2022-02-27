@@ -271,7 +271,7 @@
                                                                     <label class="control-label"
                                                                            for="name">{{ucfirst($key)}}</label>
                                                                     <select name="selectedAttribute[]"
-                                                                            class="form-control selectColor selectAttribute @if($item[0]->attr_id == 10) preselectColor @endif  selectColAttr-{{$item[0]->attr_id}}">
+                                                                            class="form-control selectColor selectAttribute @if($item[0]->attr_id == 10) preselectColor @endif selectColAttr-{{$item[0]->attr_id}}">
                                                                         <option selected disabled>
                                                                             Selecteaza {{strtolower($key)}}</option>
                                                                         @foreach($item as $color)
@@ -283,7 +283,7 @@
                                                                                 }
                                                                             @endphp
                                                                             <option
-                                                                                value="{{$color->attr_id}}_{{$color->color_id}}_{{$color->color_value}}_{{$color->color_ral}}" {{$selectedColor}}>{{$color->color_ral}}</option>
+                                                                                value="{{$color->attr_id}}_{{$color->color_id}}_{{$color->color_value}}_{{$color->color_ral}}_" {{$selectedColor}}>{{$color->color_ral}}</option>
                                                                         @endforeach
                                                                     </select>
                                                                 </div>
@@ -293,7 +293,7 @@
                                                                     <label class="control-label"
                                                                            for="name">{{ucfirst($key)}}</label>
                                                                     <select name="selectedAttribute[]"
-                                                                            class="form-control selectDimension selectAttribute">
+                                                                            class="form-control selectDimension selectAttribute selectColAttr-{{$item[0]->attr_id}}">
                                                                         <option selected disabled>
                                                                             Selecteaza {{strtolower($key)}}</option>
                                                                         @foreach($item as $dimension)
@@ -305,7 +305,7 @@
                                                                                 }
                                                                             @endphp
                                                                             <option
-                                                                                value="{{$dimension->attr_id}}_{{$dimension->dimension_id}}_{{$dimension->dimension_value}}" {{$selectedDimension}}>{{$dimension->dimension_value}}</option>
+                                                                                value="{{$dimension->attr_id}}_{{$dimension->dimension_id}}___{{$dimension->dimension_value}}" {{$selectedDimension}}>{{$dimension->dimension_value}}</option>
                                                                         @endforeach
                                                                     </select>
                                                                 </div>
@@ -1979,7 +1979,7 @@
                         var colors = res.colors;
                         if (colors && colors.length > 0) {
                             for (var i = 0; i < colors.length; i++) {
-                                var col_for_select = colors[i].attribute_id + '_' + colors[i].selected_color_id + '_' + colors[i].selectedcolor.value + '_' + colors[i].selectedcolor.ral;
+                                var col_for_select = colors[i].attribute_id + '_' + (colors[i].selected_color_id ? colors[i].selected_color_id : (colors[i].selected_dimension_id ? colors[i].selected_dimension_id : '')) + '_' + (colors[i].selectedcolor ? colors[i].selectedcolor.value : '') + '_' + (colors[i].selectedcolor ? colors[i].selectedcolor.ral : '') + '_' + (colors[i].selected_dimension ? colors[i].selected_dimension.value : '');
                                 var selectAttr = ".selectColAttr-" + colors[i].attribute_id;
                                 var option_check = selectAttr + " option[value='" + col_for_select + "']";
                                 if ($(option_check).length > 0) {
