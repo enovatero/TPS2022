@@ -634,8 +634,10 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                     }
                 }
                 $updateOrder = $order->fresh();
-                $updateOrder->prod_ml = $order->prod_ml;
-                $updateOrder->save();
+                if ($updateOrder->prod_ml != round($order->prod_ml)) {
+                    $updateOrder->prod_ml = $order->prod_ml;
+                    $updateOrder->save();
+                }
                 if ($order->status == 3) {
                     continue;
                 }
