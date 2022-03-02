@@ -556,7 +556,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $query->orderBy('numar_comanda', 'desc');
 
         // paginate and make query
-        $orders = $query->paginate($request->get('per_page', 200));
+        $orders = $query->with('_paymentType', '_billingType', 'offerDocs')->paginate($request->get('per_page', 200));
         if (count($orders) == 0 && $orders->total() > 0) {
             return redirect(
                 url()->current() . '?' . http_build_query(
@@ -653,6 +653,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $orderGroups = collect($orderGroups)->sortByDesc('date');
         $drivers = Driver::get();
         $cars = Car::get();
+        $statuses = Status::orderBy('item_order')->get();
 
         return view('voyager::offers.lista', [
             'title' => $title,
@@ -664,6 +665,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'tileFence' => $tileFence,
             'drivers' => $drivers,
             'cars' => $cars,
+            'statuses' => $statuses,
             'orderGroups' => $orderGroups->values()->all(),
         ]);
     }

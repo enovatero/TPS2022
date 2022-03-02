@@ -508,7 +508,7 @@
                                                         </span>
                                                        --}}
                                                         <select class="offerStatusSelector">
-                                                            @foreach (App\Status::orderBy('item_order')->get() as $status)
+                                                            @foreach ($statuses as $status)
                                                                 @php
                                                                     $statusClass = '';
                                                                 @endphp
