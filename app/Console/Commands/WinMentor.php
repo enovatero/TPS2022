@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use App\Product;
 use App\Unit;
 
-class pWinMentor extends Command
+class WinMentor extends Command
 {
     /**
      * The name and signature of the console command.
