@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use App\Product;
 use App\Unit;
 
-class WinMentor extends Command
+class pWinMentor extends Command
 {
     /**
      * The name and signature of the console command.
@@ -59,6 +59,9 @@ class WinMentor extends Command
         }
         $createdAt = date('Y-m-d H:i:s');
         foreach ($winMentorProducts as $key => $product) {
+            if (empty($product['CodExtern'])) {
+                continue;
+            }
             $checkProduct = Product::where('mentor_cod_extern', $product['CodExtern'])->first();
             if ($checkProduct != null) {
                 //momentan nu facem nimic cu produsele care sunt deja bagate
