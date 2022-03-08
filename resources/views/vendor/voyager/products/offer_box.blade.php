@@ -66,10 +66,10 @@
               <input readonly type="number" autocomplete="off" class="form-control input-sm eurFaraTVA parent-{{$parent->id}}" style="width: 70px; display:inline; cursor: not-allowed; color: black; font-size: 14px" @if($eurFaraTVA != 0) value="{{$eurFaraTVA}}" @else value="0.00" @endif>
             </td>
             <td style="text-align:center;">
-              <input readonly type="number" class="form-control input-sm ronCuTVA parent-{{$parent->id}}" style="width: 70px; display:inline; cursor: not-allowed; color: black; font-size: 14px" @if($ronCuTVA != 0) value="{{$ronCuTVA}}" @else value="0.00" @endif>
+              <input readonly type="number" class="form-control input-sm ronCuTVA parent-{{$parent->id}}" style="width: 80px; display:inline; cursor: not-allowed; color: black; font-size: 14px" @if($ronCuTVA != 0) value="{{$ronCuTVA}}" @else value="0.00" @endif>
             </td>
             <td style="text-align:center;">
-              <input readonly type="number" class="form-control input-sm ronTotal parent-{{$parent->id}}" style="width: 70px; display:inline; cursor: not-allowed; color: black; font-size: 14px" @if($ronCuTVA != 0) value="{{$ronTotal}}" @else value="0.00" @endif>
+              <input readonly type="number" class="form-control input-sm ronTotal parent-{{$parent->id}}" style="width: 90px; display:inline; cursor: not-allowed; color: black; font-size: 14px" @if($ronCuTVA != 0) value="{{$ronTotal}}" @else value="0.00" @endif>
             </td>
             <td style="background: lightgrey"></td>
             <td style="text-align: center;">
