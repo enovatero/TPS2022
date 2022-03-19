@@ -58,6 +58,12 @@
                             <i class="voyager-download" style="margin-right: 10px;"></i>
                             <span> Oferta PDF</span>
                         </a>
+                        <a target="_blank" class="btn btn-success btn-add-new"
+                           href="/admin/generatePDFProforma/{{$dataTypeContent->id}}"
+                           style="border-left: 6px solid orange; color: #57c7d4;margin-left: 15px;">
+                            <i class="voyager-file-text" style="margin-right: 10px;"></i>
+                            <span> Proforma PDF</span>
+                        </a>
                         @if($dataTypeContent->delivery_type == 'fan' && $dataTypeContent->fanData && $dataTypeContent->fanData->cont_id != null && $dataTypeContent->fanData->awb != null)
                             <a target="_blank" class="btn btn-success btn-add-new btnDownloadAwbFan"
                                href="/admin/printAwb/{{$dataTypeContent->fanData->awb}}/{{$dataTypeContent->fanData->cont_id}}"
@@ -82,7 +88,7 @@
                         @if($dataTypeContent->numar_comanda != null)
                             <a class="btn btn-success btn-add-new btnFisaComanda" target="_blank"
                                href="/admin/generatePDFFisa/{{$dataTypeContent->id}}"
-                               style="border-left: 6px solid #57c7d4; color: #57c7d4;margin-left: 15px;">
+                               style="border-left: 6px solid purple; color: #57c7d4;margin-left: 15px;">
                                 <i class="voyager-list" style="margin-right: 10px;"></i> <span>Fisa comanda PDF</span>
                             </a>
                             @if($dataTypeContent->status_name->title == 'noua' || $dataTypeContent->status_name->title == 'anulata' || $dataTypeContent->status_name->title == 'modificata' || $dataTypeContent->status_name->title == 'productie')

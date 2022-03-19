@@ -47,13 +47,14 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('/getAttributesByParent', [VoyagerProductsController::class, 'getAttributesByParent'])->middleware('admin.user');
     Route::put('/ajaxSaveUpdateOffer', [VoyagerOfferController::class, 'ajaxSaveUpdateOffer'])->middleware('admin.user');
     Route::get('/generatePDF/{offer_id}', [VoyagerOfferController::class, 'generatePDF'])->middleware('admin.user');
+    Route::get('/generatePDFProforma/{offer_id}', [VoyagerOfferController::class, 'generatePDFProforma'])->middleware('admin.user');
     Route::get('/generatePDFFisa/{offer_id}', [VoyagerOfferController::class, 'generatePDFFisa'])->middleware('admin.user');
     Route::post('/retrieveOffersPerYearMonth', [VoyagerOfferController::class, 'retrieveOffersPerYearMonth'])->middleware('admin.user');
     Route::get('/forceFetchProductsWinMentor', [VoyagerProductsController::class, 'forceFetchProductsWinMentor'])->middleware('admin.user');
     Route::get('/forceFetchProductsWinMentor', [VoyagerProductsController::class, 'forceFetchProductsWinMentor'])->middleware('admin.user');
     Route::get('/products-complete', [VoyagerProductsController::class, 'productsComplete'])->middleware('admin.user');
     Route::get('/products-incomplete', [VoyagerProductsController::class, 'productsIncomplete'])->middleware('admin.user');
-  
+
     Route::get('/lista-oferte', [VoyagerOfferController::class, 'list_offers'])->middleware('admin.user');
     Route::get('/lista-comenzi-tigla', [VoyagerOfferController::class, 'list_orders_custom'])->middleware('admin.user');
     Route::get('/lista-comenzi-sipca', [VoyagerOfferController::class, 'list_orders_custom'])->middleware('admin.user');
@@ -75,7 +76,7 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('deleteOfferDoc', [VoyagerUploadFilesController::class, 'deleteOfferDoc'])->middleware('admin.user');
     Route::get('retrieveTempUrl/{file_id}', [VoyagerUploadFilesController::class, 'retrieveTempUrl'])->middleware('admin.user');
     Route::get('rel/{model}/relation', [VoyagerBaseController::class, 'relation'])->middleware('admin.user');
-  
+
     // Clients Winmentor
     Route::post('syncClientToMentor', [VoyagerClientsController::class, 'syncClientToMentor'])->middleware('admin.user');
     Route::post('getColorsByOfferType', [VoyagerOfferController::class, 'getColorsByOfferType'])->middleware('admin.user');

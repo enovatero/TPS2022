@@ -1833,8 +1833,13 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         return ['success' => true, 'offer_id' => $offer->id, 'html_log' => (new self())->getHtmlLog($offer)];
     }
 
+    public function generatePDFProforma($offer_id)
+    {
+        return $this->generatePDF($offer_id, true);
+    }
+
     // generez pdf-ul cu oferta
-    public function generatePDF($offer_id)
+    public function generatePDF($offer_id, $proforma = false)
     {
         // iau oferta pe baza id-ului de oferta
         $offer = Offer::with(['distribuitor', 'client', 'delivery_address'])->find($offer_id);
@@ -1892,18 +1897,20 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             // trimit toate datele in offer_pdf si generez pdf-ul
             $attributes = OfferAttribute::with('attribute')->where('offer_id', $offer->id)->get();
             $pdf = PDF::loadView(
-                'vendor.pdfs.offer_pdf',
+                'vendor.pdfs.offer_pdf'.($proforma ? '_proforma' : ''),
                 ['offer' => $offer, 'offerProducts' => $offerProducts, 'attributes' => $attributes]
             );
-            // return $pdf->stream();
+            //return $pdf->stream();
 
-            $message = "a generat PDF oferta";
+            $message = "a generat PDF ".($proforma ? "Proforma" : "Oferta");
             (new self())->createEvent($offer, $message);
 
-            return $pdf->download(
-                "Oferta_{$offer->serieName->name}_{$offer->id}_" . ($offer->numar_comanda ? 'C' . $offer->numar_comanda . '_' : '') . "{$offer->offer_date}.pdf"
-            );
+            $fileName = ($proforma ? "Proforma" : "Oferta")."_{$offer->serieName->name}{$offer->id}_" . ($offer->numar_comanda ? 'C' . $offer->numar_comanda . '_' : '') . "{$offer->offer_date}.pdf";
+            $fileExtension = "pdf";
+
+            return $pdf->download($fileName.".".$fileExtension);
         }
+
         return ['success' => false];
     }
 
