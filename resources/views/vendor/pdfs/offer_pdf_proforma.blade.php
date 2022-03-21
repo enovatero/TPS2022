@@ -151,7 +151,7 @@
             <td width="10%">
                 <img src="{{Voyager::image($offerType->left_img)}}" style="width: 140px;">
             </td>
-            <td width="90%">
+            <td width="90%" style="vertical-align: top">
                 @endif
                 <table class="items" width="100%">
                     <thead>
