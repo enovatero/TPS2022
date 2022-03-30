@@ -81,7 +81,7 @@
               @endif
             </td>
             @if($parent->offerProducts != null && $parent->offerProducts->prices != null)
-              @foreach($parent->offerProducts->prices as $rule)
+              @foreach($parent->offerProducts->prices->sortBy('rule_id') as $rule)
                 @php
                   $subtotalRule = $parent->offerProducts->qty*$rule->ron_cu_tva;
                   $totalCalculatRules[$rule->rule_id] += $subtotalRule;
