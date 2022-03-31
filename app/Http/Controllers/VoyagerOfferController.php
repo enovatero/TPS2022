@@ -955,16 +955,19 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         if ($name == null) {
             $errMessages[] = 'Va rugam sa completati numele!';
         }
-        if ($email == null) {
-            $errMessages[] = 'Va rugam sa completati adresa de email!';
-        }
+//        if ($email == null) {
+//            $errMessages[] = 'Va rugam sa completati adresa de email!';
+//        }
         if ($phone == null) {
             $errMessages[] = 'Va rugam sa completati nr. de telefon!';
         }
+        if (strpos($phone, ',') !== false || strpos($phone, ' ') !== false) {
+            $errMessages[] = 'Numarul de telefon nu este corect!';
+        }
         if ($pers_type == 'fizica') {
-            if ($cnp == null) {
-                $errMessages[] = 'Va rugam sa completati CNP-ul!';
-            }
+//            if ($cnp == null) {
+//                $errMessages[] = 'Va rugam sa completati CNP-ul!';
+//            }
         } else {
             if ($cui == null) {
                 $errMessages[] = 'Va rugam sa completati CUI-ul!';
@@ -979,7 +982,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 $errMessages[] = 'Va rugam sa completati IBAN-ul!';
             }
         }
-        if ($addrErrs > 0) {
+        if (!empty($errMessages) > 0) {
             return ['success' => false, 'msg' => $errMessages];
         }
 
@@ -1575,6 +1578,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         ));
 
         $created_at = date("Y-m-d H:i:s");
+        //dd($modifyOfferProductsPrices);
         if ($modifyOfferProductsPrices) {
             // recreez noile valori pentru offer_products si offer_prices
             foreach ($products as $product) {
@@ -1626,6 +1630,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             }
         }
         // iau produsele din oferta si le filtrez pentru a afisa noile preturi in listarea din pagina
+        //dd($offerProducts);
         if ($offerProducts && count($offerProducts) > 0) {
             foreach ($offerProducts as $offProd) {
                 // filtrez produsele din oferta pe baza parent_id
@@ -1633,11 +1638,17 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                     return $item->id == $offProd->parent_id;
                 })->first();
                 $checkedParent->offerProducts = $offProd;
-                $ronCuTVA = $checkedParent != null ? $checkedParent->ron_cu_tva : 0;
+                $ronCuTVA = $checkedParent != null
+                    ? $checkedParent->offerProducts->prices->filter(function ($item) use ($offer) {
+                            return $item->rule_id == $offer->price_grid_id;
+                        })->first()->ron_cu_tva
+                    : 0;
+                //dd($checkedParent);
                 $ronTotal = round($ronCuTVA * $checkedParent->offerProducts->qty, 2);
                 $totalCalculat += $ronTotal;
             }
         }
+        //dd($totalCalculat);
         $offer->reducere = 0;
         $offer->total_general = number_format($totalCalculat, 2);
         $offer->total_final = number_format($totalCalculat, 2);
@@ -1715,6 +1726,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             ) : 6; // default Lista
             $offer->curs_eur = $request->input('curs_eur');
             $offer->external_number = $request->input('external_number');
+            //dd($request);
             $offer->total_general = $request->input('totalGeneral') != null ? number_format(
                 floatval($request->input('totalGeneral')),
                 2,
@@ -1754,8 +1766,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $offer->packing = $request->input('packing');
         $offer->delivery_details = $request->input('delivery_details');
         $offer->delivery_type = $request->input('delivery_type');
+        //dd($offer);
         $offer->save();
-//     dd($offer->toArray());
+        //dd($offer->toArray());
         $selectedAttributes = $request->input('selectedAttribute');
         $updatedAt = date("Y-m-d H:i:s");
         // trebuie sa imi iau color_id si sa-l pun in selectedAttribute din edit-add
