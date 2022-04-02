@@ -975,12 +975,12 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             if ($reg_com == null) {
                 $errMessages[] = 'Va rugam sa completati Registrul comertului!';
             }
-            if ($banca == null) {
-                $errMessages[] = 'Va rugam sa completati Banca!';
-            }
-            if ($iban == null) {
-                $errMessages[] = 'Va rugam sa completati IBAN-ul!';
-            }
+//            if ($banca == null) {
+//                $errMessages[] = 'Va rugam sa completati Banca!';
+//            }
+//            if ($iban == null) {
+//                $errMessages[] = 'Va rugam sa completati IBAN-ul!';
+//            }
         }
         if (!empty($errMessages) > 0) {
             return ['success' => false, 'msg' => $errMessages];
