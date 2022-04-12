@@ -556,7 +556,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $query->orderBy('numar_comanda', 'desc');
 
         // paginate and make query
-        $orders = $query->with('_paymentType', '_billingType', 'offerDocs')->paginate($request->get('per_page', 200));
+        $orders = $query->with('_paymentType', '_billingType', 'offerDocs')->paginate($request->get('per_page', 300));
         if (count($orders) == 0 && $orders->total() > 0) {
             return redirect(
                 url()->current() . '?' . http_build_query(
