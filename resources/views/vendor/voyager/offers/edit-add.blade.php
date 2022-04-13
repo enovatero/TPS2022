@@ -466,7 +466,7 @@
                                                                                     city_name="{{$address->city_name}}"
                                                                                     address="{{$address->address}}"
                                                                                     phone="{{$address->phone}}"
-                                                                                    contact="{{$address->name}}">{{$address->address}}
+                                                                                    contact="{{$address->name}}">@if($address->user_id == 1038) {{$address->wme_name}} - @endif{{$address->address}}
                                                                                 , {{$address->city_name}}
                                                                                 , {{$address->state_name}}</option>
                                                                         @else
@@ -478,7 +478,7 @@
                                                                                     city_name="{{$address->city_name()}}"
                                                                                     address="{{$address->address}}"
                                                                                     phone="{{$address->phone}}"
-                                                                                    contact="{{$address->name}}">{{$address->address}}
+                                                                                    contact="{{$address->name}}">@if($address->user_id == 1038) {{$address->wme_name}} - @endif{{$address->address}}
                                                                                 , {{$address->city_name()}}
                                                                                 , {{$address->state_name()}}</option>
                                                                         @endif
@@ -987,52 +987,58 @@
                                                            autocomplete="off"
                                                            value="{{ old('name', $dataTypeContent->name ?? '') != '' ? old('name', $dataTypeContent->name) : ''}}"/>
                                                 </div>
-                                                <div class="form-group col-md-12 container-inputs-juridica"
+                                                <div class="form-group col-md-6 container-inputs-juridica"
                                                      @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
                                                     <label class="control-label" for="name">CUI</label>
                                                     <input class="form-control" type="text" name="cui"
                                                            autocomplete="off"
                                                            value="{{ old('cui', $dataTypeContent->cui ?? '') != '' ? old('cui', $dataTypeContent->cui) : ''}}"/>
                                                 </div>
-                                                <div class="form-group col-md-12 container-inputs-juridica"
+                                                <div class="form-group col-md-6 container-inputs-juridica"
                                                      @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
                                                     <label class="control-label" for="name">Reg. Com.</label>
                                                     <input class="form-control" type="text" name="reg_com"
                                                            autocomplete="off"
                                                            value="{{ old('reg_com', $dataTypeContent->reg_com ?? '') != '' ? old('reg_com', $dataTypeContent->reg_com) : ''}}"/>
                                                 </div>
-                                                <div class="form-group col-md-12 container-inputs-juridica"
+                                                <div class="form-group col-md-6 container-inputs-juridica"
                                                      @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
                                                     <label class="control-label" for="name">Banca</label>
                                                     <input class="form-control" type="text" name="banca"
                                                            autocomplete="off"
                                                            value="{{ old('banca', $dataTypeContent->banca ?? '') != '' ? old('banca', $dataTypeContent->banca) : ''}}"/>
                                                 </div>
-                                                <div class="form-group col-md-12 container-inputs-juridica"
+                                                <div class="form-group col-md-6 container-inputs-juridica"
                                                      @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: block" @endif>
                                                     <label class="control-label" for="name">IBAN</label>
                                                     <input class="form-control" type="text" name="iban"
                                                            autocomplete="off"
                                                            value="{{ old('iban', $dataTypeContent->iban ?? '') != '' ? old('iban', $dataTypeContent->iban) : ''}}"/>
                                                 </div>
-                                                <div class="form-group col-md-12 container-inputs-fizica"
+                                                <div class="form-group col-md-6 container-inputs-fizica"
                                                      @if(old('persoana_type', $dataTypeContent->persoana_type) == 'juridica') style="display: none" @endif>
                                                     <label class="control-label" for="name">CNP</label>
                                                     <input class="form-control" type="text" name="cnp"
                                                            autocomplete="off"
-                                                           value="{{ old('cnp', $dataTypeContent->cnp ?? '') != '' ? old('cnp', $dataTypeContent->cnp) : ''}}"/>
+                                                           value=""/>
                                                 </div>
-                                                <div class="form-group  col-md-12 ">
+                                                <div class="form-group  col-md-6 ">
                                                     <label class="control-label" for="name">Email</label>
                                                     <input type="text" class="form-control" name="email"
                                                            placeholder="Email"
                                                            value="{{ old('email', $dataTypeContent->email ?? '') != '' ? old('email', $dataTypeContent->email) : ''}}">
                                                 </div>
-                                                <div class="form-group  col-md-12 ">
+                                                <div class="form-group  col-md-6 ">
                                                     <label class="control-label" for="name">Telefon</label>
                                                     <input type="text" class="form-control" name="phone"
                                                            placeholder="Telefon"
-                                                           value="{{ old('cnp', $dataTypeContent->cnp ?? '') != '' ? old('cnp', $dataTypeContent->cnp) : ''}}">
+                                                           value="">
+                                                </div>
+                                                <div class="form-group  col-md-6 ">
+                                                    <label class="control-label" for="name">Telefon 2</label>
+                                                    <input type="text" class="form-control" name="phone2"
+                                                           placeholder="Telefon 2"
+                                                           value="">
                                                 </div>
                                                 <div>
                                                     <div class="form-group col-md-12 column-element-address">
@@ -1050,12 +1056,12 @@
                                                         <label class="control-label">Tara</label>
                                                         @include('vendor.voyager.formfields.countries', ['selected' => null])
                                                     </div>
-                                                    <div class="form-group col-md-12 column-element-address">
+                                                    <div class="form-group col-md-6 column-element-address">
                                                         <label class="control-label" for="state">Judet/Regiune</label>
                                                         <select name="state[]"
                                                                 class="form-control select-state"></select>
                                                     </div>
-                                                    <div class="form-group col-md-12 column-element-address">
+                                                    <div class="form-group col-md-6 column-element-address">
                                                         <label class="control-label">Oras/Localitate/Sector</label>
                                                         <select name="city[]" class="form-control select-city"></select>
                                                     </div>
@@ -1273,12 +1279,14 @@
                                 @if($userAddresses != null && count($userAddresses) > 0)
                                     @foreach($userAddresses as $address)
                                         <option value="{{$address->id}}"
-                                                @if($edit && $dataTypeContent && $dataTypeContent->fanData && $dataTypeContent->fanData->adresa_livrare_id == $address->id) selected @endif>
+                                                @if($edit && $dataTypeContent && $dataTypeContent->fanData && $dataTypeContent->fanData->adresa_livrare_id == $address->id) selected @endif
+                                                @if($edit && $dataTypeContent && !$dataTypeContent->fanData && $dataTypeContent->delivery_address_user == $address->id) selected @endif
+                                        >
                                             {{$address->name}} -
                                             {{$address->address}},
                                             {{$address->city_name}},
                                             {{$address->state_name}},
-                                            {{$address->phone}}
+                                            {{$address->phone}} @if($address->user_id == 1038) - {{$address->wme_name}} @endif
                                         </option>
                                     @endforeach
                                 @endif
@@ -1436,12 +1444,14 @@
                                 @if($userAddresses != null && count($userAddresses) > 0)
                                     @foreach($userAddresses as $address)
                                         <option value="{{$address->id}}"
-                                                @if($edit && $dataTypeContent && $dataTypeContent->nemoData && $dataTypeContent->nemoData->adresa_livrare_id == $address->id) selected @endif>
+                                                @if($edit && $dataTypeContent && $dataTypeContent->nemoData && $dataTypeContent->nemoData->adresa_livrare_id == $address->id) selected @endif
+                                                @if($edit && $dataTypeContent && !$dataTypeContent->nemoData && $dataTypeContent->delivery_address_user == $address->id) selected @endif
+                                        >
                                             {{$address->name}} -
                                             {{$address->address}},
                                             {{$address->city_name}},
                                             {{$address->state_name}},
-                                            {{$address->phone}}
+                                            {{$address->phone}} @if($address->user_id == 1038) - {{$address->wme_name}} @endif
                                         </option>
                                     @endforeach
                                 @endif

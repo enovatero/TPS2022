@@ -952,6 +952,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $cnp = $request->input('cnp');
         $email = $request->input('email');
         $phone = $request->input('phone');
+        $phone2 = $request->input('phone2');
         if ($name == null) {
             $errMessages[] = 'Va rugam sa completati numele!';
         }
@@ -963,6 +964,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
         if (strpos($phone, ',') !== false || strpos($phone, ' ') !== false) {
             $errMessages[] = 'Numarul de telefon nu este corect!';
+        }
+        if (strpos($phone2, ',') !== false || strpos($phone2, ' ') !== false) {
+            $errMessages[] = 'Numarul de telefon 2 nu este corect!';
         }
         if ($pers_type == 'fizica') {
 //            if ($cnp == null) {
@@ -990,6 +994,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $client->name = $request->input('name');
         $client->email = $request->input('email');
         $client->phone = $request->input('phone');
+        $client->phone2 = $request->input('phone2');
         $client->type = $request->input('persoana_type');
         $currentDate = date('Y-m-d H:i:s');
         $client->created_at = $currentDate;
