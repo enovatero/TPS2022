@@ -292,7 +292,7 @@ class NemoExpressController extends Controller
 
         curl_setopt($curl, CURLOPT_URL, env('NEMO_API_URL') . "/API/" . $endpoint . $apiKeyQuery);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 15);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 60);
 
         if (!empty($params)) {
             curl_setopt($curl, CURLOPT_POST, 1);
