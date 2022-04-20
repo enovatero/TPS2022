@@ -207,7 +207,7 @@
                     </tr>
                     <tr class="total">
                         <td colspan="6" class="totals"><b>Reducere - RON -</b></td>
-                        <td class="totals"><b>{{$reducere ? '- '. number_format($reducere, 2, '.', '') : '0.00'}}</b></td>
+                        <td class="totals"><b>{{$reducere ? (-1 * number_format($reducere, 2, '.', '')) : '0.00'}}</b></td>
                     </tr>
                     <tr class="total">
                         <td colspan="6" class="totals"><b>Total final - RON -</b></td>
