@@ -123,7 +123,7 @@
       </tr>
       <tr class="total">
         <td colspan="6" class="totals" style="text-align: right;font-weight: bold;"><b style="font-weight: bold;">Reducere - RON -</b></td>
-        <td class="totals"><b><span class="reducereRon" style="font-weight: bold;">{{$reducere != null || $reducere != 0 ? number_format($reducere, 2, '.', '') : '0.00'}}</span></b><input name="reducere" type="hidden" value="{{number_format($reducere, 2, '.', '')}}"></td>
+        <td class="totals"><b><span class="reducereRon" style="font-weight: bold;">{{$reducere != null || $reducere != 0 ? number_format((-1 * $reducere), 2, '.', '') : '0.00'}}</span></b><input name="reducere" type="hidden" value="{{number_format($reducere, 2, '.', '')}}"></td>
         <td style="background: lightgrey"></td>
         <th style="text-align:right;font-weight: bold;">PI</th>
         @foreach($cleanRulePrices as $rule)

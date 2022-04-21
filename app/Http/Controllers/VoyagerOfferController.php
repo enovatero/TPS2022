@@ -1744,6 +1744,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                 '.',
                 ''
             ) : 0;
+            if ($offer->total_general < 0) {
+                $offer->reducere = -1 * $offer->reducere;
+            }
             $offer->total_final = $request->input('totalCalculatedPrice') != null ? number_format(
                 floatval($request->input('totalCalculatedPrice')),
                 2,

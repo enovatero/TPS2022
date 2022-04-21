@@ -2187,7 +2187,7 @@
             $(document).on("input", ".totalHandled", function () {
                 var totalHandled = $(this).val();
                 var totalGeneral = $("input[name=totalGeneral]").val();
-                var reducere = totalGeneral - totalHandled;
+                var reducere = (-1 * (totalGeneral - totalHandled));
                 var totalFinal = totalHandled;
                 $("input[name=reducere]").val(parseFloat(reducere).toFixed(2));
                 $("span.reducereRon").text(parseFloat(reducere).toFixed(2));
