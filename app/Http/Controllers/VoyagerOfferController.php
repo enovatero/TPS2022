@@ -1658,7 +1658,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $offer->total_general = number_format($totalCalculat, 2);
         $offer->total_final = number_format($totalCalculat, 2);
         $offer->save();
-        $priceRules = \App\RulesPrice::get();
+        $priceRules = \App\RulesPrice::get()->sortBy('code');
+        //dd($priceRules);
         return view('vendor.voyager.products.offer_box', [
             'parents' => $offerType->parents,
             'reducere' => $offer->reducere,

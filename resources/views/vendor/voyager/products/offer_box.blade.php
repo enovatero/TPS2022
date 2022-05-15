@@ -21,7 +21,7 @@
         <th style="text-align:right;font-weight: bold;">RON <br>TOTAL </th>
         <th></th>
         <th style="text-align:right;font-weight: bold;">PI</th>
-        @foreach($cleanRulePrices as $rule)
+        @foreach($cleanRulePrices->sortBy('code') as $rule)
           <th style="text-align:right;font-weight: bold;">{{$rule->title}}</th>
         @endforeach
       </tr>
@@ -81,7 +81,10 @@
               @endif
             </td>
             @if($parent->offerProducts != null && $parent->offerProducts->prices != null)
-              @foreach($parent->offerProducts->prices->sortBy('rule_id') as $rule)
+              @foreach($parent->offerProducts->prices->sortBy(function($item) {
+                    return array_search($item->rule_id, ['1', '2', '7', '3', '8', '4', '5', '6']);
+                }) as $rule
+              )
                 @php
                   $subtotalRule = $parent->offerProducts->qty*$rule->ron_cu_tva;
                   $totalCalculatRules[$rule->rule_id] += $subtotalRule;
