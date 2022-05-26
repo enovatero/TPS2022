@@ -226,7 +226,7 @@ class FanCourierController extends Controller
             'plata_expeditie' => $form_data['plata_expeditie'],
             'ramburs_bani' => $totalPlata > 0 ? floatval($totalPlata) : '',
             'plata_ramburs_la' => $totalPlata > 0 ? 'expeditor' : '',
-            'valoare_declarata' => $form_data['ramburs_numerar'],
+            'valoare_declarata' => 0,
             'persoana_contact_expeditor' => $agent->name ?: 'Top Profil Sistem',
             'persoana_contact_expeditor_adresa' => 'Sos. de Centura,  nr. 3',
             'observatii' => 'A se contacta telefonic',
