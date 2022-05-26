@@ -178,8 +178,9 @@
                                                 class="custom-table-select form-control selectpicker"
                                                 onchange="this.form.submit()"
                                                 multiple
+                                                data-none-selected-text="-"
                                             >
-                                                <option value="" {{ empty(request()->status) ? 'selected' : '' }}> - </option>
+{{--                                                <option value="" {{ empty(request()->status) ? 'selected' : '' }}> - </option>--}}
                                                 @foreach (App\Status::pluck('title', 'id') as $status_id => $status_title)
                                                     <option
                                                         value="{{ $status_id }}"
