@@ -2499,6 +2499,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'PretCuAmanuntul' => 'DA',
             'CodSubunitate' => '2',
             'Agent' => $orderUser->wme_user_id ?: 0,
+            'NrInreg' => $order->delivery_type ?: 'N/A',
             'Items' => $items,
         ];
         $ch = curl_init();
