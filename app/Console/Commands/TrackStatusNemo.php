@@ -119,7 +119,7 @@ class TrackStatusNemo extends Command
             $offer->save();
 
             $message = "a schimbat statusul din " . $oldOfferStatus->title . ' in ' . $newOfferStatus->title;
-            VoyagerOfferController::createEvent($offer, $message, true);
+            VoyagerOfferController::createEvent($offer, $message);
         }
     }
 }
