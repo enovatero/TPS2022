@@ -30,6 +30,7 @@ class Offer extends Model
         7 => 'La Termen',
         8 => 'Avans',
         9 => 'Ramburs',
+        10 => 'Plata la fabrica',
     ];
     public static $attr_p_values = [
         1 => '1K',
