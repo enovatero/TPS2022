@@ -70,8 +70,9 @@
                                                 class="custom-table-select form-control selectpicker"
                                                 onchange="this.form.submit()"
                                                 multiple
+                                                data-none-selected-text="-"
                                             >
-                                                <option value="" {{ empty(request()->custom_off_type) ? 'selected' : '' }}> - </option>
+{{--                                                <option value="" {{ empty(request()->custom_off_type) ? 'selected' : '' }}> - </option>--}}
                                                 @foreach (App\CofferType::pluck('title', 'id') as $offerTypeId => $offerTypeTitle)
                                                     <option
                                                         value="{{ $offerTypeId }}"
@@ -94,9 +95,11 @@
                                             <select name="type"
                                                 class="custom-table-select form-control selectpicker"
                                                 onchange="this.form.submit()"
+                                                multiple
+                                                data-none-selected-text="-"
                                             >
-                                                <option value=""> - </option>
-                                                @foreach (App\OfferType::pluck('title', 'id') as $offerTypeId => $offerTypeTitle)
+{{--                                                <option value=""> - </option>--}}
+                                                @foreach (App\OfferType::where('tile_fence', $tileFence)->pluck('title', 'id') as $offerTypeId => $offerTypeTitle)
                                                     <option
                                                         value="{{ $offerTypeId }}"
                                                         {{ request()->type == $offerTypeId ? 'selected' : '' }}
