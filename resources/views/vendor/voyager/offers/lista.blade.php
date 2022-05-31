@@ -36,18 +36,16 @@
             <div class="col-md-12">
                 <div class="panel panel-bordered">
                     <div class="panel-body">
-
+                        <form method="get">
                         <div class="custom-table-filters overflow__list-1">
                             @foreach ($columns as $column)
                                 @if ($column['key'] == 'agent')
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
-                                            <select
-                                                class="custom-table-select form-control"
-                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                    'agent_id' => 'value'
-                                                ])) }}').replace('value', this.value)"
+                                            <select name="agent_id"
+                                                class="custom-table-select form-control selectpicker"
+                                                    onchange="this.form.submit()"
                                             >
                                                 <option value=""> - </option>
                                                 @foreach (App\Models\User::where('role_id', 9)->orderBy('short_name')->pluck('short_name', 'id') as $agent_id => $agent_name)
@@ -68,17 +66,20 @@
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
-                                            <select
-                                                class="custom-table-select form-control"
-                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                'custom_off_type' => 'value'
-                                            ])) }}').replace('value', this.value)"
+                                            <select name="custom_off_type[]"
+                                                class="custom-table-select form-control selectpicker"
+                                                onchange="this.form.submit()"
+                                                multiple
                                             >
-                                                <option value=""> - </option>
+                                                <option value="" {{ empty(request()->custom_off_type) ? 'selected' : '' }}> - </option>
                                                 @foreach (App\CofferType::pluck('title', 'id') as $offerTypeId => $offerTypeTitle)
                                                     <option
                                                         value="{{ $offerTypeId }}"
-                                                        {{ request()->custom_off_type == $offerTypeId ? 'selected' : '' }}
+                                                        @if (!empty(request()->custom_off_type))
+                                                        @foreach(request()->custom_off_type as $custom_off_type)
+                                                            {{ $custom_off_type == $offerTypeId ? 'selected' : '' }}
+                                                        @endforeach
+                                                        @endif
                                                     >
                                                         {{ $offerTypeTitle }}
                                                     </option>
@@ -90,11 +91,9 @@
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
-                                            <select
-                                                class="custom-table-select form-control"
-                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                        'type' => 'value'
-                                    ])) }}').replace('value', this.value)"
+                                            <select name="type"
+                                                class="custom-table-select form-control selectpicker"
+                                                onchange="this.form.submit()"
                                             >
                                                 <option value=""> - </option>
                                                 @foreach (App\OfferType::pluck('title', 'id') as $offerTypeId => $offerTypeTitle)
@@ -112,11 +111,9 @@
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
-                                            <select
-                                                class="custom-table-select form-control"
-                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                    'payment_type' => 'value'
-                                                ])) }}').replace('value', this.value)"
+                                            <select name="payment_type"
+                                                class="custom-table-select form-control selectpicker"
+                                                onchange="this.form.submit()"
                                             >
                                                 <option value=""> - </option>
                                                 @foreach (App\Offer::$payment_types as $pkey => $payment_type)
@@ -135,11 +132,9 @@
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
-                                            <select
-                                                class="custom-table-select form-control"
-                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                    'attr_'.$column['key'] => 'value'
-                                                ])) }}').replace('value', this.value)"
+                                            <select name="attr_{{ $column['key'] }}"
+                                                class="custom-table-select form-control selectpicker"
+                                                onchange="this.form.submit()"
                                             >
                                                 <option value=""> - </option>
                                                 @foreach (App\Offer::$attr_p_values as $pkey => $pvalue)
@@ -158,11 +153,9 @@
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
-                                            <select
-                                                class="custom-table-select form-control"
-                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                    'attr_'.$column['key'] => 'value'
-                                                ])) }}').replace('value', this.value)"
+                                            <select name="attr_{{ $column['key'] }}"
+                                                class="custom-table-select form-control selectpicker"
+                                                onchange="this.form.submit()"
                                             >
                                                 <option value=""> - </option>
                                                 @foreach (App\Offer::$attr_p_values_new as $pkey => $pvalue)
@@ -181,17 +174,21 @@
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
-                                            <select
-                                                class="custom-table-select form-control"
-                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                    'status' => 'value'
-                                                ])) }}').replace('value', this.value)"
+                                            <select name="status[]"
+                                                class="custom-table-select form-control selectpicker"
+                                                onchange="this.form.submit()"
+                                                multiple
+                                                data-none-selected-text="-"
                                             >
-                                                <option value=""> - </option>
+{{--                                                <option value="" {{ empty(request()->status) ? 'selected' : '' }}> - </option>--}}
                                                 @foreach (App\Status::pluck('title', 'id') as $status_id => $status_title)
                                                     <option
                                                         value="{{ $status_id }}"
-                                                        {{ request()->get('status') == $status_id ? 'selected' : '' }}
+                                                        @if (!empty(request()->status))
+                                                        @foreach(request()->status as $status)
+                                                            {{ $status == $status_id ? 'selected' : '' }}
+                                                        @endforeach
+                                                        @endif
                                                     >
                                                         {{ ucfirst($status_title) }}
                                                     </option>
@@ -205,11 +202,9 @@
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
-                                            <select
-                                                class="custom-table-select form-control"
-                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                    'billing_status' => 'value'
-                                                ])) }}').replace('value', this.value)"
+                                            <select name="billing_status"
+                                                class="custom-table-select form-control selectpicker"
+                                                onchange="this.form.submit()"
                                             >
                                                 <option value=""> - </option>
                                                 @foreach (App\Offer::$billing_statuses as $bkey => $billing_status)
@@ -228,11 +223,9 @@
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru Livrare</div>
-                                            <select
-                                                class="custom-table-select form-control"
-                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                    'delivery_type' => 'value'
-                                                ])) }}').replace('value', this.value)"
+                                            <select name="delivery_type"
+                                                class="custom-table-select form-control selectpicker"
+                                                onchange="this.form.submit()"
                                             >
                                                 <option value=""> - </option>
                                                 @foreach (App\Offer::$delivery_types as $dkey => $delivery)
@@ -251,11 +244,9 @@
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
-                                            <select
-                                                class="custom-table-select form-control"
-                                                onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
-                                                    'distribuitor_id' => 'value'
-                                                ])) }}').replace('value', this.value)"
+                                            <select name="distribuitor_id"
+                                                class="custom-table-select form-control selectpicker"
+                                                onchange="this.form.submit()"
                                             >
                                                 <option value=""> - </option>
                                                 @foreach (App\Distribuitor::pluck('title', 'id') as $did => $distribuitor_title)
@@ -280,6 +271,7 @@
                                 @endif
                             @endforeach
                         </div>
+                        </form>
 
                         <div class="table-responsive-start">
                             {{-- acest div este folosit ca sa activez/dezactivez modul sticky --}}
@@ -1196,5 +1188,6 @@
             // });
 
         });
+
     </script>
 @stop

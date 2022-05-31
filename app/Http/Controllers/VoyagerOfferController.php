@@ -520,7 +520,14 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         // dynamic filters based on columns
         foreach ($columns as $column) {
             if ($column['order_by'] && $request->get($column['order_by'], false)) {
-                $query->where($column['order_by'], $request->get($column['order_by'], false));
+                if (is_array($request->get($column['order_by'])) && !empty($request->get($column['order_by']))) {
+                    //dd($request->get($column['order_by']));
+                    if ($request->get($column['order_by'])[0] != null) {
+                        $query->whereIn($column['order_by'], $request->get($column['order_by']));
+                    }
+                } else {
+                    $query->where($column['order_by'], $request->get($column['order_by'], false));
+                }
             }
         }
 
