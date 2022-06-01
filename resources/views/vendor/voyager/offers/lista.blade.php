@@ -791,14 +791,7 @@
                                 </div>
                             </div>
                             <div class="pull-right">
-                                {{ $orders->appends([
-                                    // 's' => $search->value,
-                                    // 'filter' => $search->filter,
-                                    // 'key' => $search->key,
-                                    'order_by' => $orderColumn[0],
-                                    'sort_order' => $orderColumn[1],
-                                    'per_page' => request()->get('per_page'),
-                                ])->links() }}
+                                {{ $orders->withQueryString()->links() }}
                             </div>
                             <div class="float-right" style="margin-top: 5px; margin-right: 20px;">
                                 <select class="form-control" style="width: 68px; height: 40px;" onchange="location.href = String('{{ url()->current().'?'.http_build_query(array_merge(request()->all(), [
