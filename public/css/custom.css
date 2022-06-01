@@ -711,3 +711,9 @@ td.xStickyColumn {
     border-bottom: solid 1px lightgray !important;
     z-index: 99;
 }
+
+#daterangepicker {
+    min-width: 180px;
+    padding: 5px;
+    margin: 5px;
+}

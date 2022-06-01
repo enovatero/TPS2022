@@ -36,7 +36,7 @@
             <div class="col-md-12">
                 <div class="panel panel-bordered">
                     <div class="panel-body">
-                        <form method="get">
+                        <form method="get" id="filterForm">
                         <div class="custom-table-filters overflow__list-1">
                             @foreach ($columns as $column)
                                 @if ($column['key'] == 'agent')
@@ -273,6 +273,12 @@
 
                                 @endif
                             @endforeach
+                                <div class="filter-item">
+                                    <label>
+                                        <div>Filtru data</div>
+                                        <input type="text" name="period" id="daterangepicker" value="{{ $dateRangeString }}">
+                                    </label>
+                                </div>
                         </div>
                         </form>
 
@@ -1185,5 +1191,29 @@
 
         });
 
+        $(function() {
+            $('#daterangepicker').daterangepicker({
+                locale: {
+                    format: 'DD/MM/YYYY'
+                },
+                ranges: {
+                    'Default': [moment().subtract(3, 'days'), moment().add(15, 'days')],
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                },
+            });
+
+            $(".applyBtn").removeClass("btn-success");
+            $(".applyBtn").addClass("btn-default");
+
+            $('#daterangepicker').on('apply.daterangepicker', function(ev, picker) {
+                $('#filterForm').submit();
+            });
+        });
     </script>
+
 @stop

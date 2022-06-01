@@ -518,6 +518,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'delivery_address',
         ]);
         // dynamic filters based on columns
+        //dd($request->all());
         foreach ($columns as $column) {
             if ($column['order_by'] && $request->get($column['order_by'], false)) {
                 if (is_array($request->get($column['order_by'])) && !empty($request->get($column['order_by']))) {
@@ -529,6 +530,43 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                     $query->where($column['order_by'], $request->get($column['order_by'], false));
                 }
             }
+        }
+
+        $dateRange = [
+            date('d/m/Y', strtotime("-3 days")),
+            date('d/m/Y', strtotime("+15 days"))
+        ];
+        $dateRangeString = implode(' - ', $dateRange);
+        $defaultDateRange = true;
+        $dateRangeDiff = null;
+
+        if ($request->get('period')) {
+            if ($request->get('period') != $dateRangeString) {
+                $defaultDateRange = false;
+            }
+            $dateRange = explode(' - ', $request->get('period'));
+            $dateRangeString = $request->get('period');
+        }
+
+        if (count($dateRange) == 2) {
+            $dateFrom = \DateTime::createFromFormat('d/m/Y', trim($dateRange[0]));
+            $dateTo = \DateTime::createFromFormat('d/m/Y', trim($dateRange[1]));
+            $query->whereBetween('actual_delivery_date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')]);
+            $dateRangeDiff = date_diff($dateFrom, $dateTo)->days;
+        }
+
+        switch (true) {
+            case $defaultDateRange || $dateRangeDiff == 1:
+                $defaultPerPage = 1000;
+                break;
+
+            case $dateRangeDiff > 0 && $dateRangeDiff < 3:
+                $defaultPerPage = 500;
+                break;
+
+            default:
+                $defaultPerPage = 200;
+                break;
         }
 
         $master = $request->get('master');
@@ -563,7 +601,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $query->orderBy('numar_comanda', 'desc');
 
         // paginate and make query
-        $orders = $query->with('_paymentType', '_billingType', 'offerDocs')->paginate($request->get('per_page', 300));
+        $orders = $query->with('_paymentType', '_billingType', 'offerDocs')->paginate($request->get('per_page', $defaultPerPage));
         if (count($orders) == 0 && $orders->total() > 0) {
             return redirect(
                 url()->current() . '?' . http_build_query(
@@ -676,6 +714,7 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             'cars' => $cars,
             'statuses' => $statuses,
             'orderGroups' => $orderGroups->values()->all(),
+            'dateRangeString' => $dateRangeString
         ]);
     }
 
