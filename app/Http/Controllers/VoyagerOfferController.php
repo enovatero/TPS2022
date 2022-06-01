@@ -1662,8 +1662,8 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         }
         //dd($totalCalculat);
         $offer->reducere = 0;
-        $offer->total_general = number_format($totalCalculat, 2);
-        $offer->total_final = number_format($totalCalculat, 2);
+        $offer->total_general = round($totalCalculat, 2);
+        $offer->total_final = round($totalCalculat, 2);
         $offer->save();
         $priceRules = \App\RulesPrice::get()->sortBy('code');
         //dd($priceRules);
@@ -1755,12 +1755,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             if ($offer->total_general < 0) {
                 $offer->reducere = -1 * $offer->reducere;
             }
-            $offer->total_final = $request->input('totalCalculatedPrice') != null ? number_format(
-                floatval($request->input('totalCalculatedPrice')),
-                2,
-                '.',
-                ''
-            ) : 0;
+            $offer->total_final = $request->input('totalCalculatedPrice') != null
+                ? round(floatval($request->input('totalCalculatedPrice')), 2)
+                : 0;
         }
         //$offer->offer_date = $request->input('offer_date'); // asta nu se suprascrie
         //$offer->agent_id = $request->input('agent_id'); // asta nu mai trebuie suprascris
