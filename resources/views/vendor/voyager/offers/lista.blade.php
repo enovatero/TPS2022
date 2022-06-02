@@ -102,7 +102,11 @@
                                                 @foreach (App\OfferType::where('tile_fence', $tileFence)->pluck('title', 'id') as $offerTypeId => $offerTypeTitle)
                                                     <option
                                                         value="{{ $offerTypeId }}"
-                                                        {{ request()->type == $offerTypeId ? 'selected' : '' }}
+                                                    @if (!empty(request()->type))
+                                                        @foreach(request()->type as $type)
+                                                            {{ $type == $offerTypeId ? 'selected' : '' }}
+                                                            @endforeach
+                                                        @endif
                                                     >
                                                         {{ $offerTypeTitle }}
                                                     </option>
