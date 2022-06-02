@@ -532,43 +532,6 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
             }
         }
 
-        $dateRange = [
-            date('d/m/Y', strtotime("-3 days")),
-            date('d/m/Y', strtotime("+15 days"))
-        ];
-        $dateRangeString = implode(' - ', $dateRange);
-        $defaultDateRange = true;
-        $dateRangeDiff = null;
-
-        if ($request->get('period')) {
-            if ($request->get('period') != $dateRangeString) {
-                $defaultDateRange = false;
-            }
-            $dateRange = explode(' - ', $request->get('period'));
-            $dateRangeString = $request->get('period');
-        }
-
-        if (count($dateRange) == 2) {
-            $dateFrom = \DateTime::createFromFormat('d/m/Y', trim($dateRange[0]));
-            $dateTo = \DateTime::createFromFormat('d/m/Y', trim($dateRange[1]));
-            $query->whereBetween('actual_delivery_date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')]);
-            $dateRangeDiff = date_diff($dateFrom, $dateTo)->days;
-        }
-
-        switch (true) {
-            case $defaultDateRange || $dateRangeDiff == 1:
-                $defaultPerPage = 1000;
-                break;
-
-            case $dateRangeDiff > 0 && $dateRangeDiff < 3:
-                $defaultPerPage = 500;
-                break;
-
-            default:
-                $defaultPerPage = 200;
-                break;
-        }
-
         $master = $request->get('master');
         if ($master) {
             $query->where(function ($query1) use ($master) {
@@ -589,6 +552,45 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
                         $qr->where('awb', $master);
                     });
             });
+        }
+
+        $dateRange = [
+            date('d/m/Y', strtotime("-3 days")),
+            date('d/m/Y', strtotime("+15 days"))
+        ];
+        $dateRangeString = implode(' - ', $dateRange);
+        $defaultDateRange = true;
+        $dateRangeDiff = null;
+
+        if ($request->get('period')) {
+            if ($request->get('period') != $dateRangeString) {
+                $defaultDateRange = false;
+            }
+            $dateRange = explode(' - ', $request->get('period'));
+            $dateRangeString = $request->get('period');
+        }
+
+        if (count($dateRange) == 2) {
+            $dateFrom = \DateTime::createFromFormat('d/m/Y', trim($dateRange[0]));
+            $dateTo = \DateTime::createFromFormat('d/m/Y', trim($dateRange[1]));
+            if (!$master) {
+                $query->whereBetween('actual_delivery_date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')]);
+            }
+            $dateRangeDiff = date_diff($dateFrom, $dateTo)->days;
+        }
+
+        switch (true) {
+            case $defaultDateRange || $dateRangeDiff == 1:
+                $defaultPerPage = 1000;
+                break;
+
+            case $dateRangeDiff > 0 && $dateRangeDiff < 3:
+                $defaultPerPage = 500;
+                break;
+
+            default:
+                $defaultPerPage = 200;
+                break;
         }
 
         // order by date, and user selectable column

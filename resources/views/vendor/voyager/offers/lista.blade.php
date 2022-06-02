@@ -92,7 +92,7 @@
                                     <div class="filter-item">
                                         <label>
                                             <div>Filtru {{ $column['label'] }}</div>
-                                            <select name="type"
+                                            <select name="type[]"
                                                 class="custom-table-select form-control selectpicker"
                                                 onchange="this.form.submit()"
                                                 multiple
