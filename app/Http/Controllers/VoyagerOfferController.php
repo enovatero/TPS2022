@@ -1820,6 +1820,9 @@ class VoyagerOfferController extends \TCG\Voyager\Http\Controllers\VoyagerBaseCo
         $offer->packing = $request->input('packing');
         $offer->delivery_details = $request->input('delivery_details');
         $offer->delivery_type = $request->input('delivery_type');
+        if ($request->input('delivery_type') != $offerDb->delivery_type) {
+            $offer->awb_id = null;
+        }
         //dd($offer);
         $offer->save();
         //dd($offer->toArray());

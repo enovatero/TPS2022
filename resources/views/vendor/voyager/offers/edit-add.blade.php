@@ -1236,8 +1236,8 @@
                             </div>
                             <div class="row col-md-3" style="margin-right: 3px !important;">
                                 <div class="form-group">
-                                    <label for="cashback">Ramburs (ex: 2542.26)</label>
-                                    <input type="number" name="ramburs_numerar" id="cashback" class="form-control"
+                                    <label for="cashback_fan">Ramburs (ex: 2542.26)</label>
+                                    <input type="number" name="ramburs_numerar" id="cashback_fan" class="form-control cashback"
                                            @if($edit) value="{{$dataTypeContent->total_final}}" @endif>
                                 </div>
                             </div>
@@ -1385,8 +1385,8 @@
                             </div>
                             <div class="row col-md-3" style="margin-right: 3px !important;">
                                 <div class="form-group">
-                                    <label for="cashback">Ramburs (ex: 2542.26)</label>
-                                    <input type="number" name="ramburs_numerar" class="form-control"
+                                    <label for="cashback_nemo">Ramburs (ex: 2542.26)</label>
+                                    <input type="number" name="ramburs_numerar" id="cashback_nemo" class="form-control cashback"
                                            @if($edit) value="{{$dataTypeContent->total_final}}" @endif>
                                 </div>
                             </div>
@@ -2121,7 +2121,19 @@
             $(".panel-delivery-method").find("#mod_livrare").attr("id", "mod_livrare_detaliu");
             $(".panel-delivery-method").find("#mod_livrare_detaliu").attr("name", "");
 
+            var previous_delivery_type = '';
+            $('#mod_livrare_detaliu>select[name=delivery_type]').on('select2:selecting', function (evt) {
+                previous_delivery_type =  $(this).val();
+            });
+            $('#mod_livrare>select[name=delivery_type]').on('select2:selecting', function (evt) {
+                previous_delivery_type =  $(this).val();
+            });
+
             $(document).on('select2:select', '#mod_livrare_detaliu>select[name=delivery_type]', function (e) {
+                if ((previous_delivery_type == 'fan' || previous_delivery_type == 'nemo') && previous_delivery_type !=  $(this).val()) {
+                    alert("!!! ATENTIE !!!\nDaca schimbati curierul si un AWB a fost deja creat pentru curierul anterior, acel AWB va fi sters!");
+                }
+                previous_delivery_type = $(this).val();
                 var data = e.params.data;
                 console.log(data);
                 $(".delivery-method").hide();
@@ -2133,6 +2145,10 @@
             });
 
             $("#mod_livrare>select[name=delivery_type]").on('select2:select', function (e) {
+                if ((previous_delivery_type == 'fan' || previous_delivery_type == 'nemo') && previous_delivery_type !=  $(this).val()) {
+                    alert("!!! ATENTIE !!!\nDaca schimbati curierul si un AWB a fost deja creat pentru curierul anterior, acel AWB va fi sters!");
+                }
+                previous_delivery_type = $(this).val();
                 var data = e.params.data;
                 console.log(data);
                 $(".delivery-method").hide();
@@ -2167,9 +2183,9 @@
                             }
                             var payment_type = $('#payment_type option:selected').text().trim();
                             if (payment_type != 'Ramburs') {
-                                $('#cashback').val('0');
-                            } else {
-                                $('#cashback').val($('input[name=totalCalculatedPrice]').val());
+                                $('.cashback').val('0');
+                            } else if (!$('.cashback').val() || $('.cashback').val() == 0) {
+                                $('.cashback').val($('input[name=totalCalculatedPrice]').val());
                             }
                         }
                     })
