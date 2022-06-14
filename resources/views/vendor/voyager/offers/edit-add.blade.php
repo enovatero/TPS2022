@@ -1570,7 +1570,7 @@
             });
 
             @if ($isModelTranslatable)
-            $('.side-body').multilingual({"editing": true});
+                $('.side-body').multilingual({"editing": true});
             @endif
 
             $('.side-body input[data-slug-origin]').each(function (i, el) {
@@ -1600,7 +1600,9 @@
 
                 $('#confirm_delete_modal').modal('hide');
             });
+
             $('[data-toggle="tooltip"]').tooltip();
+
             $(document).on("change", "#option-type-fizica", function () {
                 $(".container-inputs-juridica").hide();
                 $(".container-inputs-fizica").show();
@@ -2066,12 +2068,15 @@
 
             $(document).on("keyup", 'input', function () {
                 var vthis = this;
+                var vform = $(vthis).closest('form')[0];
                 clearTimeout(timeout);
                 timeout = setTimeout(function () {
                     if ($(vthis).attr("name") == "offerQty[]" || $(vthis).attr('name') == 'curs_eur') {
                         saveNewDataToDb(true, false);
+                    } else if ($(vform).hasClass('delivery-method')) {
+                        saveNewDataToDb(false, false, true);
                     } else {
-                        saveNewDataToDb(false);
+                        saveNewDataToDb();
                     }
                 }, 500);
             });
@@ -2159,7 +2164,7 @@
                 }, 500);
             });
 
-            function saveNewDataToDb(getPrices = false, modifyOfferProductsPrices = false) {
+            function saveNewDataToDb(getPrices = false, modifyOfferProductsPrices = false, cashbackChanged = false) {
                 if (isEdit) {
                     var data = $(".form-edit-add").serializeArray();
                     if (getPrices) {
@@ -2184,7 +2189,7 @@
                             var payment_type = $('#payment_type option:selected').text().trim();
                             if (payment_type != 'Ramburs') {
                                 $('.cashback').val('0');
-                            } else if (!$('.cashback').val() || $('.cashback').val() == 0) {
+                            } else if (!cashbackChanged) {
                                 $('.cashback').val($('input[name=totalCalculatedPrice]').val());
                             }
                         }
