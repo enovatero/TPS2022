@@ -690,10 +690,10 @@
                                                         {!! $data->intarziere ? '<b style="color:red;font-size:16px">'.$data->intarziere.'</b>' : '-' !!}
 
                                                         @elseif ($column['key'] == 'judet')
-                                                            <span title="{{$data->delivery_address->state_name()}}">{{ $data->delivery_address ? mb_strimwidth($data->delivery_address->state_name(), 0, 15, '..') : '-' }}</span>
+                                                            <span title="{{ $data->delivery_address ? $data->delivery_address->state_name() : '' }}">{{ $data->delivery_address ? mb_strimwidth($data->delivery_address->state_name(), 0, 15, '..') : '-' }}</span>
 
                                                         @elseif ($column['key'] == 'oras')
-                                                            <span title="{{$data->delivery_address->city_name()}}">{{ $data->delivery_address ? mb_strimwidth($data->delivery_address->city_name(), 0, 15, '..') : '-' }}</span>
+                                                            <span title="{{$data->delivery_address ? $data->delivery_address->city_name() : '' }}">{{ $data->delivery_address ? mb_strimwidth($data->delivery_address->city_name(), 0, 15, '..') : '-' }}</span>
 
                                                     @elseif ($column['key'] == 'telefon')
                                                         @php
