@@ -30,6 +30,10 @@ class Kernel extends ConsoleKernel
             ->hourly()
             ->days([1, 2, 3, 4, 5, 6])
             ->between('8:00', '22:00');
+        $schedule->command('fancourier:status')
+            ->hourly()
+            ->days([1, 2, 3, 4, 5, 6])
+            ->between('8:00', '22:00');
     }
 
     /**
